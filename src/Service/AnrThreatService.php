@@ -1,93 +1,247 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Service\AbstractService;
-use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
+use Monarc\Core\InputFormatter\FormattedInputParams;
+use Monarc\Core\Entity\UserSuperClass;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Theme;
+use Monarc\FrontOffice\Entity\Threat;
+use Monarc\FrontOffice\Table;
 
-/**
- * This class is the service that handles threats within an ANR.
- * @package Monarc\FrontOffice\Service
- */
-class AnrThreatService extends AbstractService
+class AnrThreatService
 {
-    protected $dependencies = ['anr', 'theme'];
-    protected $anrTable;
-    protected $userAnrTable;
-    protected $themeTable;
-    protected $instanceRiskTable;
-    protected $instanceRiskService;
-    protected $filterColumns = [
-        'label1', 'label2', 'label3', 'label4',
-        'description1', 'description2', 'description3', 'description4',
-        'code',
-    ];
+    private UserSuperClass $connectedUser;
 
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
+    public function __construct(
+        private Table\ThreatTable $threatTable,
+        private Table\InstanceRiskTable $instanceRiskTable,
+        private AnrInstanceRiskService $anrInstanceRiskService,
+        private Table\ThemeTable $themeTable,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
+    }
+
+    public function getList(FormattedInputParams $params): array
     {
-        $this->manageQualification($id, $data);
-        return parent::update($id, $data);
+        $result = [];
+
+        /** @var Threat $threat */
+        foreach ($this->threatTable->findByParams($params) as $threat) {
+            $result[] = $this->prepareThreatDataResult($threat);
+        }
+
+        return $result;
+    }
+
+    public function getCount(FormattedInputParams $params): int
+    {
+        return $this->threatTable->countByParams($params);
+    }
+
+    public function getThreatData(Anr $anr, string $uuid): array
+    {
+        /** @var Threat $threat */
+        $threat = $this->threatTable->findByUuidAndAnr($uuid, $anr);
+
+        return $this->prepareThreatDataResult($threat);
+    }
+
+    public function create(Anr $anr, array $data, bool $saveInDb = true): Threat
+    {
+        $threat = (new Threat())
+            ->setAnr($anr)
+            ->setCode($data['code'])
+            ->setLabels($data)
+            ->setDescriptions($data)
+            ->setComment($threatData['comment'] ?? '')
+            ->setCreator($this->connectedUser->getEmail());
+        if (isset($data['uuid'])) {
+            $threat->setUuid($data['uuid']);
+        }
+        if (isset($data['c'])) {
+            $threat->setConfidentiality((int)$data['c']);
+        }
+        if (isset($data['i'])) {
+            $threat->setIntegrity((int)$data['i']);
+        }
+        if (isset($data['a'])) {
+            $threat->setAvailability((int)$data['a']);
+        }
+        if (isset($data['mode'])) {
+            $threat->setMode((int)$data['mode']);
+        }
+        if (isset($data['status'])) {
+            $threat->setStatus($data['status']);
+        }
+        if (isset($data['trend'])) {
+            $threat->setTrend((int)$data['trend']);
+        }
+        if (isset($data['qualification'])) {
+            $threat->setTrend((int)$data['qualification']);
+        }
+
+        $this->validateCia($threat);
+
+        if (!empty($data['theme'])) {
+            /** @var Theme $theme */
+            $theme = $data['theme'] instanceof Theme
+                ? $data['theme']
+                : $this->themeTable->findById((int)$data['theme']);
+
+            $threat->setTheme($theme);
+        }
+
+        $this->threatTable->save($threat, $saveInDb);
+
+        return $threat;
+    }
+
+    public function createList(Anr $anr, array $data): array
+    {
+        $createdUuids = [];
+        foreach ($data as $row) {
+            $createdUuids[] = $this->create($anr, $row, false)->getUuid();
+        }
+        $this->threatTable->flush();
+
+        return $createdUuids;
+    }
+
+    public function update(Anr $anr, string $uuid, array $data): Threat
+    {
+        /** @var Threat $threat */
+        $threat = $this->threatTable->findByUuidAndAnr($uuid, $anr);
+
+        $this->manageQualification($threat, $data);
+
+        $threat->setCode($data['code'])
+            ->setLabels($data)
+            ->setDescriptions($data)
+            ->setConfidentiality((int)$data['c'])
+            ->setIntegrity((int)$data['i'])
+            ->setAvailability((int)$data['a'])
+            ->setUpdater($this->connectedUser->getEmail());
+        if (isset($data['status'])) {
+            $threat->setStatus($data['status']);
+        }
+        if (isset($data['trend'])) {
+            $threat->setTrend((int)$data['trend']);
+        }
+        if (isset($data['comment'])) {
+            $threat->setComment($data['comment']);
+        }
+        if (!empty($data['theme']) && (
+            $threat->getTheme() === null || $threat->getTheme()->getId() !== (int)$data['theme']
+        )) {
+            /** @var Theme $theme */
+            $theme = $this->themeTable->findById((int)$data['theme']);
+            $threat->setTheme($theme);
+        }
+
+        $this->threatTable->save($threat);
+
+        return $threat;
+    }
+
+    public function patch(Anr $anr, string $uuid, array $data): Threat
+    {
+        /** @var Threat $threat */
+        $threat = $this->threatTable->findByUuidAndAnr($uuid, $anr);
+
+        if (isset($data['status'])) {
+            $threat->setStatus((int)$data['status'])
+                ->setUpdater($this->connectedUser->getEmail());
+
+            $this->threatTable->save($threat);
+        }
+
+        return $threat;
+    }
+
+    public function delete(Anr $anr, string $uuid): void
+    {
+        /** @var Threat $threat */
+        $threat = $this->threatTable->findByUuidAndAnr($uuid, $anr);
+
+        $this->threatTable->remove($threat);
+    }
+
+    public function deleteList(Anr $anr, array $data): void
+    {
+        $threats = $this->threatTable->findByUuidsAndAnr($data, $anr);
+
+        $this->threatTable->removeList($threats);
     }
 
     /**
-     * @inheritdoc
+     * Can be set from 1st step, 2nd sub-step "Threats assessment".
+     * Updates the qualifications for the specified threat whenever they are created or updated.
+     * This noticeably handles qualification values inheritance.
      */
-    public function patch($id, $data)
-    {
-        $this->manageQualification($id, $data);
-        return parent::patch($id, $data);
-    }
-
-    /**
-     * Updates the qualifications for the specified threat whenever they are created or updated. This noticeably
-     * handles qualification values inheritance.
-     *
-     * @param int $id The threat ID
-     * @param array $data The qualification data
-     */
-    public function manageQualification($id, $data)
+    private function manageQualification(Threat $threat, array $data): void
     {
         if (isset($data['qualification'])) {
-            $filter = [
-                'anr' => $data['anr'],
-                'threat' => $id,
-            ];
+            $threat->setQualification($data['qualification']);
 
-            // If qualification is not forced, retrieve only inherited instance risksx
-            if (empty($data['forceQualification'])) {
-                $filter['mh'] = 1;
-            }
+            $instancesRisks = $this->instanceRiskTable->findByAnrAndThreatExcludeLocallySet(
+                $threat->getAnr(),
+                $threat,
+                empty($data['forceQualification'])
+            );
+            foreach ($instancesRisks as $instanceRisk) {
+                $instanceRisk->setThreatRate((int)$data['qualification']);
 
-            /** @var InstanceRiskTable $instanceRiskTable */
-            $instanceRiskTable = $this->get('instanceRiskTable');
-            $instancesRisks = $instanceRiskTable->getEntityByFields($filter);
-
-            /** @var AnrInstanceRiskService $instanceRiskService */
-            $instanceRiskService = $this->get('instanceRiskService');
-
-            foreach ($instancesRisks as $i => $instanceRisk) {
-                $instanceRisk->threatRate = $data['qualification'];
-
-                // If qualification is forced, instances risks become inherited
+                /* If qualification is forced, the instances risks threatRate's value is set from outside. */
                 if (!empty($data['forceQualification'])) {
-                    $instanceRisk->mh = 1;
+                    $instanceRisk->setIsThreatRateNotSetOrModifiedExternally(true);
                 }
 
-                $instanceRiskTable->saveEntity($instanceRisk, false);
+                $this->anrInstanceRiskService->recalculateRiskRatesAndUpdateRecommendationsPositions($instanceRisk);
 
-                $instanceRiskService->updateRisks($instanceRisk);
-                $instanceRiskService->updateInstanceRiskRecommendationsPositions($instanceRisk);
+                $this->instanceRiskTable->save($instanceRisk, false);
             }
+        }
+    }
 
-            $instanceRiskTable->getDb()->flush();
+    private function prepareThreatDataResult(Threat $threat): array
+    {
+        $themeData = null;
+        if ($threat->getTheme() !== null) {
+            $themeData = array_merge([
+                'id' => $threat->getTheme()->getId(),
+            ], $threat->getTheme()->getLabels());
+        }
+
+        return array_merge($threat->getLabels(), $threat->getDescriptions(), [
+            'uuid' => $threat->getUuid(),
+            'anr' => [
+                'id' => $threat->getAnr()->getId(),
+            ],
+            'code' => $threat->getCode(),
+            'c' => $threat->getConfidentiality(),
+            'i' => $threat->getIntegrity(),
+            'a' => $threat->getAvailability(),
+            'theme' => $themeData,
+            'trend' => $threat->getTrend(),
+            'qualification' => $threat->getQualification(),
+            'mode' => $threat->getMode(),
+            'comment' => $threat->getComment(),
+            'status' => $threat->getStatus(),
+        ]);
+    }
+
+    private function validateCia(Threat $threat): void
+    {
+        if ($threat->getConfidentiality() === 0 && $threat->getAvailability() === 0 && $threat->getIntegrity() === 0) {
+            throw new \Exception();
         }
     }
 }

@@ -1,34 +1,36 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) Cases is a registered trademark of SECURITYMADEIN.LU
- * @license   MyCases is licensed under the GNU Affero GPL v3 - See license.txt for more information
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\Mvc\Controller\AbstractRestfulController;
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 
-class ApiDashboardAnrRisksController extends AbstractRestfulController
+class ApiDashboardAnrRisksController extends AbstractRestfulControllerRequestHandler
 {
-    private AnrInstanceRiskService $anrInstanceRiskService;
+    use ControllerRequestResponseHandlerTrait;
 
-    public function __construct(AnrInstanceRiskService $anrInstanceRiskService)
+    public function __construct(private AnrInstanceRiskService $anrInstanceRiskService)
     {
-        $this->anrInstanceRiskService = $anrInstanceRiskService;
     }
 
     public function get($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
         $params = $this->getParsedParams();
 
-        $instanceRisks = $this->anrInstanceRiskService->getInstanceRisks($anrId, $id, $params);
+        $id = $id === null ? null : (int)$id;
+        $instanceRisks = $this->anrInstanceRiskService->getInstanceRisks($anr, $id, $params);
 
-        return new JsonModel([
+        return $this->getPreparedJsonResponse([
             'count' => \count($instanceRisks),
             'risks' => $params['limit'] > 0
                 ? \array_slice($instanceRisks, ($params['page'] - 1) * $params['limit'], $params['limit'])
@@ -49,8 +51,8 @@ class ApiDashboardAnrRisksController extends AbstractRestfulController
             'order' => $this->params()->fromQuery('order', 'maxRisk'),
             'order_direction' => $this->params()->fromQuery('order_direction', 'desc'),
             'thresholds' => $this->params()->fromQuery('thresholds'),
-            'page' => $this->params()->fromQuery('page', 1),
-            'limit' => $this->params()->fromQuery('limit', 50)
+            'page' => (int)$this->params()->fromQuery('page', 1),
+            'limit' => (int)$this->params()->fromQuery('limit', 50)
         ];
     }
 }

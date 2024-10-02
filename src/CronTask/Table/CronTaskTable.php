@@ -10,8 +10,8 @@ namespace Monarc\FrontOffice\CronTask\Table;
 use DateTime;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManager;
-use Monarc\Core\Model\Table\AbstractTable;
-use Monarc\FrontOffice\Model\Entity\CronTask;
+use Monarc\Core\Table\AbstractTable;
+use Monarc\FrontOffice\Entity\CronTask;
 
 class CronTaskTable extends AbstractTable
 {

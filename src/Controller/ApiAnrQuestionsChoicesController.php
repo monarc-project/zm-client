@@ -7,30 +7,27 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Service\AnrQuestionChoiceService;
 
-/**
- * Api Anr Questions Choices Controller
- *
- * Class ApiAnrQuestionsChoicesController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrQuestionsChoicesController extends ApiAnrAbstractController
 {
     protected $name = 'choices';
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(AnrQuestionChoiceService $anrQuestionChoiceService)
+    {
+        parent::__construct($anrQuestionChoiceService);
+    }
+
     public function replaceList($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
 
         $this->getService()->replaceList($data, $anrId);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 }

@@ -1,14 +1,22 @@
 <?php declare(strict_types=1);
+/**
+ * @link      https://github.com/monarc-project for the canonical source repository
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @license   MONARC is licensed under GNU Affero General Public License version 3
+ */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\Mvc\Controller\AbstractRestfulController;
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\OperationalRiskScaleService;
 
-class ApiOperationalRisksScalesController extends AbstractRestfulController
+class ApiOperationalRisksScalesController extends AbstractRestfulControllerRequestHandler
 {
+    use ControllerRequestResponseHandlerTrait;
+
     private OperationalRiskScaleService $operationalRiskScaleService;
 
     public function __construct(OperationalRiskScaleService $operationalRiskScaleService)
@@ -18,48 +26,49 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
 
     public function getList()
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        return new JsonModel([
-            'data' => $this->operationalRiskScaleService->getOperationalRiskScales($anrId),
+        return $this->getPreparedJsonResponse([
+            'data' => $this->operationalRiskScaleService->getOperationalRiskScales($anr),
         ]);
     }
 
+    /**
+     * @param array $data
+     */
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $this->operationalRiskScaleService->createOperationalRiskScaleType($anrId, $data),
+        return $this->getSuccessfulJsonResponse([
+            'id' => $this->operationalRiskScaleService->createOperationalRiskScaleType($anr, $data)->getId(),
         ]);
     }
 
-    public function deleteList($data)
-    {
-        $this->operationalRiskScaleService->deleteOperationalRiskScaleTypes($data);
-
-        return new JsonModel(['status' => 'ok']);
-    }
-
+    /**
+     * @param array $data
+     */
     public function update($id, $data)
     {
-        $data['anr'] = (int)$this->params()->fromRoute('anrid');
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        if ($this->operationalRiskScaleService->update((int)$id, $data)) {
-            return new JsonModel(['status' => 'ok']);
-        }
+        $this->operationalRiskScaleService->updateScaleType($anr, (int)$id, $data);
 
-        // Not successful
-        return new JsonModel(['status' => 'ko']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function patchList($data)
     {
-        $data['anr'] = (int)$this->params()->fromRoute('anrid');
+        // TODO: add a validator for the limits...
+
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
         if (isset($data['scaleValue'], $data['scaleIndex'])) {
-            $this->operationalRiskScaleService->updateValueForAllScales($data);
+            $this->operationalRiskScaleService->updateValueForAllScales($anr, $data);
         }
 
         if (isset($data['numberOfLevelForOperationalImpact'])) {
@@ -69,7 +78,7 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
                 throw new Exception('Scales level must remain below 20 ', 412);
             }
 
-            $this->operationalRiskScaleService->updateLevelsNumberOfOperationalRiskScale($data);
+            $this->operationalRiskScaleService->updateLevelsNumberOfOperationalRiskScale($anr, $data);
         }
 
         if (isset($data['probabilityMin'], $data['probabilityMax'])) {
@@ -83,9 +92,19 @@ class ApiOperationalRisksScalesController extends AbstractRestfulController
                 throw new Exception('Minimum cannot be greater than Maximum', 412);
             }
 
-            $this->operationalRiskScaleService->updateMinMaxForOperationalRiskProbability($data);
+            $this->operationalRiskScaleService->updateMinMaxForOperationalRiskProbability($anr, $data);
         }
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
+    }
+
+    public function deleteList($data)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->operationalRiskScaleService->deleteOperationalRiskScaleTypes($anr, $data);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }

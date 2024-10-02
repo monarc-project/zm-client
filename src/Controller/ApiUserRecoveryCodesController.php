@@ -1,68 +1,51 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Exception\Exception;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\Core\Service\UserService;
-use Monarc\Core\Model\Table\UserTable;
-use Laminas\Mvc\Controller\AbstractRestfulController;
-use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Entity\User;
+use Monarc\FrontOffice\Table\UserTable;
 
-/**
- * Api User RecoveryCodes Controller
- *
- * Class ApiUserRecoveryCodesController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiUserRecoveryCodesController extends AbstractRestfulController
+class ApiUserRecoveryCodesController extends AbstractRestfulControllerRequestHandler
 {
-    /** @var ConnectedUserService */
-    private $connectedUserService;
+    use ControllerRequestResponseHandlerTrait;
 
-    /** @var UserService */
-    private $userService;
+    private User $connectedUser;
 
-    /** @var UserTable */
-    private $userTable;
-
-
-    public function __construct(
-        UserService $userService,
-        ConnectedUserService $connectedUserService,
-        UserTable $userTable
-    ) {
-        $this->userService = $userService;
-        $this->connectedUserService = $connectedUserService;
-        $this->userTable = $userTable;
+    public function __construct(private UserTable $userTable, ConnectedUserService $connectedUserService)
+    {
+        /** @var User $user */
+        $user = $connectedUserService->getConnectedUser();
+        $this->connectedUser = $user;
     }
 
     /**
-     * Generates and returns 5 new recovery codes (20 chars for each codes).
+     * Generates and returns 5 new recovery codes (20 chars for each code).
      */
     public function create($data)
     {
-        $connectedUser = $this->connectedUserService->getConnectedUser();
         $status = 'ok';
 
-        if (! $connectedUser->isTwoFactorAuthEnabled()) {
-            $status = 'Two factor authentication not enbabled';
-        } else {
-            $recoveryCodes = array();
+        if ($this->connectedUser->isTwoFactorAuthEnabled()) {
+            $recoveryCodes = [];
             for ($i = 0; $i < 5; $i++) {
-                array_push($recoveryCodes, bin2hex(openssl_random_pseudo_bytes(10)));
+                $recoveryCodes[] = bin2hex(openssl_random_pseudo_bytes(10));
             }
 
-            $connectedUser->createRecoveryCodes($recoveryCodes);
-            $this->userTable->saveEntity($connectedUser);
+            $this->connectedUser->createRecoveryCodes($recoveryCodes);
+            $this->userTable->save($this->connectedUser);
+        } else {
+            $status = 'Two factor authentication not enbabled';
         }
 
-        return new JsonModel([
+        return $this->getPreparedJsonResponse([
             'status' => $status,
             'recoveryCodes' => $recoveryCodes,
         ]);

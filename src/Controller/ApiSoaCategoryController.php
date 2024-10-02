@@ -1,64 +1,92 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Exception\Exception;
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\InputFormatter\SoaCategory\GetSoaCategoriesInputFormatter;
+use Monarc\Core\Validator\InputValidator\SoaCategory\PostSoaCategoryDataInputValidator;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Service\SoaCategoryService;
 
-/**
- * Api ANR Categories Controller
- *
- * Class ApiAnrCategoriesController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiSoaCategoryController extends ApiAnrAbstractController
+class ApiSoaCategoryController extends AbstractRestfulControllerRequestHandler
 {
-    protected $name = 'categories';
-    protected $dependencies = ['anr', 'referential'];
+    use ControllerRequestResponseHandlerTrait;
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(
+        private SoaCategoryService $soaCategoryService,
+        private GetSoaCategoriesInputFormatter $getSoaCategoriesInputFormatter,
+        private PostSoaCategoryDataInputValidator $postSoaCategoryDataInputValidator
+    ) {
+    }
+
     public function getList()
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
+        return $this->getPreparedJsonResponse([
+            'categories' => $this->soaCategoryService->getList(
+                $this->getFormattedInputParams($this->getSoaCategoriesInputFormatter)
+            ),
+        ]);
+    }
+
+    public function get($id)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        return $this->getPreparedJsonResponse($this->soaCategoryService->getSoaCategoryData($anr, (int)$id));
+    }
+
+    /**
+     * @param array $data
+     */
+    public function create($data)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $isBatchData = $this->isBatchData($data);
+        $this->validatePostParams($this->postSoaCategoryDataInputValidator, $data, $isBatchData);
+
+        if ($isBatchData) {
+            return $this->getSuccessfulJsonResponse([
+                'id' => $this->soaCategoryService
+                    ->createList($anr, $this->postSoaCategoryDataInputValidator->getValidDataSets()),
+            ]);
         }
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-        $status = $this->params()->fromQuery('status', 1);
-        $referential = $this->params()->fromQuery('referential');
 
-        $filterAnd = ['anr' => $anrId];
-        if ($status === 'all') {
-            $filterAnd['status'] = (int)$status;
-        }
+        return $this->getSuccessfulJsonResponse([
+            'id' => $this->soaCategoryService->create($anr, $this->postSoaCategoryDataInputValidator->getValidData())
+                ->getId(),
+        ]);
+    }
 
-        if ($referential) {
-            $filterAnd['r.anr'] = $anrId;
-            $filterAnd['r.uuid'] = $referential;
-        }
+    /**
+     * @param array $data
+     */
+    public function update($id, $data)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $this->validatePostParams($this->postSoaCategoryDataInputValidator, $data);
 
-        $service = $this->getService();
+        $this->soaCategoryService->update($anr, (int)$id, $this->postSoaCategoryDataInputValidator->getValidData());
 
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
-        }
+        return $this->getSuccessfulJsonResponse();
+    }
 
-        return new JsonModel(array(
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
-        ));
+    public function delete($id)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->soaCategoryService->delete($anr, (int)$id);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }

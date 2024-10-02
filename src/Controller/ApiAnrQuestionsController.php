@@ -7,15 +7,16 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-/**
- * Api Anr Questions Controller
- *
- * Class ApiAnrQuestionsController
- * @package Monarc\FrontOffice\Controller
- */
+use Monarc\FrontOffice\Service\AnrQuestionService;
+
 class ApiAnrQuestionsController extends ApiAnrAbstractController
 {
     protected $name = 'questions';
 
     protected $dependencies = ['anr'];
+
+    public function __construct(AnrQuestionService $anrQuestionService)
+    {
+        parent::__construct($anrQuestionService);
+    }
 }

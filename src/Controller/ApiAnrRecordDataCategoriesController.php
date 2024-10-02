@@ -7,44 +7,33 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-/**
- * Api Anr Record Data Categories Controller
- *
- * Class ApiAnrRecordDataCategoriesController
- * @package Monarc\FrontOffice\Controller
- */
+use Monarc\FrontOffice\Service\AnrRecordDataCategoryService;
+
 class ApiAnrRecordDataCategoriesController extends ApiAnrAbstractController
 {
     protected $name = 'record-data-categories';
     protected $dependencies = ['anr'];
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(AnrRecordDataCategoryService $anrRecordDataCategoryService)
+    {
+        parent::__construct($anrRecordDataCategoryService);
+    }
+
     public function create($data)
     {
         return $this->methodNotAllowed();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function update($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function delete($id)
     {
         return $this->methodNotAllowed();

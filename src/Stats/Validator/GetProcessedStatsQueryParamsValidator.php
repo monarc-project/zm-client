@@ -5,22 +5,16 @@ namespace Monarc\FrontOffice\Stats\Validator;
 use DateTime;
 use Laminas\Filter\StringTrim;
 use Laminas\InputFilter\ArrayInput;
-use Laminas\InputFilter\InputFilter;
 use Laminas\Validator\Callback;
 use Laminas\Validator\Date;
 use Laminas\Validator\Digits;
 use Laminas\Validator\InArray;
+use Monarc\Core\Validator\InputValidator\AbstractInputValidator;
 use Monarc\FrontOffice\Stats\DataObject\StatsDataObject;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
-use Monarc\FrontOffice\Validator\InputValidator\AbstractMonarcInputValidator;
 
-class GetProcessedStatsQueryParamsValidator extends AbstractMonarcInputValidator
+class GetProcessedStatsQueryParamsValidator extends AbstractInputValidator
 {
-    public function __construct(InputFilter $inputFilter)
-    {
-        parent::__construct($inputFilter);
-    }
-
     protected function getRules(): array
     {
         return [

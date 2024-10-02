@@ -10,7 +10,8 @@ namespace Monarc\FrontOffice\Model\Table;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\Core\Model\Table\AbstractEntityTable;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\FrontOffice\Model\Entity\Question;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Question;
 
 /**
  * Class QuestionTable
@@ -21,5 +22,36 @@ class QuestionTable extends AbstractEntityTable
     public function __construct(DbCli $dbService, ConnectedUserService $connectedUserService)
     {
         parent::__construct($dbService, Question::class, $connectedUserService);
+    }
+
+    /**
+     * @return Question[]
+     */
+    public function findByAnr(Anr $anr): array
+    {
+        return $this->getRepository()
+            ->createQueryBuilder('q')
+            ->where('q.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function saveEntity(Question $question, bool $flushAll = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->persist($question);
+        if ($flushAll) {
+            $em->flush();
+        }
+    }
+
+    public function deleteEntity(Question $question, bool $flush = true): void
+    {
+        $em = $this->getDb()->getEntityManager();
+        $em->remove($question);
+        if ($flush) {
+            $em->flush();
+        }
     }
 }

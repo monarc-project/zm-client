@@ -8,9 +8,10 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\AbstractController;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
 use Ramsey\Uuid\Uuid;
-use Laminas\View\Model\JsonModel;
+use function in_array;
 
 /**
  * Abstract controller for all ANR-based routes. Allows easy permissions filtering for routes below this one.
@@ -18,9 +19,8 @@ use Laminas\View\Model\JsonModel;
  */
 abstract class ApiAnrAbstractController extends AbstractController
 {
-    /**
-     * @inheritdoc
-     */
+    use ControllerRequestResponseHandlerTrait;
+
     public function getList()
     {
         $page = $this->params()->fromQuery('page');
@@ -49,9 +49,9 @@ abstract class ApiAnrAbstractController extends AbstractController
             }
         }
 
-        return new JsonModel([
+        return $this->getPreparedJsonResponse([
             'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
+            $this->name => $entities,
         ]);
     }
 
@@ -75,15 +75,11 @@ abstract class ApiAnrAbstractController extends AbstractController
 
         $entity = $this->getService()->getEntity($identifier);
 
-        if (!$entity['anr'] || $entity['anr']->get('id') !== $anrId) {
-            throw new Exception('Anr ids diffence', 412);
-        }
-
         if (count($this->dependencies)) {
             $this->formatDependencies($entity, $this->dependencies);
         }
 
-        return new JsonModel($entity);
+        return $this->getPreparedJsonResponse($entity);
     }
 
     /**
@@ -116,8 +112,12 @@ abstract class ApiAnrAbstractController extends AbstractController
             if (isset($new_data['amv']) && !is_array($new_data['amv'])) {
                 $new_data['amv'] = ['uuid' => $new_data['amv'], 'anr' => $anrId];
             }
-            if (isset($new_data['father']) && isset($new_data['child'])) {
+            if (isset($new_data['father'], $new_data['child'])) {
                 $new_data['father'] = ['anr' => $anrId, 'uuid' => $new_data['father']];
+                $new_data['child'] = ['anr' => $anrId, 'uuid' => $new_data['child']];
+            }
+            if (isset($new_data['parent'], $new_data['child'])) {
+                $new_data['parent'] = ['anr' => $anrId, 'uuid' => $new_data['parent']];
                 $new_data['child'] = ['anr' => $anrId, 'uuid' => $new_data['child']];
             }
 
@@ -125,8 +125,7 @@ abstract class ApiAnrAbstractController extends AbstractController
             $created_objects[] = $id;
         }
 
-        return new JsonModel([
-            'status' => 'ok',
+        return $this->getSuccessfulJsonResponse([
             'id' => count($created_objects) == 1 ? $created_objects[0] : $created_objects,
         ]);
     }
@@ -137,8 +136,14 @@ abstract class ApiAnrAbstractController extends AbstractController
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
-        if (count($identifier) > 1 && in_array('anr', $identifier) && in_array('uuid', $identifier) && !is_array($id)) {
+        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(
+            \get_class($this->getService()->get('entity'))
+        )->getIdentifierFieldNames();
+        if (\count($identifier) > 1
+            && in_array('anr', $identifier)
+            && in_array('uuid', $identifier)
+            && !is_array($id)
+        ) {
             $id = ['uuid' => $id, 'anr' => $anrId];
         }
         if (empty($anrId)) {
@@ -148,7 +153,7 @@ abstract class ApiAnrAbstractController extends AbstractController
 
         $this->getService()->update($id, $data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     /**
@@ -157,8 +162,14 @@ abstract class ApiAnrAbstractController extends AbstractController
     public function patch($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
-        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
-        if (count($identifier) > 1 && in_array('anr', $identifier) && in_array('uuid', $identifier) && !is_array($id)) {
+        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(
+            \get_class($this->getService()->get('entity'))
+        )->getIdentifierFieldNames();
+        if (\count($identifier) > 1
+            && in_array('anr', $identifier)
+            && in_array('uuid', $identifier)
+            && !is_array($id)
+        ) {
             $id = ['uuid' => $id, 'anr' => $anrId];
         }
 
@@ -169,7 +180,7 @@ abstract class ApiAnrAbstractController extends AbstractController
 
         $this->getService()->patch($id, $data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     /**
@@ -177,17 +188,21 @@ abstract class ApiAnrAbstractController extends AbstractController
      */
     public function delete($id)
     {
-        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(get_class($this->getService()->get('entity')))->getIdentifierFieldNames();
+        $identifier = $this->getService()->get('entity')->getDbAdapter()->getClassMetadata(
+            \get_class($this->getService()->get('entity'))
+        )->getIdentifierFieldNames();
         $anrId = (int)$this->params()->fromRoute('anrid');
-        if (count($identifier) > 1 && in_array('anr', $identifier) && in_array('uuid', $identifier) && !is_array($id)) {
+        if (\count($identifier) > 1
+            && in_array('anr', $identifier)
+            && in_array('uuid', $identifier)
+            && !is_array($id)
+        ) {
             $id = ['uuid' => $id, 'anr' => $anrId];
         }
 
-        if ($this->getService()->deleteFromAnr($id, $anrId)) {
-            return new JsonModel(['status' => 'ok']);
-        }
+        $this->getService()->deleteFromAnr($id, $anrId);
 
-        return new JsonModel(['status' => 'ok']); // Todo : may be add error message
+        return $this->getSuccessfulJsonResponse();
     }
 
     /**
@@ -200,19 +215,17 @@ abstract class ApiAnrAbstractController extends AbstractController
         $class = $this->getService()->get('entity');
         $entity = new $class();
         $ids = $class->getDbAdapter()->getClassMetadata(get_class($entity))->getIdentifierFieldNames();
-        if (count($ids) > 1) {
+        if (\count($ids) > 1) {
             foreach ($data as $key => $value) {
-                if (count($ids) > 1 && in_array('anr', $ids) && in_array('uuid', $ids) && !is_array($value)) {
+                if (in_array('anr', $ids) && in_array('uuid', $ids) && !is_array($value)) {
                     $data[$key] = ['uuid' => $value, 'anr' => $anrId];
                 }
             }
         }
 
-        if ($this->getService()->deleteListFromAnr($data, $anrId)) {
-            return new JsonModel(['status' => 'ok']);
-        }
+        $this->getService()->deleteListFromAnr($data, $anrId);
 
-        return new JsonModel(['status' => 'ok']); // Todo: may be add error message
+        return $this->getSuccessfulJsonResponse();
     }
 
     /**

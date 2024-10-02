@@ -29,9 +29,9 @@ class AnrRecordDataCategoryService extends AbstractService
      */
     public function createDataCategory($data)
     {
-        $dc = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $data['anr']->get('id')]);
+        $dc = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $data['anr']->getId()]);
         if(count($dc)) {
-            return $dc[0]->get('id');
+            return $dc[0]->getId();
         }
         return $this->create($data, true);
     }
@@ -66,7 +66,7 @@ class AnrRecordDataCategoryService extends AbstractService
     /**
      * Imports a record data category from a data array. This data is generally what has been exported into a file.
      * @param array $data The record data category's data fields
-     * @param \Monarc\FrontOffice\Model\Entity\Anr $anr The target ANR id
+     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
     public function importFromArray($data, $anr)
@@ -77,7 +77,7 @@ class AnrRecordDataCategoryService extends AbstractService
         try {
             $dataCategoryEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $anr]);
             if (count($dataCategoryEntity)) {
-                $id =  $dataCategoryEntity[0]->get('id');
+                $id =  $dataCategoryEntity[0]->getId();
             } else {
                 $id = $this->create($data);
             }

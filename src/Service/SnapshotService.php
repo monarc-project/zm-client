@@ -1,220 +1,133 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Doctrine\ORM\ORMException;
+use Doctrine\Common\Collections\Criteria;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Service\AbstractService;
-use Monarc\FrontOffice\Model\Entity\Anr;
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
-use Monarc\FrontOffice\Model\Entity\Snapshot;
-use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\SnapshotTable;
-use Monarc\Core\Model\Entity\User;
-use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Snapshot;
+use Monarc\FrontOffice\Table;
 
-/**
- * This class is the service that handles snapshots. Snapshots are backups of ANRs at a specific point in time, and
- * may be consulted or restored at any time.
- * @package Monarc\FrontOffice\Service
- */
-class SnapshotService extends AbstractService
+class SnapshotService
 {
-    protected $dependencies = ['anr', 'anrReference'];
-    protected $filterColumns = [];
-    protected $anrTable;
-    protected $userAnrTable;
-    protected $anrService;
+    private UserSuperClass $connectedUser;
 
-    /**
-     * @inheritdoc
-     */
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
-    {
-        if (is_null($order)) {
-            $order = '-id';
-        }
-        /** @var SnapshotTable $table */
-        $table = $this->get('table');
-        return $table->fetchAllFiltered(
-            array_keys($this->get('entity')->getJsonArray()),
-            $page,
-            $limit,
-            $this->parseFrontendOrder($order),
-            $this->parseFrontendFilter($filter, $this->filterColumns),
-            $filterAnd
-        );
+    public function __construct(
+        private Table\SnapshotTable $snapshotTable,
+        private Table\AnrTable $anrTable,
+        private AnrService $anrService,
+        private Table\UserAnrTable $userAnrTable,
+        private Table\UserTable $userTable,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    /**
-     * @throws ORMException
-     * @throws Exception
-     */
-    public function create($data, $last = true): int
+    public function getList(Anr $anr): array
     {
-        // duplicate anr and create snapshot record with new id
-        /** @var AnrService $anrService */
-        $anrService = $this->get('anrService');
-        $newAnr = $anrService->duplicateAnr($data['anr'], MonarcObject::SOURCE_CLIENT, null, [], true);
+        $snapshotsList = [];
+        $snapshots = $this->snapshotTable->findByAnrReferenceAndOrderBy($anr, ['createdAt' => Criteria::DESC]);
+        foreach ($snapshots as $snapshot) {
+            $snapshotsList[] = [
+                'id' => $snapshot->getId(),
+                'anr' => [
+                    'id' => $snapshot->getAnr()->getId(),
+                ],
+                'comment' => $snapshot->getComment(),
+                'createdAt' => [
+                    'date' => $snapshot->getCreatedAt()->format('Y-m-d H:i:s.u'),
+                ],
+                'creator' => $snapshot->getCreator(),
+            ];
+        }
 
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-        /** @var SnapshotTable $snapshotTable */
-        $snapshotTable = $this->get('table');
+        return $snapshotsList;
+    }
 
-        // TODO: Refactor this service and AnrService to be able to pass snapshot data in the constructor.
+    public function create(Anr $anr, array $data): Snapshot
+    {
+        $newAnr = $this->anrService->duplicateAnr($anr, [], true);
+        /*
+         * Snapshots should not be visible on global dashboard
+         * and stats not send to the StatsService (but snapshots are ignored anyway).
+         */
+        $newAnr->setIsVisibleOnDashboard(0)->setIsStatsCollected(0);
+        $this->anrTable->save($newAnr, false);
+
         $snapshot = (new Snapshot())
             ->setAnr($newAnr)
-            ->setAnrReference($data['anr'] instanceof Anr ? $data['anr'] : $anrTable->findById($data['anr']))
-            ->setCreator($newAnr->getCreator())
+            ->setAnrReference($anr)
+            ->setCreator($this->connectedUser->getFirstname() . ' ' . $this->connectedUser->getLastname())
             ->setComment($data['comment']);
 
-        $snapshotTable->saveEntity($snapshot);
+        $this->snapshotTable->save($snapshot);
 
-        // Snapshots should not be visible on global dashboard
-        // and stats not send to the StatsService (but snapshots are ignored anyway).
-        $newAnr->setIsVisibleOnDashboard(0)
-            ->setIsStatsCollected(0);
-
-        $anrTable->saveEntity($newAnr);
-
-        return $snapshot->getId();
+        return $snapshot;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
+    public function delete(Anr $anr, int $id): void
     {
-        foreach ($data as $key => $value) {
-            if ($key !== 'comment') {
-                unset($data[$key]);
-            }
-        }
-        return parent::patch($id, $data);
+        /** @var Snapshot $snapshot */
+        $snapshot = $this->snapshotTable->findByIdAndAnr($id, $anr);
+
+        $this->snapshotTable->remove($snapshot);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
+    public function restore(Anr $anrReference, int $snapshotId): Anr
     {
-        return $this->patch($id, $data);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function delete($id)
-    {
-        /** @var SnapshotTable $snapshotTable */
-        $snapshotTable = $this->get('table');
-        $snapshot = $snapshotTable->getEntity($id);
-
-        /** @var AnrService $anrService */
-        $anrService = $this->get('anrService');
-
-        return $anrService->delete($snapshot->anr->id);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function deleteInstanceRisk($id, $anrId = null)
-    {
-        // Ensure user is allowed to perform this action
-        if ($anrId !== null) {
-            $entity = $this->get('table')->getEntity($id);
-            if ($entity->anrReference->id !== $anrId) {
-                throw new Exception('Anr id error', 412);
-            }
-
-            /** @var User $connectedUser */
-            $connectedUser = $this->get('table')->getConnectedUser();
-
-            /** @var UserAnrTable $userAnrTable */
-            $userAnrTable = $this->get('userAnrTable');
-            $rights = $userAnrTable->getEntityByFields(['user' => $connectedUser->getId(), 'anr' => $anrId]);
-            $rwd = 0;
-            foreach ($rights as $right) {
-                if ($right->rwd == 1) {
-                    $rwd = 1;
-                }
-            }
-
-            if (!$rwd) {
-                throw new Exception('You are not authorized to do this action', 412);
-            }
+        /** @var Snapshot $snapshot */
+        $snapshot = $this->snapshotTable->findById($snapshotId);
+        if ($snapshot->getAnrReference()->getId() !== $anrReference->getId()) {
+            throw new Exception('The analysis associated with the snapshot matches the requested one.', 412);
         }
 
-        return $this->delete($id);
-    }
+        /* Use the anr from the snapshot as a new one. */
+        $snapshotAnr = $snapshot->getAnr();
 
-    /**
-     * Restores a snapshot into a separate regular Anr.
-     *
-     * @param int $anrId Reference ANR ID
-     * @param int $id Snapshot ID to restore
-     * @return int Newly created ANR ID
-     */
-    public function restore($anrId, $id)
-    {
-        // switch anr and anrReference
-        /** @var SnapshotTable $snapshotTable */
-        $snapshotTable = $this->get('table');
-        /** @var AnrService $anrService */
-        $anrService = $this->get('anrService');
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-
-        $snapshot = $snapshotTable->findById($id);
-        /** @var Anr $anrReference */
-        $anrReference = $snapshot->getAnrReference();
-
-        // duplicate the anr linked to this snapshot
-        $newAnr = $anrService->duplicateAnr($snapshot->getAnr(), MonarcObject::SOURCE_CLIENT, null, [], false, true);
-
-        /** @var Snapshot[] $snapshots */
-        $snapshots = $snapshotTable->getEntityByFields(['anrReference' => $anrId]);
-        //define new reference for all snapshots
-        foreach ($snapshots as $snap) {
-            $snap->setAnrReference($newAnr);
-            $snapshotTable->saveEntity($snap);
+        /* Update the reference for all the other snapshots. */
+        foreach ($anrReference->getReferencedSnapshots() as $referencedSnapshot) {
+            if ($snapshot->getId() !== $referencedSnapshot->getId()) {
+                $this->snapshotTable->save($referencedSnapshot->setAnrReference($snapshotAnr), false);
+            }
+            $anrReference->removeReferencedSnapshot($referencedSnapshot);
         }
 
-        /**
-         * Transmit the to the new anr (restored from snapshot) access and settings from the replaced (old) anr.
-         */
-        /** @var UserAnrTable $userAnrTable */
-        $userAnrTable = $anrService->get('userAnrCliTable');
-        $usersAnrs = $userAnrTable->findByAnrId($anrId);
-
-        foreach ($usersAnrs as $userAnr) {
-            $userAnr->setAnr($newAnr);
-            $userAnrTable->saveEntity($userAnr);
+        /* Move permissions from the old anr to the new one. */
+        foreach ($anrReference->getUsersAnrsPermissions() as $userAnrPermission) {
+            $anrReference->removeUserAnrPermission($userAnrPermission);
+            $this->userAnrTable->save($userAnrPermission->setAnr($snapshotAnr), false);
         }
 
         /*
          * We need to set visibility on global dashboard, set stats sending option,
          * swap the uuid of the old anr, that we are going to drop and restore labels.
          */
-        $newAnr->setIsVisibleOnDashboard((int)$anrReference->isVisibleOnDashboard())
+        $snapshotAnr->setIsVisibleOnDashboard((int)$anrReference->isVisibleOnDashboard())
             ->setIsStatsCollected((int)$anrReference->isStatsCollected())
-            ->setLabel1($anrReference->getLabel1())
-            ->setLabel2($anrReference->getLabel2())
-            ->setLabel3($anrReference->getLabel3())
-            ->setLabel4($anrReference->getLabel4());
+            ->setLabel($anrReference->getLabel());
         $referenceAnrUuid = $anrReference->getUuid();
 
-        $anrTable->deleteEntity($anrReference);
+        $this->userTable->save($this->connectedUser->setCurrentAnr($snapshotAnr), false);
 
-        $anrTable->saveEntity($newAnr->setUuid($referenceAnrUuid));
+        $this->snapshotTable->save($snapshot->setAnr($anrReference), false);
+        $this->anrTable->save($anrReference->generateAndSetUuid());
+        try {
+            $this->anrTable->remove($anrReference, false);
+            $this->snapshotTable->remove($snapshot, false);
+            $this->anrTable->save($snapshotAnr->setUuid($referenceAnrUuid));
+        } catch (\Throwable $e) {
+            $this->snapshotTable->save($snapshot->setAnr($snapshotAnr), false);
+            $this->anrTable->save($anrReference->setUuid($referenceAnrUuid));
+            throw $e;
+        }
 
-        return $newAnr->getId();
+        return $snapshotAnr;
     }
 }

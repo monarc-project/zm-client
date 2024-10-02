@@ -1,42 +1,39 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\FrontOffice\Model\Entity\MonarcObject;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrService;
-use Laminas\View\Model\JsonModel;
 
-/**
- * Api Duplicate Anr Controller
- *
- * Class ApiDuplicateAnrController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiDuplicateAnrController extends \Monarc\Core\Controller\AbstractController
+class ApiDuplicateAnrController extends AbstractRestfulControllerRequestHandler
 {
-    protected $name = 'anrs';
+    use ControllerRequestResponseHandlerTrait;
+
+    private AnrService $anrService;
+
+    public function __construct(AnrService $anrService)
+    {
+        $this->anrService = $anrService;
+    }
 
     /**
-     * @inheritdoc
+     * @param array $data
      */
     public function create($data)
     {
-        /** @var AnrService $service */
-        $service = $this->getService();
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        if (!isset($data['anr'])) {
-            throw new \Monarc\Core\Exception\Exception('Anr missing', 412);
-        }
+        $newAnr = $this->anrService->duplicateAnr($anr, $data);
 
-        $newAnr = $service->duplicateAnr((int)$data['anr'], MonarcObject::SOURCE_CLIENT, null, $data);
-
-        return new JsonModel([
-            'status' => 'ok',
+        return $this->getSuccessfulJsonResponse([
             'id' => $newAnr->getId(),
         ]);
     }

@@ -1,122 +1,84 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\InputFormatter\ObjectCategory\ObjectCategoriesInputFormatter;
+use Monarc\Core\Validator\InputValidator\ObjectCategory\PostObjectCategoryDataInputValidator;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrObjectCategoryService;
-use Laminas\View\Model\JsonModel;
 
-/**
- * Api ANR Objects Categories Controller
- *
- * Class ApiAnrObjectsCategoriesController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAnrObjectsCategoriesController extends ApiAnrAbstractController
+class ApiAnrObjectsCategoriesController extends AbstractRestfulControllerRequestHandler
 {
-    protected $name = 'categories';
-    protected $dependencies = ['parent', 'root', 'anr'];
+    use ControllerRequestResponseHandlerTrait;
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(
+        private AnrObjectCategoryService $anrObjectCategoryService,
+        private ObjectCategoriesInputFormatter $objectCategoriesInputFormatter,
+        private PostObjectCategoryDataInputValidator $postObjectCategoryDataInputValidator
+    ) {
+    }
+
     public function getList()
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        if (empty($order)) {
-            $order = "position";
-        }
-        $filter = $this->params()->fromQuery('filter');
-        $lock = $this->params()->fromQuery('lock') == "false" ? false : true;
+        $formattedParams = $this->getFormattedInputParams($this->objectCategoriesInputFormatter);
+        $this->objectCategoriesInputFormatter->prepareCategoryFilter();
 
-        /** @var AnrObjectCategoryService $service */
-        $service = $this->getService();
-
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $filterAnd = ['anr' => $anrId];
-        $catid = (int)$this->params()->fromQuery('catid');
-        $parentId = (int)$this->params()->fromQuery('parentId');
-        if (!empty($catid)) {
-            $filterAnd['id'] = [
-                'op' => 'NOT IN',
-                'value' => [$catid],
-            ];
-            if ($parentId > 0) {
-                $filterAnd['id']['value'][] = $parentId;
-                $filterAnd['parent'] = $parentId;
-            } else {
-                $filterAnd['parent'] = null;
-            }
-        } elseif ($parentId > 0) {
-            $filterAnd['parent'] = $parentId;
-        } elseif (!$lock) {
-            $filterAnd['parent'] = null;
-        }
-
-        $objectCategories = $service->getListSpecific($page, $limit, $order, $filter, $filterAnd);
-
-        $fields = ['id', 'label1', 'label2', 'label3', 'label4', 'position'];
-
-        if ($parentId > 0 && $lock) {
-            $recursiveArray = $this->getCleanFields($objectCategories, $fields);
-        } else {
-            $recursiveArray = $this->recursiveArray($objectCategories, null, 0, $fields);
-        }
-
-        return new JsonModel([
-            'count' => $this->getService()->getFilteredCount($filter, $filterAnd),
-            $this->name => $recursiveArray
+        return $this->getPreparedJsonResponse([
+            'count' => $this->anrObjectCategoryService->getCount($formattedParams),
+            'categories' => $this->anrObjectCategoryService->getList($formattedParams),
         ]);
     }
 
-    /**
-     * Helper method that cleans up an entity by only keeping the fields that are listed in the $fields parameter
-     * @param array $items The items to filter
-     * @param array $fields The fields to keep
-     * @return array The filtered items
-     */
-    public function getCleanFields($items, $fields)
+    public function get($id)
     {
-        $output = [];
-        foreach ($items as $item) {
-            $item_output = [];
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-            foreach ($item as $key => $value) {
-                if (in_array($key, $fields)) {
-                    $item_output[$key] = $value;
-                }
-            }
-
-            $output[] = $item_output;
-        }
-        return $output;
+        return $this->getPreparedJsonResponse($this->anrObjectCategoryService->getObjectCategoryData($anr, (int)$id));
     }
 
     /**
-     * @inheritdoc
+     * @param array $data
      */
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        $obj = $this->getService()->create($data);
+        $category = $this->anrObjectCategoryService->create($anr, $data);
 
-        return new JsonModel([
-            'status' => 'ok',
-            'categ' => $obj,
-        ]);
+        return $this->getSuccessfulJsonResponse(['categ' => ['id' => $category->getId()]]);
+    }
+
+    /**
+     * @param array $data
+     */
+    public function update($id, $data)
+    {
+        $this->validatePostParams($this->postObjectCategoryDataInputValidator, $data);
+
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->anrObjectCategoryService->update($anr, (int)$id, $data);
+
+        return $this->getSuccessfulJsonResponse();
+    }
+
+    public function delete($id)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->anrObjectCategoryService->delete($anr, (int)$id);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }

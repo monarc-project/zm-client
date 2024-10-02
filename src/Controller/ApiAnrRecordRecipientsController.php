@@ -7,64 +7,49 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Service\AnrRecordRecipientService;
 
-/**
- * Api Anr Record Recipients Controller
- *
- * Class ApiAnrRecordRecipientsController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiAnrRecordRecipientsController extends ApiAnrAbstractController
 {
     protected $name = 'record-recipients';
     protected $dependencies = ['anr'];
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(AnrRecordRecipientService $anrRecordRecipientService)
+    {
+        parent::__construct($anrRecordRecipientService);
+    }
+
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
         $id = $this->getService()->create($data);
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $id,
-        ]);
+        return $this->getSuccessfulJsonResponse(['id' => $id]);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function update($id, $data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
         if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+            throw new Exception('Anr id missing', 412);
         }
         $data['anr'] = $anrId;
 
-        $service = $this->getService()->update($id, $data);
+        $this->getService()->update($id, $data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function patch($id, $data)
     {
         return $this->methodNotAllowed();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function delete($id)
     {
         return $this->methodNotAllowed();

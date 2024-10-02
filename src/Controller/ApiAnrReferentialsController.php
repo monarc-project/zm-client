@@ -1,98 +1,91 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
-
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\InputFormatter\Referential\GetReferentialInputFormatter;
+use Monarc\Core\Validator\InputValidator\Referential\PostReferentialDataInputValidator;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Service\AnrReferentialService;
 
-/**
- * Api Anr Referentials Controller
- *
- * Class ApiAnrReferentialsController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAnrReferentialsController extends ApiAnrAbstractController
+class ApiAnrReferentialsController extends AbstractRestfulControllerRequestHandler
 {
-    protected $name = 'referentials';
-    protected $dependencies = ['anr', 'measures'];
+    use ControllerRequestResponseHandlerTrait;
+
+    public function __construct(
+        private AnrReferentialService $anrReferentialService,
+        private GetReferentialInputFormatter $getReferentialInputFormatter,
+        private PostReferentialDataInputValidator $postReferentialDataInputValidator
+    ) {
+    }
 
     public function getList()
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-        $filterAnd = ['anr' => $anrId];
+        $formatterParams = $this->getFormattedInputParams($this->getReferentialInputFormatter);
 
-        $service = $this->getService();
-
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
-        }
-
-        return new JsonModel(array(
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
-        ));
+        return $this->getPreparedJsonResponse([
+            'referentials' => $this->anrReferentialService->getList($formatterParams),
+        ]);
     }
 
+    /**
+     * @param string $id
+     */
     public function get($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $entity = $this->getService()->getEntity(['anr' => $anrId, 'uuid' => $id]);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \Monarc\Core\Exception\Exception('Anr ids diffence', 412);
-        }
-
-        if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies);
-        }
-
-        return new JsonModel($entity);
+        return $this->getPreparedJsonResponse($this->anrReferentialService->getReferentialData($anr, $id));
     }
 
+    /**
+     * @param array $data
+     */
+    public function create($data)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $this->validatePostParams($this->postReferentialDataInputValidator, $data);
+
+
+        return $this->getSuccessfulJsonResponse([
+            'id' => $this->anrReferentialService->create(
+                $anr,
+                $this->postReferentialDataInputValidator->getValidData()
+            )->getUuid(),
+        ]);
+    }
+
+    /**
+     * @param string $id
+     * @param array $data
+     */
     public function update($id, $data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'uuid' => $data['uuid']];
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $this->validatePostParams($this->postReferentialDataInputValidator, $data);
 
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
+        $this->anrReferentialService->update($anr, $id, $this->postReferentialDataInputValidator->getValidData());
 
-        $this->getService()->update($newId, $data);
-
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
+    /**
+     * @param string $id
+     */
     public function delete($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $newId = ['anr'=> $anrId, 'uuid' => $id];
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        $this->anrReferentialService->delete($anr, $id);
 
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-
-        $this->getService()->delete($newId);
-
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 }

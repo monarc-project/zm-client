@@ -1,90 +1,79 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\AbstractController;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrService;
-use Laminas\View\Model\JsonModel;
+use Monarc\FrontOffice\Validator\InputValidator\Anr\CreateAnrDataInputValidator;
 
-/**
- * Api Anr Controller
- *
- * Class ApiAnrController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAnrController extends AbstractController
+class ApiAnrController extends AbstractRestfulControllerRequestHandler
 {
-    protected $name = 'anrs';
-    protected $dependencies = ['referentials'];
+    use ControllerRequestResponseHandlerTrait;
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(
+        private CreateAnrDataInputValidator $createAnrDataInputValidator,
+        private AnrService $anrService
+    ) {
+    }
+
     public function getList()
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
+        $result = $this->anrService->getList();
 
-        /** @var AnrService $service */
-        $service = $this->getService();
-        $entities = $service->getList($page, $limit, $order, $filter);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
-        }
-
-        return new JsonModel([
-            'count' => count($entities),
-            $this->name => $entities
+        return $this->getPreparedJsonResponse([
+            'count' => \count($result),
+            'anrs' => $result,
         ]);
     }
 
+    public function get($id)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        return $this->getSuccessfulJsonResponse($this->anrService->getAnrData($anr));
+    }
+
     /**
-     * @inheritdoc
+     * @param array $data
      */
     public function create($data)
     {
-        /** @var AnrService $service */
-        $service = $this->getService();
+        $this->validatePostParams($this->createAnrDataInputValidator, $data);
 
-        if (!isset($data['model'])) {
-            throw new \Monarc\Core\Exception\Exception('Model missing', 412);
-        }
+        $anr = $this->anrService->createBasedOnModel($this->createAnrDataInputValidator->getValidData());
 
-        $newAnr = $service->createFromModelToClient($data);
-
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $newAnr->getId(),
-        ]);
+        return $this->getSuccessfulJsonResponse(['id' => $anr->getId()]);
     }
 
     /**
-     * @inheritdoc
+     * @param int $id
+     * @param array $data
      */
     public function patch($id, $data)
     {
-        /** @var AnrService $service */
-        $service = $this->getService();
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        if (isset($data['referentials'])) {
-            $service->updateReferentials($data);
-            unset($data['referentials']);
-        }
+        $this->anrService->patch($anr, $data);
 
-        $service->patch($id, $data);
+        return $this->getSuccessfulJsonResponse(['id' => $id]);
+    }
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $id,
-        ]);
+    public function delete(mixed $id)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->anrService->delete($anr);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }

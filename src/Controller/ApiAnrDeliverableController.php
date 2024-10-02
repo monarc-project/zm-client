@@ -1,98 +1,63 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
+use Laminas\Diactoros\Response;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\DeliverableGenerationService;
-use Laminas\Mvc\Controller\AbstractRestfulController;
-use Laminas\View\Model\JsonModel;
+use function strlen;
 
-/**
- * Api Anr Deliverable Controller
- *
- * Class ApiAnrDeliverableController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAnrDeliverableController extends AbstractRestfulController
+class ApiAnrDeliverableController extends AbstractRestfulControllerRequestHandler
 {
-    /** @var DeliverableGenerationService */
-    private $deliverableGenerationService;
+    use ControllerRequestResponseHandlerTrait;
 
-    public function __construct(DeliverableGenerationService $deliverableGenerationService)
+    public function __construct(private DeliverableGenerationService $deliverableGenerationService)
     {
-        $this->deliverableGenerationService = $deliverableGenerationService;
     }
 
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $data['anr'] = $anrId;
-
-        $typeDoc = $data['typedoc'];
+        $typeDoc = (int)$data['typedoc'];
         if (empty($typeDoc)) {
             throw new Exception('Document type missing', 412);
         }
 
-        $params = [
-            'txt' => [
-                'VERSION' => htmlspecialchars($data['version']),
-                'STATE' => $data['status'] == 0 ? 'Draft' : 'Final',
-                'CLASSIFICATION' => htmlspecialchars($data['classification']),
-                'COMPANY' => htmlspecialchars($this->deliverableGenerationService->getCompanyName()),
-                'DOCUMENT' => htmlspecialchars($data['docname']),
-                'DATE' => date('d/m/Y'),
-                'CLIENT' => htmlspecialchars($data['managers']),
-                'SMILE' => htmlspecialchars($data['consultants']),
-                'SUMMARY_EVAL_RISK' => $data['summaryEvalRisk'] ?? '',
-            ],
-        ];
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        // Generate the DOCX file
-        $filePath = $this->deliverableGenerationService
-            ->generateDeliverableWithValues($anrId, $typeDoc, $params, $data);
-
-        if (file_exists($filePath)) {
-            $response = $this->getResponse();
-            $response->setContent(file_get_contents($filePath));
-
-            unlink($filePath);
-
-            $headers = $response->getHeaders();
-            $headers->clearHeaders()
-                ->addHeaderLine('Content-Type', 'text/plain; charset=utf-8')
-                ->addHeaderLine('Content-Disposition', 'attachment; filename="deliverable.docx"');
-
-            return $this->response;
+        $filePath = $this->deliverableGenerationService->generateDeliverableWithValues($anr, $typeDoc, $data);
+        if (!file_exists($filePath)) {
+            throw new Exception('Generated file is not found: ' . $filePath);
         }
 
-        throw new Exception('Generated file not found: ' . $filePath);
+        $reportContent = file_get_contents($filePath);
+        $stream = fopen('php://memory', 'rb+');
+        fwrite($stream, $reportContent);
+        rewind($stream);
+        unlink($filePath);
+
+        return new Response($stream, 200, [
+            'Content-Type' => 'text/plain; charset=utf-8',
+            'Content-Length' => strlen($reportContent),
+            'Content-Disposition' => 'attachment; filename="deliverable.docx"',
+        ]);
     }
 
     public function get($id)
     {
-        return new JsonModel([
-            'delivery' => $this->deliverableGenerationService->getLastDeliveries(
-                (int)$this->params()->fromRoute('anrid'),
-                $id
-            ),
-        ]);
-    }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-    /**
-     * @inheritdoc
-     */
-    public function getList()
-    {
-        return new JsonModel([
-            'models' => $this->deliverableGenerationService->getDeliveryModels(),
-            'delivery' => $this->deliverableGenerationService->getLastDeliveries(
-                (int)$this->params()->fromRoute('anrid')
-            ),
+        return $this->getPreparedJsonResponse([
+            'delivery' => $this->deliverableGenerationService->getLastDelivery($anr, (int)$id),
         ]);
     }
 }

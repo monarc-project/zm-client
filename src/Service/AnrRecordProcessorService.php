@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\AbstractService;
-use Monarc\FrontOffice\Model\Entity\RecordProcessor;
+use Monarc\FrontOffice\Entity\RecordProcessor;
 
 /**
  * AnrRecord Processor Service
@@ -29,7 +29,7 @@ class AnrRecordProcessorService extends AbstractService
     public function deleteProcessor($id)
     {
         $entity = $this->get('table')->getEntity($id);
-        $anrId = $entity->anr->id;
+        $anrId = $entity->getAnr()->getId();
         $actorsToCheck = array();
         if($entity->dpo) {
             array_push($actorsToCheck, $entity->dpo->id);
@@ -145,7 +145,7 @@ class AnrRecordProcessorService extends AbstractService
     /**
      * Imports a record processor from a data array. This data is generally what has been exported into a file.
      * @param array $data The processor's data fields
-     * @param \Monarc\FrontOffice\Model\Entity\Anr $anr The target ANR id
+     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
     public function importFromArray($data, $anr)
@@ -158,7 +158,7 @@ class AnrRecordProcessorService extends AbstractService
         try {
             $processorEntity = $this->get('table')->getEntityByFields(['label' => $newData['label'], 'anr' => $anr]);
             if (count($processorEntity)) {
-                $id = $processorEntity[0]->get('id');
+                $id = $processorEntity[0]->getId();
             } else {
                 $id = $this->create($newData);
             }

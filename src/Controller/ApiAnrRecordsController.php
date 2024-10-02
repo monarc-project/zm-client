@@ -8,7 +8,11 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Exception\Exception;
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Entity\AbstractEntity;
+use Monarc\FrontOffice\Entity\RecordPersonalData;
+use Monarc\FrontOffice\Entity\RecordProcessor;
+use Monarc\FrontOffice\Service\AnrRecordService;
+use Doctrine\ORM\PersistentCollection;
 
 /**
  * TODO: Refactor me.
@@ -17,17 +21,26 @@ use Laminas\View\Model\JsonModel;
  * TODO: Refactor the controller and related Frontend:
  *  - multiple requests
  *  - call backend only when filed is edited (recipients, processors, etc).
- *
- * Api Anr Records Controller
- *
- * Class ApiAnrRecordsController
- * @package Monarc\FrontOffice\Controller
  */
 class ApiAnrRecordsController extends ApiAnrAbstractController
 {
     protected $name = 'records';
-    protected $dependencies = [ 'anr', 'controller', 'representative', 'dpo', 'jointControllers',
-        'personalData', 'internationalTransfers', 'processors', 'recipients'];
+    protected $dependencies = [
+        'anr',
+        'controller',
+        'representative',
+        'dpo',
+        'jointControllers',
+        'personalData',
+        'internationalTransfers',
+        'processors',
+        'recipients',
+    ];
+
+    public function __construct(AnrRecordService $anrRecordService)
+    {
+        parent::__construct($anrRecordService);
+    }
 
     public function getList()
     {
@@ -44,104 +57,100 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
         $service = $this->getService();
 
         $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
+        foreach ($entities as $key => $entity) {
+            $this->formatDependencies($entities[$key], $this->dependencies);
         }
-        return new JsonModel(array(
+
+        return $this->getPreparedJsonResponse([
             'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
-        ));
+            $this->name => $entities,
+        ]);
     }
 
     public function get($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
         $entity = $this->getService()->getEntity(['id' => $id]);
 
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        if (!$entity['anr'] || $entity['anr']->get('id') !== $anrId) {
-            throw new Exception('Anr ids are different', 412);
-        }
-        if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies);
-        }
-        return new JsonModel($entity);
+        $this->formatDependencies($entity, $this->dependencies);
+
+        return $this->getPreparedJsonResponse($entity);
     }
 
-    public function formatDependencies(&$entity, $dependencies, $EntityDependency = "", $subField = [])
+    public function formatDependencies(&$entity, $dependencies, $entityDependency = "", $subField = [])
     {
-        foreach($dependencies as $dependency) {
+        foreach ($dependencies as $dependency) {
             if (!empty($entity[$dependency])) {
-                if (is_object($entity[$dependency])) {
-                    if (is_a($entity[$dependency], 'Monarc\Core\Model\Entity\AbstractEntity')) {
-                        if(is_a($entity[$dependency], $EntityDependency)){ //fetch more info
+                if (\is_object($entity[$dependency])) {
+                    if ($entity[$dependency] instanceof AbstractEntity) {
+                        if ($entity[$dependency] instanceof $entityDependency) {
                             $entity[$dependency] = $entity[$dependency]->getJsonArray();
-                            if(!empty($subField)){
-                                foreach ($subField as $key => $value){
-                                    $entity[$dependency][$value] = $entity[$dependency][$value] ? $entity[$dependency][$value]->getJsonArray() : [];
-                                    unset($entity[$dependency][$value]['__initializer__']);
-                                    unset($entity[$dependency][$value]['__cloner__']);
-                                    unset($entity[$dependency][$value]['__isInitialized__']);
+                            if (!empty($subField)) {
+                                foreach ($subField as $value) {
+                                    $entity[$dependency][$value] = $entity[$dependency][$value]
+                                        ? $entity[$dependency][$value]->getJsonArray()
+                                        : [];
+                                    unset(
+                                        $entity[$dependency][$value]['__initializer__'],
+                                        $entity[$dependency][$value]['__cloner__'],
+                                        $entity[$dependency][$value]['__isInitialized__']
+                                    );
                                 }
                             }
-                        }else {
+                        } else {
                             $entity[$dependency] = $entity[$dependency]->getJsonArray();
                         }
-                        unset($entity[$dependency]['__initializer__']);
-                        unset($entity[$dependency]['__cloner__']);
-                        unset($entity[$dependency]['__isInitialized__']);
-                    }else if(get_class($entity[$dependency]) == 'Doctrine\ORM\PersistentCollection') {
+                    } elseif ($entity[$dependency] instanceof PersistentCollection) {
                         $entity[$dependency]->initialize();
-                        if($entity[$dependency]->count()){
+                        if ($entity[$dependency]->count()) {
                             $dependencySnapshot = $entity[$dependency]->getSnapshot();
                             $temp = [];
-                            foreach($dependencySnapshot as $d){
-                                if(is_a($d, 'Monarc\FrontOffice\Model\Entity\RecordProcessor')) { //fetch more info
+                            foreach ($dependencySnapshot as $d) {
+                                if ($d instanceof RecordProcessor) {
                                     $d = $d->getJsonArray();
-                                    if($d['representative']){
+                                    if ($d['representative']) {
                                         $d['representative'] = $d['representative']->getJsonArray();
                                     }
-                                    if($d['dpo']){
+                                    if ($d['dpo']) {
                                         $d['dpo'] = $d['dpo']->getJsonArray();
                                     }
                                     $temp[] = $d;
-                                }
-                                else if(is_a($d, 'Monarc\FrontOffice\Model\Entity\RecordPersonalData')) { //fetch more info
+                                } elseif ($d instanceof RecordPersonalData) {
                                     $d = $d->getJsonArray();
                                     $d['dataCategories']->initialize();
-                                    if($d['dataCategories']->count()){
+                                    if ($d['dataCategories']->count()) {
                                         $dataCategories = $d['dataCategories']->getSnapshot();
                                         $d['dataCategories'] = [];
-                                        foreach($dataCategories as $dc){
+                                        foreach ($dataCategories as $dc) {
                                             $tempDataCategory = $dc->toArray();
                                             $d['dataCategories'][] = $tempDataCategory;
                                         }
                                     }
-                                    if($d['record']){
+                                    if ($d['record']) {
                                         $d['record'] = $d['record']->getJsonArray();
                                     }
 
                                     $temp[] = $d;
-                                }
-                                else if(is_a($d, 'Monarc\Core\Model\Entity\AbstractEntity')){
-                                    $temp[] = $d->getJsonArray();
-                                }else{
-                                    $temp[] = $d;
+                                } else {
+                                    if ($d instanceof AbstractEntity) {
+                                        $temp[] = $d->getJsonArray();
+                                    } else {
+                                        $temp[] = $d;
+                                    }
                                 }
                             }
                             $entity[$dependency] = $temp;
                         }
-                    }else if (is_array($entity[$dependency])) {
-                        foreach($entity[$dependency] as $key => $value) {
-                            if (is_a($entity[$dependency][$key], 'Monarc\Core\Model\Entity\AbstractEntity')) {
-                                $entity[$dependency][$key] = $entity[$dependency][$key]->getJsonArray();
-                                unset($entity[$dependency][$key]['__initializer__']);
-                                unset($entity[$dependency][$key]['__cloner__']);
-                                unset($entity[$dependency][$key]['__isInitialized__']);
+                    } else {
+                        if (\is_array($entity[$dependency])) {
+                            foreach ($entity[$dependency] as $key => $value) {
+                                if ($entity[$dependency][$key] instanceof AbstractEntity) {
+                                    $entity[$dependency][$key] = $entity[$dependency][$key]->getJsonArray();
+                                    unset(
+                                        $entity[$dependency][$key]['__initializer__'],
+                                        $entity[$dependency][$key]['__cloner__'],
+                                        $entity[$dependency][$key]['__isInitialized__']
+                                    );
+                                }
                             }
                         }
                     }
@@ -160,26 +169,16 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
 
         $this->getService()->updateRecord($id, $data);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
     public function delete($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-
         $this->getService()->deleteRecord($id);
 
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function create($data)
     {
         $anrId = (int)$this->params()->fromRoute('anrid');
@@ -190,9 +189,6 @@ class ApiAnrRecordsController extends ApiAnrAbstractController
 
         $id = $this->getService()->create($data);
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $id,
-        ]);
+        return $this->getSuccessfulJsonResponse(['id' => $id]);
     }
 }

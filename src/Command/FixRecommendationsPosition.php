@@ -2,8 +2,8 @@
 
 namespace Monarc\FrontOffice\Command;
 
-use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\RecommandationTable;
+use Monarc\FrontOffice\Table\AnrTable;
+use Monarc\FrontOffice\Table\RecommendationTable;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,10 +16,10 @@ class FixRecommendationsPosition extends Command
     /** @var AnrTable */
     private $anrTable;
 
-    /** @var RecommandationTable */
+    /** @var RecommendationTable */
     private $recommendationTable;
 
-    public function __construct(AnrTable $anrTable, RecommandationTable $recommendationTable)
+    public function __construct(AnrTable $anrTable, RecommendationTable $recommendationTable)
     {
         $this->anrTable = $anrTable;
         $this->recommendationTable = $recommendationTable;
@@ -43,17 +43,17 @@ class FixRecommendationsPosition extends Command
             $recommendationsWithEmptyPosition = $this->recommendationTable->findByAnrWithEmptyPosition($anr);
             $updatedCount[$anr->getId()] = 0;
             if (!empty($recommendationsWithEmptyPosition)) {
-                $maxPosition = $this->recommendationTable->getMaxPositionByAnr($anr);
+                $maxPosition = $this->recommendationTable->findMaxPosition(['anr' => $anr]);
                 foreach ($recommendationsWithEmptyPosition as $recommendationWithEmptyPosition) {
                     $recommendationWithEmptyPosition->setPosition(++$maxPosition);
 
-                    $this->recommendationTable->saveEntity($recommendationWithEmptyPosition);
+                    $this->recommendationTable->save($recommendationWithEmptyPosition);
                     $updatedCount[$anr->getId()]++;
                 }
             }
         }
 
-        $this->recommendationTable->getDb()->flush();
+        $this->recommendationTable->flush();
 
         foreach ($updatedCount as $anrId => $count) {
             $output->writeln(['Anr ID: ' . $anrId . ', updated: ' . $count]);

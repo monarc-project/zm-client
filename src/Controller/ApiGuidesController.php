@@ -8,16 +8,16 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\AbstractController;
+use Monarc\Core\Service\GuideService;
 
-/**
- * Api Guides Controller
- *
- * Class ApiGuidesController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiGuidesController extends AbstractController
 {
     protected $name = 'guides';
 
     protected $dependencies = ['anr'];
+
+    public function __construct(GuideService $guideService)
+    {
+        parent::__construct($guideService);
+    }
 }

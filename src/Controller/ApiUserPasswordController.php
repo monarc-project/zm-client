@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -12,20 +12,10 @@ use Monarc\Core\Service\PasswordService;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 
-/**
- * Api User Password Controller
- *
- * Class ApiUserPasswordController
- * @package Monarc\FrontOffice\Controller
- */
 class ApiUserPasswordController extends AbstractRestfulController
 {
-    /** @var PasswordService */
-    private $passwordService;
-
-    public function __construct(PasswordService $passwordService)
+    public function __construct(private PasswordService $passwordService)
     {
-        $this->passwordService = $passwordService;
     }
 
     public function update($id, $data)
@@ -34,7 +24,7 @@ class ApiUserPasswordController extends AbstractRestfulController
             throw new Exception('Password must be the same', 422);
         }
 
-        $this->passwordService->changePassword($id, $data['old'], $data['new']);
+        $this->passwordService->changePassword((int)$id, $data['old'], $data['new']);
 
         return new JsonModel(['status' => 'ok']);
     }

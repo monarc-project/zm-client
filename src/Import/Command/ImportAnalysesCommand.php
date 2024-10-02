@@ -7,11 +7,11 @@
 
 namespace Monarc\FrontOffice\Import\Command;
 
-use Monarc\Core\Model\Entity\AnrSuperClass;
+use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Import\Service\InstanceImportService;
-use Monarc\FrontOffice\Model\Entity\CronTask;
-use Monarc\FrontOffice\Model\Table\AnrTable;
+use Monarc\FrontOffice\Entity\CronTask;
+use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Service\SnapshotService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -47,7 +47,6 @@ class ImportAnalysesCommand extends Command
 
         parent::__construct();
     }
-
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -85,14 +84,12 @@ class ImportAnalysesCommand extends Command
                 $password = base64_decode($params['password']);
             }
 
-            $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_UNDER_IMPORT));
+            $this->anrTable->save($anr->setStatus(AnrSuperClass::STATUS_UNDER_IMPORT));
             $ids = [];
             $errors = [];
             try {
                 /* Create a Snapshot as a backup. */
-                if (!empty($params['createSnapshot'])) {
-                    $this->snapshotService->create(['anr' => $anr, 'comment' => 'Import Backup #' . time()]);
-                }
+                $this->snapshotService->create($anr, ['comment' => 'Import Backup #' . time()]);
                 [$ids, $errors] = $this->instanceImportService->importFromFile($anrId, [
                     'file' => [[
                         'tmp_name' => $params['fileNameWithPath'],
@@ -102,7 +99,6 @@ class ImportAnalysesCommand extends Command
                     'mode' => $params['mode'] ?? null,
                     'idparent' => $params['idparent'] ?? null,
                 ]);
-                $this->instanceImportService->cleanCache();
             } catch (\Throwable $e) {
                 $errors[] = $e->getMessage();
                 $errors[] = 'Error Trace:';
@@ -111,12 +107,12 @@ class ImportAnalysesCommand extends Command
 
             if (!empty($errors)) {
                 $this->cronTaskService->setFailure($cronTask, implode("\n", $errors));
-                $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_IMPORT_ERROR));
+                $this->anrTable->save($anr->setStatus(AnrSuperClass::STATUS_IMPORT_ERROR));
 
                 return 1;
             }
 
-            $this->anrTable->saveEntity($anr->setStatus(AnrSuperClass::STATUS_ACTIVE));
+            $this->anrTable->save($anr->setStatus(AnrSuperClass::STATUS_ACTIVE));
             $this->cronTaskService->setSuccessful(
                 $cronTask,
                 'The Analysis was successfully imported with anr ID ' . $anrId

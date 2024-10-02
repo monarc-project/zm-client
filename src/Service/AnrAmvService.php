@@ -1,313 +1,432 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
 use Doctrine\ORM\EntityNotFoundException;
-use Doctrine\ORM\ORMException;
-use Monarc\Core\Model\Entity\AmvSuperClass;
-use Monarc\Core\Model\Entity\InstanceRiskSuperClass;
-use Monarc\Core\Service\AmvService;
-use Monarc\FrontOffice\Model\Entity\Amv;
-use Monarc\FrontOffice\Model\Entity\InstanceRisk;
-use Monarc\FrontOffice\Model\Table\AmvTable;
-use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\InstanceRiskTable;
-use Monarc\FrontOffice\Model\Table\InstanceTable;
-use Monarc\FrontOffice\Model\Table\MeasureTable;
-use Monarc\FrontOffice\Model\Table\MonarcObjectTable;
-use Monarc\FrontOffice\Model\Table\ThreatTable;
-use Monarc\FrontOffice\Model\Table\VulnerabilityTable;
-use Ramsey\Uuid\Uuid;
+use Monarc\Core\Exception\Exception;
+use Monarc\Core\InputFormatter\FormattedInputParams;
+use Monarc\Core\Entity\AmvSuperClass;
+use Monarc\Core\Entity\InstanceRiskSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Service\Interfaces\PositionUpdatableServiceInterface;
+use Monarc\Core\Service\Traits\PositionUpdateTrait;
+use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Table;
 
-/**
- * This class is the service that handles AMV links in use within an ANR.
- * @see \Monarc\FrontOffice\Model\Entity\Amv
- * @see \Monarc\FrontOffice\Model\Table\AmvTable
- * @package Monarc\FrontOffice\Service
- */
-class AnrAmvService extends AmvService
+class AnrAmvService implements PositionUpdatableServiceInterface
 {
-    protected $userAnrTable;
-    protected $MonarcObjectTable;
-    protected $instanceRiskTable;
-    protected $measureTable;
-    protected $referentialTable;
-    protected $amvTable;
-    protected $filterColumns = ['status'];
-    protected $dependencies = ['anr', 'asset', 'threat', 'vulnerability'];
+    use PositionUpdateTrait;
 
-    /**
-     * @inheritdoc
-     */
-    public function getList(
-        $page = 1,
-        $limit = 25,
-        $order = null,
-        $filter = null,
-        $filterAnd = null,
-        $filterJoin = null
+    private UserSuperClass $connectedUser;
+
+    public function __construct(
+        private Table\AmvTable $amvTable,
+        private Table\AssetTable $assetTable,
+        private Table\ThreatTable $threatTable,
+        private Table\ThemeTable $themeTable,
+        private Table\VulnerabilityTable $vulnerabilityTable,
+        private Table\InstanceRiskTable $instanceRiskTable,
+        private Table\MeasureTable $measureTable,
+        private Table\ReferentialTable $referentialTable,
+        private AnrAssetService $anrAssetService,
+        private AnrThreatService $anrThreatService,
+        private AnrVulnerabilityService $anrVulnerabilityService,
+        private AnrInstanceRiskService $anrInstanceRiskService,
+        ConnectedUserService $connectedUserService
     ) {
-        [$filterJoin, $filterLeft, $filtersCol] = $this->get('entity')->getFiltersForService();
-
-        return $this->get('table')->fetchAllFiltered(
-            array_keys($this->get('entity')->getJsonArray()),
-            $page,
-            $limit,
-            $this->parseFrontendOrder($order),
-            $this->parseFrontendFilter($filter, $filtersCol),
-            $filterAnd,
-            $filterJoin,
-            $filterLeft
-        );
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getFilteredCount($filter = null, $filterAnd = null)
+    public function getList(FormattedInputParams $params): array
     {
-        [$filterJoin, $filterLeft, $filtersCol] = $this->get('entity')->getFiltersForService();
+        $result = [];
+        /** @var Entity\Amv $amv */
+        foreach ($this->amvTable->findByParams($params) as $amv) {
+            $result[] = $this->prepareAmvDataResult($amv);
+        }
 
-        return $this->get('table')->countFiltered(
-            $this->parseFrontendFilter($filter, $filtersCol),
-            $filterAnd,
-            $filterJoin,
-            $filterLeft
-        );
+        return $result;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
+    public function getCount($params): int
     {
-        /** @var AmvTable $amvTable */
-        $amvTable = $this->get('table');
-        /** @var Amv $amv */
-        $amv = $amvTable->findByUuidAndAnrId($id['uuid'], (int)$id['anr']);
+        return $this->amvTable->countByParams($params);
+    }
 
-        $linkedMeasuresUuids = array_column($data['measures'], 'uuid');
+    public function getAmvData(Entity\Anr $anr, string $uuid): array
+    {
+        /** @var Entity\Amv $amv */
+        $amv = $this->amvTable->findByUuidAndAnr($uuid, $anr);
+
+        return $this->prepareAmvDataResult($amv, true);
+    }
+
+    public function create(Entity\Anr $anr, array $data, bool $saveInDb = true): Entity\Amv
+    {
+        if ($this->amvTable
+            ->findByAmvItemsUuidsAndAnr($data['asset'], $data['threat'], $data['vulnerability'], $anr) !== null
+        ) {
+            throw new Exception('The informational risk already exists.', 412);
+        }
+
+        /** @var Entity\Asset $asset */
+        $asset = $this->assetTable->findByUuidAndAnr($data['asset'], $anr);
+        /** @var Entity\Threat $threat */
+        $threat = $this->threatTable->findByUuidAndAnr($data['threat'], $anr);
+        /** @var Entity\Vulnerability $vulnerability */
+        $vulnerability = $this->vulnerabilityTable->findByUuidAndAnr($data['vulnerability'], $anr);
+
+        return $this->createAmvFromPreparedData($anr, $asset, $threat, $vulnerability, $data, $saveInDb);
+    }
+
+    public function createAmvFromPreparedData(
+        Entity\Anr $anr,
+        Entity\Asset $asset,
+        Entity\Threat $threat,
+        Entity\Vulnerability $vulnerability,
+        array $data,
+        bool $saveInDb = true,
+        bool $createInstanceRisksForInstances = true
+    ): Entity\Amv {
+        $amv = (new Entity\Amv())
+            ->setAnr($anr)
+            ->setAsset($asset)
+            ->setThreat($threat)
+            ->setVulnerability($vulnerability)
+            ->setCreator($this->connectedUser->getEmail());
+        if (isset($data['uuid'])) {
+            $amv->setUuid($data['uuid']);
+        }
+        if (isset($data['status'])) {
+            $amv->setStatus($data['status']);
+        }
+
+        foreach ($data['measures'] ?? [] as $measureUuid) {
+            /** @var Entity\Measure $measure */
+            $measure = $this->measureTable->findByUuidAndAnr($measureUuid, $anr);
+            $amv->addMeasure($measure);
+        }
+
+        $this->updatePositions($amv, $this->amvTable, $data);
+
+        if ($createInstanceRisksForInstances) {
+            $this->createInstanceRiskForInstances($asset, $amv);
+        }
+
+        $this->amvTable->save($amv, $saveInDb);
+
+        return $amv;
+    }
+
+    public function update(Entity\Anr $anr, string $uuid, array $data): Entity\Amv
+    {
+        /** @var Entity\Amv $amv */
+        $amv = $this->amvTable->findByUuidAndAnr($uuid, $anr);
+
         foreach ($amv->getMeasures() as $measure) {
-            $linkedMeasuresUuidKey = array_search($measure->getUuid(), $linkedMeasuresUuids, true);
-            if ($linkedMeasuresUuidKey === false) {
+            $linkedMeasuresUuidKey = array_search($measure->getUuid(), $data['measures'], true);
+            if ($linkedMeasuresUuidKey !== false) {
+                unset($data['measures'][$linkedMeasuresUuidKey]);
+            } else {
                 $amv->removeMeasure($measure);
+            }
+        }
+        foreach ($data['measures'] as $measureUuid) {
+            /** @var Entity\Measure $measure */
+            $measure = $this->measureTable->findByUuidAndAnr($measureUuid, $anr);
+            $amv->addMeasure($measure);
+        }
+
+        $amv->setUpdater($this->connectedUser->getEmail());
+
+        $this->updatePositions($amv, $this->amvTable, $data);
+
+        $isThreatChanged = $this->isThreatChanged($data, $amv);
+        if ($isThreatChanged) {
+            /** @var Entity\Threat $threat */
+            $threat = $this->threatTable->findByUuidAndAnr($data['threat'], $anr);
+            $amv->setThreat($threat);
+        }
+
+        $isVulnerabilityChanged = $this->isVulnerabilityChanged($data, $amv);
+        if ($isVulnerabilityChanged) {
+            /** @var Entity\Vulnerability $vulnerability */
+            $vulnerability = $this->vulnerabilityTable->findByUuidAndAnr($data['vulnerability'], $anr);
+            $amv->setVulnerability($vulnerability);
+        }
+        if ($isThreatChanged || $isVulnerabilityChanged) {
+            foreach ($amv->getInstanceRisks() as $instanceRisk) {
+                $instanceRisk->setThreat($amv->getThreat());
+                $instanceRisk->setVulnerability($amv->getVulnerability());
+            }
+        }
+
+        $this->amvTable->save($amv);
+
+        return $amv;
+    }
+
+    public function patch(Entity\Anr $anr, string $uuid, array $data): Entity\Amv
+    {
+        /** @var Entity\Amv $amv */
+        $amv = $this->amvTable->findByUuidAndAnr($uuid, $anr);
+        if (isset($data['status'])) {
+            $amv->setStatus((int)$data['status'])->setUpdater($this->connectedUser->getEmail());
+            $this->amvTable->save($amv);
+        }
+
+        return $amv;
+    }
+
+    /**
+     * Import of instance risks.
+     *
+     * @return string[] Created Amvs' uuids.
+     */
+    public function createAmvItems(Entity\Anr $anr, array $data): array
+    {
+        $createdAmvsUuids = [];
+        foreach ($data as $amvData) {
+            if (!isset($amvData['asset']['uuid'], $amvData['threat']['uuid'], $amvData['vulnerability']['uuid'])
+                || $this->amvTable->findByAmvItemsUuidsAndAnr(
+                    $amvData['asset']['uuid'],
+                    $amvData['threat']['uuid'],
+                    $amvData['vulnerability']['uuid'],
+                    $anr
+                ) !== null
+            ) {
                 continue;
             }
 
-            unset($data['measures'][$linkedMeasuresUuidKey]);
-        }
-        /** @var MeasureTable $measureTable */
-        $measureTable = $this->get('measureTable');
-        foreach ($data['measures'] as $measure) {
-            $amv->addMeasure($measureTable->getEntity($measure));
-        }
+            $asset = $this->getOrCreateAssetObject($anr, $amvData['asset']);
+            $threat = $this->getOrCreateThreatObject($anr, $amvData['threat']);
+            $vulnerability = $this->getOrCreateVulnerabilityObject($anr, $amvData['vulnerability']);
 
-        $amv->setUpdater($this->getConnectedUser()->getFirstname() . ' ' . $this->getConnectedUser()->getLastname());
+            $amv = (new Entity\Amv())
+                ->setAnr($anr)
+                ->setAsset($asset)
+                ->setThreat($threat)
+                ->setVulnerability($vulnerability)
+                ->setCreator($this->connectedUser->getEmail());
 
-        if ($this->isThreatChanged($data, $amv) || $this->isVulnerabilityChanged($data, $amv)) {
-            $newAmv = (new Amv())
-                ->setUuid(Uuid::uuid4())
-                ->setAnr($amv->getAnr())
-                ->setAsset($amv->getAsset())
-                ->setThreat($amv->getThreat())
-                ->setVulnerability($amv->getVulnerability())
-                ->setMeasures($amv->getMeasures())
-                ->setPosition($amv->getPosition())
-                ->setStatus($amv->getStatus())
-                ->setCreator($amv->getUpdater());
+            $this->updatePositions($amv, $this->amvTable);
 
-            if ($this->isThreatChanged($data, $amv)) {
-                /** @var ThreatTable $threatTable */
-                $threatTable = $this->get('threatTable');
-                $threat = $threatTable->findByAnrAndUuid($amv->getAnr(), $data['threat']);
-                $newAmv->setThreat($threat);
-            }
-            if ($this->isVulnerabilityChanged($data, $amv)) {
-                /** @var VulnerabilityTable $vulnerabilityTable */
-                $vulnerabilityTable = $this->get('vulnerabilityTable');
-                $vulnerability = $vulnerabilityTable->findByAnrAndUuid($amv->getAnr(), $data['vulnerability']);
-                $newAmv->setVulnerability($vulnerability);
-            }
+            $this->createInstanceRiskForInstances($asset, $amv);
 
-            /** @var InstanceRisk[] $instancesRisks */
-            /** @var InstanceRiskTable $instanceRiskTable */
-            $instanceRiskTable = $this->get('instanceRiskTable');
-            $instancesRisks = $instanceRiskTable->findByAmv($amv);
-            foreach ($instancesRisks as $instanceRisk) {
-                $instanceRisk->setThreat($newAmv->getThreat());
-                $instanceRisk->setVulnerability($newAmv->getVulnerability());
-                $instanceRisk->setAmv($newAmv);
-            }
+            $this->amvTable->save($amv);
 
-            $amvTable->deleteEntity($amv, false);
-            $amv = $newAmv;
+            $createdAmvsUuids[] = $amv->getUuid();
         }
 
-        $amvTable->saveEntity($amv);
+        return $createdAmvsUuids;
     }
 
     /**
-     * @inheritdoc
+     * Links amv of destination to source depending on the measures_measures (map referential).
      */
-    public function patch($id, $data)
-    {
-        /** @var AmvTable $amvTable */
-        $amvTable = $this->get('table');
-        $amv = $amvTable->findByUuidAndAnrId($id['uuid'], (int)$data['anr']);
-
-        if (isset($data['status'])) {
-            $amv->setStatus((int)$data['status']);
+    public function createLinkedAmvs(
+        Entity\Anr $anr,
+        string $sourceReferentialUuid,
+        string $destinationReferentialUuid
+    ): void {
+        /** @var Entity\Referential $referential */
+        $referential = $this->referentialTable->findByUuidAndAnr($destinationReferentialUuid, $anr);
+        foreach ($referential->getMeasures() as $destinationMeasure) {
+            foreach ($destinationMeasure->getLinkedMeasures() as $measureLink) {
+                if ($measureLink->getReferential()->getUuid() === $sourceReferentialUuid) {
+                    foreach ($measureLink->getAmvs() as $amv) {
+                        $destinationMeasure->addAmv($amv);
+                    }
+                    $this->measureTable->save($destinationMeasure, false);
+                }
+            }
         }
-        $amv->setUpdater($this->getConnectedUser()->getFirstname() . ' ' . $this->getConnectedUser()->getLastname());
-
-        $amvTable->saveEntity($amv);
+        $this->measureTable->flush();
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function create($data, $last = true)
+    public function delete(Entity\Anr $anr, string $uuid): void
     {
-        $class = $this->get('entity');
-        /** @var Amv $amv */
-        $amv = new $class();
-        $amv->setLanguage($this->getLanguage());
-        $amv->setDbAdapter($this->get('table')->getDb());
+        /** @var Entity\Amv $amv */
+        $amv = $this->amvTable->findByUuidAndAnr($uuid, $anr);
+        $this->resetInstanceRisksRelation($amv);
+        $this->amvTable->remove($amv);
+    }
 
-        //manage the measures separately because it's the slave of the relation amv<-->measures
-        if (!empty($data['measures'])) {
-            foreach ($data['measures'] as $measure) {
-                $measureEntity = $this->get('measureTable')->getEntity($measure);
-                $measureEntity->addAmv($amv);
-            }
-            unset($data['measures']);
+    public function deleteList(Entity\Anr $anr, array $data): void
+    {
+        /** @var Entity\Amv $amv */
+        foreach ($this->amvTable->findByUuidsAndAnr($data, $anr) as $amv) {
+            $this->resetInstanceRisksRelation($amv);
+            $this->amvTable->remove($amv);
         }
-        $amv->exchangeArray($data);
-        unset($data['measures']);
-        $dependencies = (property_exists($this, 'dependencies')) ? $this->dependencies : [];
-        $this->setDependencies($amv, $dependencies);
+    }
 
-        $amv->setCreator(
-            $this->getConnectedUser()->getFirstname() . ' ' . $this->getConnectedUser()->getLastname()
-        );
+    private function getOrCreateAssetObject(Entity\Anr $anr, array $assetData): Entity\Asset
+    {
+        if (!empty($assetData['uuid'])) {
+            try {
+                /** @var Entity\Asset $asset */
+                $asset = $this->assetTable->findByUuidAndAnr($assetData['uuid'], $anr);
 
-        /** @var AmvTable $table */
-        $table = $this->get('table');
-        $id = $table->save($amv, $last);
-
-        // Create instances risks
-        /** @var MonarcObjectTable $MonarcObjectTable */
-        $MonarcObjectTable = $this->get('MonarcObjectTable');
-        $objects = $MonarcObjectTable->getEntityByFields([
-            'anr' => $data['anr'],
-            'asset' => [
-                'uuid' => $amv->getAsset()->getUuid(),
-                'anr' => $data['anr']
-            ]
-        ]);
-        foreach ($objects as $object) {
-            /** @var InstanceTable $instanceTable */
-            $instanceTable = $this->get('instanceTable');
-            $instances = $instanceTable->getEntityByFields([
-                'anr' => $data['anr'],
-                'object' => ['anr' => $data['anr'], 'uuid' => $object->getUuid()]
-            ]);
-            $i = 1;
-            $nbInstances = count($instances);
-            foreach ($instances as $instance) {
-                $instanceRisk = new InstanceRisk();
-
-                $instanceRisk->setLanguage($this->getLanguage());
-                $instanceRisk->setDbAdapter($this->get('table')->getDb());
-                $instanceRisk->setAnr($this->get('anrTable')->getEntity($data['anr']));
-                $instanceRisk->setAmv($amv);
-                $instanceRisk->setAsset($amv->getAsset());
-                $instanceRisk->setInstance($instance);
-                $instanceRisk->setThreat($amv->getThreat());
-                $instanceRisk->setVulnerability($amv->getVulnerability());
-
-                $this->get('instanceRiskTable')->save($instanceRisk, ($i == $nbInstances));
-                $i++;
+                return $asset;
+            } catch (EntityNotFoundException $e) {
             }
         }
 
-        return $id;
+        return $this->anrAssetService->create($anr, $assetData, false);
+    }
+
+    private function getOrCreateThreatObject(Entity\Anr $anr, array $threatData): Entity\Threat
+    {
+        if (!empty($threatData['uuid'])) {
+            try {
+                /** @var Entity\Threat $threat */
+                $threat = $this->threatTable->findByUuidAndAnr($threatData['uuid'], $anr);
+
+                return $threat;
+            } catch (EntityNotFoundException $e) {
+            }
+        }
+
+        if (isset($threatData['theme'])) {
+            $threatData['theme'] = $this->themeTable->findById((int)$threatData['theme']);
+        }
+
+        return $this->anrThreatService->create($anr, $threatData, false);
+    }
+
+    private function getOrCreateVulnerabilityObject(Entity\Anr $anr, array $vulnerabilityData): Entity\Vulnerability
+    {
+        if (!empty($vulnerabilityData['uuid'])) {
+            try {
+                /** @var Entity\Vulnerability $vulnerability */
+                $vulnerability = $this->vulnerabilityTable->findByUuidAndAnr($vulnerabilityData['uuid'], $anr);
+
+                return $vulnerability;
+            } catch (EntityNotFoundException $e) {
+            }
+        }
+
+        return $this->anrVulnerabilityService->create($anr, $vulnerabilityData);
     }
 
     /**
-     * @param array $id
-     *
-     * @throws EntityNotFoundException|ORMException
+     * Created instance risks based on the newly created AMV for the instances based on the linked asset.
      */
-    public function delete($id)
+    private function createInstanceRiskForInstances(Entity\Asset $asset, Entity\Amv $amv): void
     {
-        /** @var InstanceRiskTable $instanceRiskTable */
-        $instanceRiskTable = $this->get('instanceRiskTable');
-        /** @var AmvTable $amvTable */
-        $amvTable = $this->get('amvTable');
-
-        $amv = $amvTable->findByUuidAndAnrId($id['uuid'], $id['anr']);
-        $this->resetInstanceRisksRelation($amv, $amvTable, $instanceRiskTable);
-
-        parent::delete($id);
+        foreach ($asset->getInstances() as $instance) {
+            $this->anrInstanceRiskService->createInstanceRisk($instance, $amv);
+        }
     }
 
-    public function deleteListFromAnr($data, $anrId = null)
-    {
-        /** @var AnrTable $anrTable */
-        $anrTable = $this->get('anrTable');
-        if ($anrId !== null) {
-            $anr = $anrTable->findById($anrId);
-
-            $this->validateAnrPermissions($anr, $data);
-        }
-
-        /** @var InstanceRiskTable $instanceRiskTable */
-        $instanceRiskTable = $this->get('instanceRiskTable');
-        /** @var AmvTable $amvTable */
-        $amvTable = $this->get('amvTable');
-
-        foreach ($data as $amvId) {
-            $amv = $amvTable->findByUuidAndAnrId($amvId['uuid'], $amvId['anr']);
-            $this->resetInstanceRisksRelation($amv, $amvTable, $instanceRiskTable);
-        }
-
-        return $this->get('table')->deleteList($data);
-    }
-
-    protected function isThreatChanged(array $data, AmvSuperClass $amv): bool
+    private function isThreatChanged(array $data, AmvSuperClass $amv): bool
     {
         return $amv->getThreat()->getUuid() !== $data['threat'];
     }
 
-    protected function isVulnerabilityChanged(array $data, AmvSuperClass $amv): bool
+    private function isVulnerabilityChanged(array $data, AmvSuperClass $amv): bool
     {
         return $amv->getVulnerability()->getUuid() !== $data['vulnerability'];
     }
 
-    /**
-     * @throws ORMException
-     */
-    private function resetInstanceRisksRelation(
-        Amv $amv,
-        AmvTable $amvTable,
-        InstanceRiskTable $instanceRiskTable
-    ): void {
+    private function resetInstanceRisksRelation(Entity\Amv $amv): void
+    {
         foreach ($amv->getInstanceRisks() as $instanceRisk) {
             $instanceRisk->setAmv(null)
                 ->setSpecific(InstanceRiskSuperClass::TYPE_SPECIFIC)
-                ->setUpdater($amvTable->getConnectedUser()->getEmail());
+                ->setUpdater($this->connectedUser->getEmail());
 
-            $instanceRiskTable->saveEntity($instanceRisk);
+            $this->instanceRiskTable->save($instanceRisk);
 
             // TODO: remove it when double fields relation is removed.
-            $instanceRiskTable->getDb()->getEntityManager()->refresh($instanceRisk);
-            $instanceRiskTable->saveEntity($instanceRisk->setAnr($amv->getAnr()));
+            $this->instanceRiskTable->refresh($instanceRisk);
+            $this->instanceRiskTable->save($instanceRisk->setAnr($amv->getAnr()));
         }
+    }
+
+    private function prepareAmvDataResult(Entity\Amv $amv, bool $includePositionFields = false): array
+    {
+        $measures = [];
+        foreach ($amv->getMeasures() as $measure) {
+            $referential = $measure->getReferential();
+            $measures[] = [
+                'uuid' => $measure->getUuid(),
+                'code' => $measure->getCode(),
+                'label1' => $measure->getLabel(1),
+                'label2' => $measure->getLabel(2),
+                'label3' => $measure->getLabel(3),
+                'label4' => $measure->getLabel(4),
+                'referential' => [
+                    'uuid' => $referential->getUuid(),
+                    'label1' => $referential->getLabel(1),
+                    'label2' => $referential->getLabel(2),
+                    'label3' => $referential->getLabel(3),
+                    'label4' => $referential->getLabel(4),
+                ]
+            ];
+        }
+
+        $result = array_merge([
+            'uuid' => $amv->getUuid(),
+            'measures' => $measures,
+            'status' => $amv->getStatus(),
+            'position' => $amv->getPosition(),
+        ], $this->getAmvRelationsData($amv));
+
+        if ($includePositionFields) {
+            $result['implicitPosition'] = 1;
+            if ($amv->getPosition() > 1) {
+                $maxPositionByAsset = $this->amvTable->findMaxPosition($amv->getImplicitPositionRelationsValues());
+                if ($maxPositionByAsset === $amv->getPosition()) {
+                    $result['implicitPosition'] = 2;
+                } else {
+                    /** @var Entity\Asset $asset */
+                    $asset = $amv->getAsset();
+                    $previousAmv = $this->amvTable->findByAssetAndPosition($asset, $amv->getPosition() - 1);
+                    if ($previousAmv !== null) {
+                        $result['implicitPosition'] = 3;
+                        $result['previous'] = array_merge([
+                            'uuid' => $previousAmv->getUuid(),
+                            'position' => $previousAmv->getPosition(),
+                        ], $this->getAmvRelationsData($previousAmv));
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    private function getAmvRelationsData(Entity\Amv $amv): array
+    {
+        $asset = $amv->getAsset();
+        $threat = $amv->getThreat();
+        $themeData = $threat->getTheme() !== null
+            ? array_merge(['id' => $threat->getTheme()->getId()], $threat->getTheme()->getLabels())
+            : null;
+        $vulnerability = $amv->getVulnerability();
+
+        return [
+            'asset' => array_merge([
+                'uuid' => $asset->getUuid(),
+                'code' => $asset->getCode(),
+            ], $asset->getLabels()),
+            'threat' => array_merge([
+                'uuid' => $threat->getUuid(),
+                'code' => $threat->getCode(),
+                'theme' => $themeData,
+            ], $threat->getLabels()),
+            'vulnerability' => array_merge([
+                'uuid' => $vulnerability->getUuid(),
+                'code' => $vulnerability->getCode(),
+            ], $vulnerability->getLabels()),
+        ];
     }
 }

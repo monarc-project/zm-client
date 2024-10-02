@@ -1,80 +1,26 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\AbstractController;
-use Monarc\Core\Service\ModelService;
-use Laminas\View\Model\JsonModel;
+use Laminas\Mvc\Controller\AbstractRestfulController;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\FrontOffice\Service\AnrModelService;
 
-/**
- * Api Models Controller
- *
- * Class ApiModelsController
- * @package Monarc\Core\Controller
- */
-class ApiModelsController extends AbstractController
+class ApiModelsController extends AbstractRestfulController
 {
-    protected $dependencies = ['anr'];
-    protected $name = 'models';
+    use ControllerRequestResponseHandlerTrait;
 
-    /**
-     * @inheritdoc
-     */
-    public function getList()
+    public function __construct(private AnrModelService $anrModelService)
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-        $isGeneric = $this->params()->fromQuery('isGeneric');
-        $status = (string)$this->params()->fromQuery('status', \Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE);
-
-        $service = $this->getService();
-        switch ($status) {
-            case (string)\Monarc\Core\Model\Entity\AbstractEntity::STATUS_INACTIVE:
-                $filterAnd = ['status' => \Monarc\Core\Model\Entity\AbstractEntity::STATUS_INACTIVE];
-                break;
-            default:
-            case (string)\Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE:
-                $filterAnd = ['status' => \Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE];
-                break;
-            case 'all':
-                $filterAnd = ['status' => ['op' => 'IN', 'value' => [\Monarc\Core\Model\Entity\AbstractEntity::STATUS_INACTIVE, \Monarc\Core\Model\Entity\AbstractEntity::STATUS_ACTIVE]]];
-                break;
-        }
-
-
-        if (!is_null($isGeneric)) {
-            $filterAnd['isGeneric'] = $isGeneric;
-        }
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd, 'FO');
-
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
-        }
-
-        return new JsonModel([
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
-        ]);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function get($id)
+    public function getList()
     {
-        /** @var ModelService $modelService */
-        $modelService = $this->getService();
-        $entity = $modelService->getModelWithAnr($id);
-
-        return new JsonModel($entity);
+        return $this->getPreparedJsonResponse(['models' => $this->anrModelService->getModelsListOfClient()]);
     }
 }

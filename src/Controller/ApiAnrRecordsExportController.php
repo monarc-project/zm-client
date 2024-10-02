@@ -7,121 +7,41 @@
 
 namespace Monarc\FrontOffice\Controller;
 
-/**
- * Api ANR Records Export Controller
- *
- * Class ApiAnrRecordsExportController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAnrRecordsExportController extends ApiAnrAbstractController
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\Exception\Exception;
+use Monarc\FrontOffice\Export\Controller\Traits\ExportResponseControllerTrait;
+use Monarc\FrontOffice\Service\AnrRecordService;
+
+class ApiAnrRecordsExportController extends AbstractRestfulControllerRequestHandler
 {
-    /**
-     * @inheritdoc
-     */
+    use ControllerRequestResponseHandlerTrait;
+    use ExportResponseControllerTrait;
+
+    public function __construct(private AnrRecordService $anrRecordService)
+    {
+    }
+
     public function create($data)
     {
         if (!empty($data['id'])) {
-            $entity = $this->getService()->getEntity($data['id']);
+            $output = $this->anrRecordService->export($data);
+            $filename = empty($data['filename']) ? $data['id'] : $data['filename'];
 
+            return $this->prepareJsonExportResponse($filename, $output, !empty($data['password']));
+        }
+
+        if ($data['export'] === "All") {
             $anrId = (int)$this->params()->fromRoute('anrid');
             if (empty($anrId)) {
-                throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-            }
-
-            if ($entity['anr']->get('id') != $anrId) {
-                throw new \Monarc\Core\Exception\Exception('Anr ids differents', 412);
-            }
-
-            $output = $this->getService()->export($data);
-
-            if (empty($data['password'])) {
-                $contentType = 'application/json; charset=utf-8';
-                $extension = '.json';
-            } else {
-                $contentType = 'text/plain; charset=utf-8';
-                $extension = '.bin';
-            }
-
-            $this->getResponse()
-                 ->getHeaders()
-                 ->clearHeaders()
-                 ->addHeaderLine('Content-Type', $contentType)
-                 ->addHeaderLine('Content-Disposition', 'attachment; filename="' .
-                                  (empty($data['filename']) ? $data['id'] : $data['filename']) . $extension . '"');
-
-            $this->getResponse()
-                 ->setContent($output);
-
-            return $this->getResponse();
-        } elseif ($data['export'] == "All") {
-            if (empty($data['password'])) {
-                $contentType = 'application/json; charset=utf-8';
-                $extension = '.json';
-            } else {
-                $contentType = 'text/plain; charset=utf-8';
-                $extension = '.bin';
-            }
-            $anrId = (int)$this->params()->fromRoute('anrid');
-            if (empty($anrId)) {
-                throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
+                throw new Exception('Anr id missing', 412);
             }
             $data['anr'] = $anrId;
-            $data['filename'] = "records_list";
-            $output = $this->getService()->exportAll($data);
+            $output = $this->anrRecordService->exportAll($data);
 
-            $this->getResponse()
-                 ->getHeaders()
-                 ->clearHeaders()
-                 ->addHeaderLine('Content-Type', $contentType)
-                 ->addHeaderLine('Content-Disposition', 'attachment; filename="' .
-                                  (empty($data['filename']) ? $data['id'] : $data['filename']) . $extension . '"');
-
-            $this->getResponse()
-                 ->setContent($output);
-
-            return $this->getResponse();
-        } else {
-            throw new \Monarc\Core\Exception\Exception('Record to export is required', 412);
+            return $this->prepareJsonExportResponse('records_list', $output, !empty($data['password']));
         }
-    }
 
-    /**
-     * @inheritdoc
-     */
-    public function get($id)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getList()
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function delete($id)
-    {
-        return $this->methodNotAllowed();
+        throw new Exception('Record to export is required', 412);
     }
 }

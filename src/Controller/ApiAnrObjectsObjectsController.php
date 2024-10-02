@@ -1,82 +1,74 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Model\Entity\AbstractEntity;
-use Monarc\Core\Service\ObjectObjectService;
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\Validator\InputValidator\ObjectComposition\CreateDataInputValidator;
+use Monarc\Core\Validator\InputValidator\ObjectComposition\MovePositionDataInputValidator;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Service\AnrObjectObjectService;
 
-/**
- * Api ANR Objects Objects Controller
- *
- * Class ApiAnrObjectsController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAnrObjectsObjectsController extends ApiAnrAbstractController
+class ApiAnrObjectsObjectsController extends AbstractRestfulControllerRequestHandler
 {
-    /**
-     * @inheritdoc
-     */
-    public function update($id, $data)
-    {
-        // This works a little different that regular PUT calls - here we just expect a parameter "move" with the
-        // value "up" or "down" to move the object. We can't edit any other field anyway.
-        if (isset($data['move']) && in_array($data['move'], ['up', 'down'])) {
-            /** @var ObjectObjectService $service */
-            $service = $this->getService();
-            $service->moveObject($id, $data['move']);
-        }
+    use ControllerRequestResponseHandlerTrait;
 
-        return new JsonModel(['status' => 'ok']);
+    public function __construct(
+        private AnrObjectObjectService $anrObjectObjectService,
+        private CreateDataInputValidator $createDataInputValidator,
+        private MovePositionDataInputValidator $movePositionDataInputValidator
+    ) {
     }
 
     /**
-     * @inheritdoc
+     * @param array $data
      */
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-        $data['child'] = ['anr' => $anrId, 'uuid' => $data['child']];
-        $data['father'] = ['anr' => $anrId, 'uuid' => $data['father']];
+        $this->validatePostParams($this->createDataInputValidator, $data);
 
-        $id = $this->getService()->create($data, true, AbstractEntity::FRONT_OFFICE);
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $id,
-        ]);
+        $objectComposition = $this->anrObjectObjectService->create(
+            $anr,
+            $this->createDataInputValidator->getValidData()
+        );
+
+        return $this->getSuccessfulJsonResponse(['id' => $objectComposition->getId()]);
     }
 
     /**
-     * @inheritdoc
+     * @param array $data
      */
-    public function get($id)
+    public function update($id, $data)
     {
-        return $this->methodNotAllowed();
+        $this->validatePostParams($this->movePositionDataInputValidator, $data);
+
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        $this->anrObjectObjectService->shiftPositionInComposition(
+            $anr,
+            (int)$id,
+            $this->movePositionDataInputValidator->getValidData()
+        );
+
+        return $this->getSuccessfulJsonResponse();
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getList()
+    public function delete($id)
     {
-        return $this->methodNotAllowed();
-    }
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
-    {
-        return $this->methodNotAllowed();
+        $this->anrObjectObjectService->delete($anr, (int)$id);
+
+        return $this->getSuccessfulJsonResponse();
     }
 }

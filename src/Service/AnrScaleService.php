@@ -1,69 +1,96 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\Service\ScaleService;
+use Monarc\Core\Entity as CoreEntity;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Table\ModelTable;
+use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Table;
 
-/**
- * This class is the service that handles scales within an ANR. This is a simple CRUD service.
- * Note that the scales are not editable after the ANR has started being evaluated.
- * @see anrCheckStartedService
- * @package Monarc\FrontOffice\Service
- */
-class AnrScaleService extends ScaleService
+class AnrScaleService
 {
-    protected $forbiddenFields = [];
+    private CoreEntity\UserSuperClass $connectedUser;
 
-    /** @var AnrCheckStartedService */
-    protected $anrCheckStartedService;
-
-    public function getList($page = 1, $limit = 25, $order = null, $filter = null, $filterAnd = null)
-    {
-        $scales = parent::getList($page, $limit, $order, $filter, $filterAnd);
-
-        /** @var AnrCheckStartedService $anrCheckStartedService */
-        $anrCheckStartedService = $this->get('anrCheckStartedService');
-
-        // Return both the scales, and also whether or not we can modify them
-        return [$scales, $anrCheckStartedService->canChange($filterAnd['anr'])];
+    public function __construct(
+        private Table\ScaleTable $scaleTable,
+        private Table\InstanceRiskTable $instanceRiskTable,
+        private ModelTable $modelTable,
+        private Table\InstanceConsequenceTable $instanceConsequenceTable,
+        private Table\ThreatTable $threatTable,
+        private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function create($data, $last = true)
+    public function getList(Entity\Anr $anr): array
     {
-        $this->validateScaleEditable($data['anr']);
+        $result = [];
+        $availableTypes = CoreEntity\ScaleSuperClass::getAvailableTypes();
+        /** @var Entity\Scale $scale */
+        foreach ($this->scaleTable->findByAnr($anr) as $scale) {
+            $result[] = [
+                'id' => $scale->getId(),
+                'type' => $availableTypes[$scale->getType()],
+                'min' => $scale->getMin(),
+                'max' => $scale->getMax(),
+            ];
+        }
 
-        return parent::create($data,$last);
+        return $result;
     }
 
-    public function patch($id, $data)
+    public function update(Entity\Anr $anr, int $id, array $data)
     {
-        $this->validateScaleEditable($data['anr']);
+        $this->validateIfScalesAreEditable($anr);
 
-        return parent::patch($id, $data);
-    }
+        /** @var Entity\Scale $scale */
+        $scale = $this->scaleTable->findByIdAndAnr($id, $anr);
 
-    public function update($id, $data)
-    {
-        $this->validateScaleEditable($data['anr']);
+        $scale->setMin((int)$data['min'])
+            ->setMax((int)$data['max'])
+            ->setUpdater($this->connectedUser->getEmail());
 
-        return parent::patch($id, $data);
+        $this->scaleTable->save($scale);
+
+        return $scale;
     }
 
     /**
-     * @throws Exception
+     * Returns whether the ANR sensitive values (scales values) can NOT be changed safely.
+     * It is not possible to change the scales thresholds when:
+     *  - It has been explicitly disabled in the model ANR
+     *  - Risks have been evaluated
+     *  - Consequences have been evaluated
+     *  - Threats have been evaluated
      */
-    private function validateScaleEditable(int $anrId): void
+    public function areScalesNotEditable(Entity\Anr $anr): bool
     {
-        /** @var AnrCheckStartedService $anrCheckStartedService */
-        $anrCheckStartedService = $this->get('anrCheckStartedService');
-        if (!$anrCheckStartedService->canChange($anrId)) {
-            throw new Exception('Scale is not editable', 412);
+        $areScalesUpdatable = true;
+        if ($anr->getModelId() !== null) {
+            /** @var CoreEntity\Model $model */
+            $model = $this->modelTable->findById($anr->getModelId());
+            $areScalesUpdatable = $model->areScalesUpdatable();
+        }
+
+        return !$areScalesUpdatable
+            || $this->instanceRiskTable->isEvaluationStarted($anr)
+            || $this->instanceConsequenceTable->isEvaluationStarted($anr)
+            || $this->threatTable->isEvaluationStarted($anr)
+            || $this->operationalInstanceRiskScaleTable->isEvaluationStarted($anr);
+    }
+
+    public function validateIfScalesAreEditable(Entity\Anr $anr): void
+    {
+        if ($this->areScalesNotEditable($anr)) {
+            throw new Exception('Scales are not editable when the risks evaluation is started.', 412);
         }
     }
 }

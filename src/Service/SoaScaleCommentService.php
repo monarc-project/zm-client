@@ -1,90 +1,107 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2022 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2023 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Doctrine\ORM\EntityNotFoundException;
-use Doctrine\ORM\OptimisticLockException;
-use Doctrine\ORM\ORMException;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\Core\Service\ConfigService;
-use Monarc\Core\Service\SoaScaleCommentService as CoreSoaScaleCommentService;
-use Monarc\Core\Model\Entity\AnrSuperClass;
-use Monarc\Core\Model\Entity\TranslationSuperClass;
-use Monarc\FrontOffice\Model\Entity\SoaScaleComment;
-use Monarc\FrontOffice\Model\Entity\Translation;
-use Monarc\FrontOffice\Model\Table\AnrTable;
-use Monarc\FrontOffice\Model\Table\SoaScaleCommentTable;
-use Monarc\FrontOffice\Model\Table\TranslationTable;
-use Ramsey\Uuid\Uuid;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\SoaScaleComment;
+use Monarc\FrontOffice\Table\SoaScaleCommentTable;
 
-class SoaScaleCommentService extends CoreSoaScaleCommentService
+class SoaScaleCommentService
 {
-    public function __construct(
-        AnrTable $anrTable,
-        ConnectedUserService $connectedUserService,
-        SoaScaleCommentTable $soaScaleCommentTable,
-        TranslationTable $translationTable,
-        ConfigService $configService
-    ) {
-        $this->anrTable = $anrTable;
-        $this->connectedUser = $connectedUserService->getConnectedUser();
+    private SoaScaleCommentTable $soaScaleCommentTable;
+
+    private UserSuperClass $connectedUser;
+
+    public function __construct(SoaScaleCommentTable $soaScaleCommentTable, ConnectedUserService $connectedUserService)
+    {
         $this->soaScaleCommentTable = $soaScaleCommentTable;
-        $this->translationTable = $translationTable;
-        $this->configService = $configService;
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    protected function createSoaScaleComment(
-        AnrSuperClass $anr,
-        int $scaleIndex,
-        array $languageCodes,
-        bool $isFlushable = false
-    ): void {
-        $scaleComment = (new soaScaleComment())
-            ->setAnr($anr)
-            ->setScaleIndex($scaleIndex)
-            ->setColour('')
-            ->setIsHidden(false)
-            ->setCommentTranslationKey((string)Uuid::uuid4())
-            ->setCreator($this->connectedUser->getEmail());
-
-        $this->soaScaleCommentTable->save($scaleComment, false);
-
-        foreach ($languageCodes as $languageCode) {
-            // Create a translation for the scaleComment (init with blank value).
-            $translation = $this->createTranslationObject(
-                $anr,
-                Translation::SOA_SCALE_COMMENT,
-                $scaleComment->getCommentTranslationKey(),
-                $languageCode,
-                ''
-            );
-
-            $this->translationTable->save($translation, false);
+    public function getSoaScaleCommentsData(Anr $anr): array
+    {
+        $result = [];
+        /** @var SoaScaleComment[] $soaScaleComments */
+        $soaScaleComments = $this->soaScaleCommentTable->findByAnrOrderByIndex($anr);
+        foreach ($soaScaleComments as $soaScaleComment) {
+            $result[] = $this->getPreparedSoaScaleCommentData($soaScaleComment);
         }
 
-        if ($isFlushable) {
+        return $result;
+    }
+
+    public function getPreparedSoaScaleCommentData(SoaScaleComment $soaScaleComment): array
+    {
+        return [
+            'id' => $soaScaleComment->getId(),
+            'scaleIndex' => $soaScaleComment->getScaleIndex(),
+            'colour' => $soaScaleComment->getColour(),
+            'comment' => $soaScaleComment->getComment(),
+            'isHidden' => $soaScaleComment->isHidden(),
+        ];
+    }
+
+    public function createOrHideSoaScaleComments(Anr $anr, array $data): void
+    {
+        $soaScaleComments = $this->soaScaleCommentTable->findByAnrOrderByIndex($anr);
+
+        if (isset($data['numberOfLevels'])) {
+            $levelsNumber = (int)$data['numberOfLevels'];
+            foreach ($soaScaleComments as $soaScaleComment) {
+                $soaScaleComment
+                    ->setIsHidden($soaScaleComment->getScaleIndex() >= $levelsNumber)
+                    ->setUpdater($this->connectedUser->getEmail());
+                $this->soaScaleCommentTable->save($soaScaleComment, false);
+            }
+            $numberOfCurrentComments = \count($soaScaleComments);
+            if ($levelsNumber > $numberOfCurrentComments) {
+                for ($i = $numberOfCurrentComments; $i < $levelsNumber; $i++) {
+                    $this->createSoaScaleComment($anr, $i);
+                }
+            }
+
             $this->soaScaleCommentTable->flush();
         }
     }
 
-    protected function createTranslationObject(
-        AnrSuperClass $anr,
-        string $type,
-        string $key,
-        string $lang,
-        string $value
-    ): TranslationSuperClass {
-        return (new Translation())
+    public function update(Anr $anr, int $id, array $data): void
+    {
+        /** @var SoaScaleComment $soaScaleComment */
+        $soaScaleComment = $this->soaScaleCommentTable->findByIdAndAnr($id, $anr);
+
+        if (isset($data['comment'])) {
+            $soaScaleComment->setComment($data['comment']);
+        }
+        if (!empty($data['colour'])) {
+            $soaScaleComment->setColour($data['colour']);
+        }
+
+        $this->soaScaleCommentTable->save($soaScaleComment->setUpdater($this->connectedUser->getEmail()));
+    }
+
+    public function createSoaScaleComment(
+        Anr $anr,
+        int $scaleIndex,
+        string $colour = '',
+        string $comment = '',
+        bool $isHidden = false
+    ): SoaScaleComment {
+        $soaScaleComment = (new SoaScaleComment())
             ->setAnr($anr)
-            ->setType($type)
-            ->setKey($key)
-            ->setLang($lang)
-            ->setValue($value)
+            ->setScaleIndex($scaleIndex)
+            ->setColour($colour)
+            ->setComment($comment)
+            ->setIsHidden($isHidden)
             ->setCreator($this->connectedUser->getEmail());
+        $this->soaScaleCommentTable->save($soaScaleComment, false);
+
+        return $soaScaleComment;
     }
 }

@@ -58,7 +58,7 @@ class AnrRecordRecipientService extends AbstractService
     /**
      * Imports a record recipient from a data array. This data is generally what has been exported into a file.
      * @param array $data The record recipient's data fields
-     * @param \Monarc\FrontOffice\Model\Entity\Anr $anr The target ANR id
+     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
     public function importFromArray($data, $anr)
@@ -76,7 +76,7 @@ class AnrRecordRecipientService extends AbstractService
                 'anr' => $anr
             ]);
             if (count($recipientEntity)) {
-                $id = $recipientEntity[0]->get('id');
+                $id = $recipientEntity[0]->getId();
             } else {
                 $id = $this->create($data);
             }

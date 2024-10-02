@@ -8,6 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Service\AbstractServiceFactory;
+use Monarc\FrontOffice\Table\AnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 
 /**
  * Factory class attached to AnrInterviewService
@@ -17,8 +19,8 @@ class AnrInterviewServiceFactory extends AbstractServiceFactory
 {
     protected $ressources = [
         'table' => 'Monarc\FrontOffice\Model\Table\InterviewTable',
-        'entity' => 'Monarc\FrontOffice\Model\Entity\Interview',
-        'anrTable' => 'Monarc\FrontOffice\Model\Table\AnrTable',
-        'userAnrTable' => 'Monarc\FrontOffice\Model\Table\UserAnrTable',
+        'entity' => 'Monarc\FrontOffice\Entity\Interview',
+        'anrTable' => AnrTable::class,
+        'userAnrTable' => UserAnrTable::class,
     ];
 }

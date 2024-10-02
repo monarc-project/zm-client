@@ -35,7 +35,7 @@ class AnrRecordPersonalDataService extends AbstractService
         if (!empty($data['dataCategories'])) {
             foreach ($data['dataCategories'] as $dataCategory) {
                 if (!isset($dataCategory['id'])) {
-                    $dc['anr'] = $this->anrTable->getEntity($data['anr']);
+                    $dc['anr'] = $this->anrTable->findById((int)$data['anr']);
                     $dc['id'] = $this->recordDataCategoryService->createDataCategory($dataCategory);
                 }
                 $dataCategories[] = $dataCategory['id'];
@@ -49,7 +49,7 @@ class AnrRecordPersonalDataService extends AbstractService
     public function deletePersonalData($id)
     {
         $personalDataEntity = $this->get('table')->getEntity($id);
-        $anrId = $personalDataEntity->anr->id;
+        $anrId = $personalDataEntity->getAnr()->getId();
         $dataCategoriesToCheck = [];
         foreach($personalDataEntity->dataCategories as $dc) {
             $dataCategoriesToCheck[] = $dc->id;
@@ -76,7 +76,7 @@ class AnrRecordPersonalDataService extends AbstractService
         if (!empty($data['dataCategories'])) {
             foreach ($data['dataCategories'] as $dc) {
                 if (!isset($dc['id'])) {
-                    $dc['anr'] = $this->anrTable->getEntity($data['anr']);
+                    $dc['anr'] = $this->anrTable->findById((int)$data['anr']);
                     $dc['id'] = $this->recordDataCategoryService->createDataCategory($dc);
                 }
                 $dataCategories[] = $dc['id'];
@@ -141,7 +141,7 @@ class AnrRecordPersonalDataService extends AbstractService
     /**
      * Imports a record personal data from a data array. This data is generally what has been exported into a file.
      * @param array $data The record personal data's data fields
-     * @param \Monarc\FrontOffice\Model\Entity\Anr $anr The target ANR id
+     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
      * @return bool|int The ID of the generated asset, or false if an error occurred.
      */
     public function importFromArray($data, $anr, $recordId)

@@ -8,10 +8,10 @@
 namespace Monarc\FrontOffice\CronTask\Service;
 
 use DateTime;
-use Monarc\Core\Model\Entity\UserSuperClass;
+use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\CronTask\Table\CronTaskTable;
-use Monarc\FrontOffice\Model\Entity\CronTask;
+use Monarc\FrontOffice\Entity\CronTask;
 
 class CronTaskService
 {

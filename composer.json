@@ -41,24 +41,27 @@
         }
     ],
     "require": {
-        "php": "^7.4 || ^8.0",
+        "php": "^8.0",
         "ext-intl": "*",
+        "ext-imagick": "*",
         "ext-json": "*",
         "ext-bcmath": "*",
         "ext-openssl": "*",
         "ext-posix": "*",
         "doctrine/doctrine-orm-module": "^5.1",
-        "monarc/core": "^2.12.6",
+        "monarc/core": "dev-feature/remove-db-abstract as v2.12.7",
         "robmorgan/phinx": "^0.13.4",
         "laminas/laminas-di": "^3.1",
         "laminas/laminas-mvc": "^3.1",
+        "laminas/laminas-mvc-console": "^1.2",
         "laminas/laminas-permissions-rbac": "^3.0",
         "laminas/laminas-filter": "^2.9",
         "laminas/laminas-inputfilter": "^2.10",
         "laminas/laminas-dependency-plugin": "^2.0",
         "symfony/console": "^5.0",
         "guzzlehttp/guzzle": "^6.5",
-        "phpoffice/phpword": "^0.18.1"
+        "phpoffice/phpword": "^0.18.1",
+        "laminas/laminas-mvc-middleware": "^2.2"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master"

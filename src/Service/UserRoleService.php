@@ -1,60 +1,46 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Model\Table\UserRoleTable;
-use Monarc\Core\Model\Table\UserTokenTable;
+use Monarc\Core\Exception\UserNotLoggedInException;
 use Monarc\Core\Service\UserRoleService as CoreUserRoleService;
-use Monarc\FrontOffice\Model\Table\UserAnrTable;
+use Monarc\FrontOffice\Entity\UserAnr;
+use Monarc\FrontOffice\Table\UserTable;
+use Monarc\FrontOffice\Table\UserTokenTable;
 
-/**
- * This class is the service that handles the users roles. This is a simple CRUD service that inherits from its
- * Monarc\Core parent.
- * @see \Monarc\Core\Service\UserRoleService
- * @package Monarc\FrontOffice\Service
- */
 class UserRoleService extends CoreUserRoleService
 {
-    /** @var UserAnrTable */
-    private $userAnrTable;
-
     public function __construct(
-        UserRoleTable $userRoleTable,
-        UserTokenTable $userTokenTable,
-        UserAnrTable $userAnrTable
+        UserTable $userTable,
+        UserTokenTable $userTokenTable
     ) {
-        parent::__construct($userRoleTable, $userTokenTable);
-
-        $this->userAnrTable = $userAnrTable;
+        parent::__construct($userTable, $userTokenTable);
     }
 
-    /**
-     * Retrieve user's roles from its authentication token
-     * @param string $token User authentication token
-     * @return array An array of roles and ANRs accesses
-     * @throws \Exception If the token is not found
-     */
-    public function getByUserToken($token)
+    public function getUserRolesByToken(string $token): array
     {
-        // Retrieve user access
-        $userId = $this->getUserIdByToken($token);
-        $anrs = [];
-        $userAnrs = $this->userAnrTable->getEntityByFields(['user' => $userId]);
-        foreach ($userAnrs as $userAnr) {
-            $anrs[] = [
-                'anr' => $userAnr->anr->id,
-                'rwd' => $userAnr->rwd
+        $userToken = $this->userTokenTable->findByToken($token);
+        if ($userToken === null) {
+            throw new UserNotLoggedInException();
+        }
+
+        $userAnrs = [];
+        /** @var UserAnr $userAnr */
+        foreach ($userToken->getUser()->getUserAnrs() as $userAnr) {
+            $userAnrs[] = [
+                'anr' => $userAnr->getAnr()->getId(),
+                'rwd' => $userAnr->getRwd(),
             ];
         }
 
         return [
-            'roles' => $this->getByUserId($userId),
-            'anrs' => $anrs
+            'roles' => parent::getUserRolesByToken($token),
+            'anrs' => $userAnrs,
         ];
     }
 }

@@ -1,155 +1,64 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Laminas\View\Model\JsonModel;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\InputFormatter\ScaleComment\GetScaleCommentsInputFormatter;
+use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Service\AnrScaleCommentService;
 
-/**
- * Api ANR Scales Comments Controller
- *
- * Class ApiAnrScalesCommentsController
- * @package Monarc\FrontOffice\Controller
- */
-class ApiAnrScalesCommentsController extends ApiAnrAbstractController
+class ApiAnrScalesCommentsController extends AbstractRestfulControllerRequestHandler
 {
-    protected $dependencies = ['anr', 'scale', 'scaleImpactType'];
-    protected $name = 'comments';
+    use ControllerRequestResponseHandlerTrait;
 
-    /**
-     * @inheritdoc
-     */
+    public function __construct(
+        private AnrScaleCommentService $anrScaleCommentService,
+        private GetScaleCommentsInputFormatter $getScaleCommentsInputFormatter
+    ) {
+    }
+
     public function getList()
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
+        $formattedParams = $this->getFormattedInputParams($this->getScaleCommentsInputFormatter);
+        $formattedParams->setFilterValueFor('scale', (int)$this->params()->fromRoute('scaleid'));
 
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $filterAnd = ['anr' => $anrId];
+        $comments = $this->anrScaleCommentService->getList($formattedParams);
 
-        $scaleId = (int)$this->params()->fromRoute('scaleid');
-        if (empty($scaleId)) {
-            throw new \Monarc\Core\Exception\Exception('Scale id missing', 412);
-        }
-        $filterAnd['scale'] = $scaleId;
-
-        $service = $this->getService();
-
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        if (count($this->dependencies)) {
-            foreach ($entities as $key => $entity) {
-                $this->formatDependencies($entities[$key], $this->dependencies);
-            }
-        }
-
-        return new JsonModel([
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities
+        return $this->getPreparedJsonResponse([
+            'count' => \count($comments),
+            'comments' => $comments,
         ]);
     }
 
     /**
-     * @inheritdoc
-     */
-    public function get($id)
-    {
-        $entity = $this->getService()->getEntity($id);
-
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        if (!$entity['anr'] || $entity['anr']->get('id') != $anrId) {
-            throw new \Monarc\Core\Exception\Exception('Anr ids diffence', 412);
-        }
-
-        $scaleId = (int)$this->params()->fromRoute('scaleid');
-        if (empty($scaleId)) {
-            throw new \Monarc\Core\Exception\Exception('Scale id missing', 412);
-        }
-        if (!$entity['scale'] || $entity['scale']->get('id') != $scaleId) {
-            throw new \Monarc\Core\Exception\Exception('Scale ids diffence', 412);
-        }
-
-        if (count($this->dependencies)) {
-            $this->formatDependencies($entity, $this->dependencies);
-        }
-
-        return new JsonModel($entity);
-    }
-
-    /**
-     * @inheritdoc
+     * @param array $data
      */
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-        $scaleId = (int)$this->params()->fromRoute('scaleid');
-        if (empty($scaleId)) {
-            throw new \Monarc\Core\Exception\Exception('Scale id missing', 412);
-        }
-        $data['scale'] = $scaleId;
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        $id = $this->getService()->create($data);
+        $scaleComment = $this->anrScaleCommentService->create($anr, $data);
 
-        return new JsonModel([
-            'status' => 'ok',
-            'id' => $id,
-        ]);
+        return $this->getSuccessfulJsonResponse(['id' => $scaleComment->getId()]);
     }
 
     /**
-     * @inheritdoc
+     * @param array $data
      */
     public function update($id, $data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-        $scaleId = (int)$this->params()->fromRoute('scaleid');
-        if (empty($scaleId)) {
-            throw new \Monarc\Core\Exception\Exception('Scale id missing', 412);
-        }
-        $data['scale'] = $scaleId;
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
 
-        $this->getService()->update($id, $data);
+        $scaleComment = $this->anrScaleCommentService->update($anr, (int)$id, $data);
 
-        return new JsonModel(['status' => 'ok']);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function patch($id, $data)
-    {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new \Monarc\Core\Exception\Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-        $scaleId = (int)$this->params()->fromRoute('scaleid');
-        if (empty($scaleId)) {
-            throw new \Monarc\Core\Exception\Exception('Scale id missing', 412);
-        }
-        $data['scale'] = $scaleId;
-
-        $this->getService()->patch($id, $data);
-
-        return new JsonModel(['status' => 'ok']);
+        return $this->getSuccessfulJsonResponse(['id' => $scaleComment->getId()]);
     }
 }
