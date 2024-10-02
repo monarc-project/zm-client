@@ -456,6 +456,32 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->removeColumn('updated_at')
             ->update();
 
+        $this->execute(
+            'CREATE TABLE IF NOT EXISTS `system_messages` (
+                `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+                `user_id` int(11) unsigned NOT NULL,
+                `title` varchar(255) NOT NULL,
+                `description` TEXT,
+                `status` smallint(3) unsigned NOT NULL DEFAULT 1,
+                `creator` varchar(255) NOT NULL,
+                `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                `updater` varchar(255) DEFAULT NULL,
+                `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                CONSTRAINT `system_messages_user_id_id_fk1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+            );'
+        );
+        $usersQuery = $this->query('SELECT id FROM users WHERE status = 1;');
+        foreach ($usersQuery->fetchAll() as $userData) {
+            $this->table('system_messages')->insert([
+                'user_id' => $userData['id'],
+                'title' => 'Monarc version is updated to v2.13.1',
+                'description' => 'Please, read the release notes available https://www.monarc.lu/news. In case if you encounter any issues with your analysis, please let us know by sending us an email to info-monarc@nc3.lu.',
+                'status' => 1,
+                'creator' => 'System',
+            ])->saveData();
+        }
+
         /* TODO: Should be added to the next release migration, to perform this release in a safe mode.
         $this->table('anr_instance_metadata_fields')->removeColumn('label_translation_key')->update();
         $this->table('instances_metadata')->removeColumn('comment_translation_key')->update();

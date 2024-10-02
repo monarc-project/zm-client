@@ -98,6 +98,19 @@ return [
                 ],
             ],
 
+            'monarc_api_system_messages' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/system-messages[/:id]',
+                    'constraints' => [
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ApiSystemMessagesController::class,
+                    ],
+                ],
+            ],
+
             'monarc_api_models' => [
                 'type' => 'segment',
                 'options' => [
@@ -1413,6 +1426,7 @@ return [
             Controller\ApiAnrInstancesMetadataFieldsController::class => AutowireFactory::class,
             Controller\ApiInstanceMetadataController::class => AutowireFactory::class,
             Controller\ApiSoaScaleCommentController::class => AutowireFactory::class,
+            Controller\ApiSystemMessagesController::class => AutowireFactory::class,
             Export\Controller\ApiAnrExportController::class => AutowireFactory::class,
             Export\Controller\ApiAnrInstancesExportController::class => AutowireFactory::class,
             Export\Controller\ApiAnrObjectsExportController::class => AutowireFactory::class,
@@ -1495,6 +1509,7 @@ return [
             Table\SoaTable::class => ClientEntityManagerFactory::class,
             Table\SnapshotTable::class => ClientEntityManagerFactory::class,
             Table\SoaScaleCommentTable::class => ClientEntityManagerFactory::class,
+            Table\SystemMessageTable::class => ClientEntityManagerFactory::class,
             Table\ThemeTable::class => ClientEntityManagerFactory::class,
             Table\ThreatTable::class => ClientEntityManagerFactory::class,
             Table\UserTable::class => ClientEntityManagerFactory::class,
@@ -1566,6 +1581,7 @@ return [
             Service\InstanceMetadataService::class => AutowireFactory::class,
             Service\SoaService::class => AutowireFactory::class,
             Service\SoaScaleCommentService::class => AutowireFactory::class,
+            Service\SystemMessageService::class => AutowireFactory::class,
             Stats\Service\StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             Stats\Service\StatsSettingsService::class => AutowireFactory::class,
             CronTask\Service\CronTaskService::class => AutowireFactory::class,
@@ -1802,6 +1818,7 @@ return [
             'monarc_api_stats_global/processed',
             'monarc_api_stats_global/general_settings',
             'monarc_api_stats_global/validate-stats-availability',
+            'monarc_api_system_messages',
         ],
         // User : RWD access per analysis
         Entity\UserRole::USER_FO => [
@@ -1909,6 +1926,7 @@ return [
             'monarc_api_stats_global/processed',
             'monarc_api_stats_global/general_settings',
             'monarc_api_stats_global/validate-stats-availability',
+            'monarc_api_system_messages',
         ],
         Entity\UserRole::USER_ROLE_CEO => [
             'monarc_api_admin_users_roles',
@@ -1923,6 +1941,7 @@ return [
             'monarc_api_stats_global/anrs_settings',
             'monarc_api_stats_global/general_settings',
             'monarc_api_stats_global/validate-stats-availability',
+            'monarc_api_system_messages',
         ],
     ],
     'activeLanguages' => ['fr'],
