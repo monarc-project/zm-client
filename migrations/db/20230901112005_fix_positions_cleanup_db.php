@@ -241,8 +241,8 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->removeColumn('created_at')
             ->removeColumn('updater')
             ->removeColumn('updated_at')
+            ->dropForeignKey(['measure_id', 'anr_id'])
             ->renameColumn('measure_id', 'measure_uuid')
-            ->dropForeignKey(['measure_uuid', 'anr_id'])
             ->update();
         $this->table('measures_amvs')
             ->addColumn('measure_id', 'integer', ['signed' => false, 'after' => MysqlAdapter::FIRST])
@@ -266,8 +266,8 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->removeColumn('created_at')
             ->removeColumn('updater')
             ->removeColumn('updated_at')
+            ->dropForeignKey(['measure_id', 'anr_id'])
             ->renameColumn('measure_id', 'measure_uuid')
-            ->dropForeignKey(['measure_uuid', 'anr_id'])
             ->update();
         $this->table('measures_rolf_risks')
             ->addColumn('measure_id', 'integer', ['signed' => false, 'after' => 'id'])
