@@ -79,6 +79,7 @@
     "prefer-stable": true,
     "config": {
         "allow-plugins": {
+            "ocramius/package-versions": true,
             "laminas/laminas-dependency-plugin": true
         }
     }
