@@ -221,7 +221,6 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->addIndex(['master_measure_id', 'linked_measure_id'], ['unique' => true])
             ->update();
         /* Apply measures relation to soa. */
-        $this->table('soa')->removeIndex(['measure_id', 'anr_id'])->update();
         $this->table('soa')
             ->dropForeignKey(['measure_id', 'anr_id'])
             ->renameColumn('measure_id', 'measure_uuid')
