@@ -208,9 +208,9 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->update();
         /* Remove unlinked measures links with measures and update the new relation field. */
         $this->execute('UPDATE measures_measures mm INNER JOIN measures m '
-                         . 'ON mm.father_id = m.`uuid` AND mm.anr_id = m.anr_id SET master_measure_id = m.id;');
+            . 'ON mm.father_id = m.`uuid` AND mm.anr_id = m.anr_id SET master_measure_id = m.id;');
         $this->execute('UPDATE measures_measures mm INNER JOIN measures m '
-                        . 'ON mm.child_id = m.`uuid` AND mm.anr_id = m.anr_id SET linked_measure_id = m.id;');
+            . 'ON mm.child_id = m.`uuid` AND mm.anr_id = m.anr_id SET linked_measure_id = m.id;');
         $this->execute('DELETE FROM measures_measures WHERE master_measure_id IS NULL OR linked_measure_id IS NULL;');
         $this->table('measures_measures')
             ->removeColumn('anr_id')
@@ -398,6 +398,8 @@ class FixPositionsCleanupDb extends AbstractMigration
                 '", description = "' . $anrData[$descriptionName] .
                 '", language_code = "' . $languageCode . '" WHERE id = ' . (int)$anrData['id']);
         }
+        $this->execute('UPDATE anrs SET created_at = NOW(), creator = "System"
+            WHERE created_at IS NULL OR creator IS NULL');
 
         /* Replace in recommandations_sets label1,2,3,4 by a single label field. */
         $this->table('recommandations_sets')
@@ -408,8 +410,20 @@ class FixPositionsCleanupDb extends AbstractMigration
         );
         foreach ($recSetsQuery->fetchAll() as $recSetData) {
             $labelName = 'label' . $recSetData['language'];
-            $this->execute('UPDATE recommandations_sets SET label = "' . $recSetData[$labelName] . '"' .
-                ' WHERE uuid = "' . $recSetData['uuid'] . '" AND anr_id = ' . (int)$recSetData['anr_id']);
+            /* Check if the label is already exist. */
+            $recSetExistenceQuery = $this->fetchRow('SELECT uuid FROM recommandations_sets WHERE anr_id = '
+                . (int)$recSetData['anr_id'] . ' AND label = "' . htmlspecialchars($recSetData[$labelName]) . '"');
+            if ($recSetExistenceQuery !== false) {
+                /* MOve all the recommendation to the existing set and remove it. */
+                $this->execute('UPDATE recommandations SET recommandation_set_uuid = "' . $recSetExistenceQuery['uuid']
+                    . '" WHERE recommandation_set_uuid = "' . $recSetData['uuid'] . '" 
+                        AND anr_id = ' . (int)$recSetData['anr_id']);
+                $this->execute('DELETE FROM recommandations_sets WHERE uuid = "' . $recSetData['uuid'] . '"
+                    AND anr_id = ' . (int)$recSetData['anr_id']);
+            } else {
+                $this->execute('UPDATE recommandations_sets SET label = "' . htmlspecialchars($recSetData[$labelName])
+                    . '" WHERE uuid = "' . $recSetData['uuid'] . '" AND anr_id = ' . (int)$recSetData['anr_id']);
+            }
         }
         /* Make anr_id and label unique. */
         $this->table('recommandations_sets')->addIndex(['anr_id', 'label'], ['unique' => true])->update();
@@ -436,9 +450,9 @@ class FixPositionsCleanupDb extends AbstractMigration
 
         /* The unique relation is not correct as it should be possible to instantiate the same operational risk. */
         $this->table('operational_instance_risks_scales')
-             ->removeIndex(['anr_id', 'instance_risk_op_id', 'operational_risk_scale_type_id'])
-             ->addIndex(['anr_id', 'instance_risk_op_id', 'operational_risk_scale_type_id'], ['unique' => false])
-             ->update();
+            ->removeIndex(['anr_id', 'instance_risk_op_id', 'operational_risk_scale_type_id'])
+            ->addIndex(['anr_id', 'instance_risk_op_id', 'operational_risk_scale_type_id'], ['unique' => false])
+            ->update();
 
         /* Note: Temporary change fields types to avoid setting values from the code. Later will be dropped. */
         $this->table('operational_risks_scales_types')
