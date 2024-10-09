@@ -262,7 +262,8 @@ class FixPositionsCleanupDb extends AbstractMigration
         $measuresAmvsTable->removeColumn('measure_uuid')->update();
         /* Apply measures relation to measures_rolf_risks. */
         $measuresRolfRisksTable = $this->table('measures_rolf_risks');
-        $this->execute('ALTER TABLE `measures_rolf_risks` DROP FOREIGN KEY `measures_rolf_risks_ibfk_3`');
+        $this->execute('ALTER TABLE `measures_rolf_risks` DROP FOREIGN KEY `measures_rolf_risks_ibfk_1`,
+            DROP FOREIGN KEY `measures_rolf_risks_ibfk_3`');
         $measuresRolfRisksTable
             ->removeColumn('creator')
             ->removeColumn('created_at')
