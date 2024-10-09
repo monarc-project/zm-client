@@ -334,16 +334,9 @@ class FixPositionsCleanupDb extends AbstractMigration
         $this->table('soa_scale_comments')
             ->addColumn('comment', 'text', ['null' => true, 'limit' => MysqlAdapter::TEXT_REGULAR])
             ->update();
-
-        $this->execute(
-            'ALTER TABLE anr_instance_metadata_fields CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'
-        );
-        $this->execute('ALTER TABLE instances_metadata CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;');
-        $this->execute('ALTER TABLE translations CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;');
-
         $this->execute(
             'UPDATE anr_instance_metadata_fields aim
-            INNER JOIN translations t ON aim.label_translation_key COLLATE utf8mb4_general_ci = t.translation_key
+            INNER JOIN translations t ON aim.label_translation_key = t.translation_key
                 AND t.anr_id = aim.anr_id
                 AND t.type = "anr-metadatas-on-instances"
             SET aim.label = t.value;'
@@ -351,28 +344,28 @@ class FixPositionsCleanupDb extends AbstractMigration
         $this->execute(
             'UPDATE instances_metadata im
             INNER JOIN anr_instance_metadata_fields aimf ON im.metadata_id = aimf.id
-            INNER JOIN translations t ON im.comment_translation_key COLLATE utf8mb4_general_ci = t.translation_key
+            INNER JOIN translations t ON im.comment_translation_key = t.translation_key
                 AND t.anr_id = aimf.anr_id
                 AND t.type = "instance-metadata"
             SET im.comment = t.value;'
         );
         $this->execute(
             'UPDATE operational_risks_scales_types orst
-            INNER JOIN translations t ON orst.label_translation_key COLLATE utf8mb4_general_ci = t.translation_key
+            INNER JOIN translations t ON orst.label_translation_key = t.translation_key
                 AND t.anr_id = orst.anr_id
                 AND t.type = "operational-risk-scale-type"
             SET orst.label = t.value;'
         );
         $this->execute(
             'UPDATE operational_risks_scales_comments orsc
-            INNER JOIN translations t ON orsc.comment_translation_key COLLATE utf8mb4_general_ci = t.translation_key
+            INNER JOIN translations t ON orsc.comment_translation_key = t.translation_key
                 AND t.anr_id = orsc.anr_id
                 AND t.type = "operational-risk-scale-comment"
             SET orsc.comment = t.value;'
         );
         $this->execute(
             'UPDATE soa_scale_comments ssc
-            INNER JOIN translations t ON ssc.comment_translation_key COLLATE utf8mb4_general_ci = t.translation_key
+            INNER JOIN translations t ON ssc.comment_translation_key = t.translation_key
                 AND t.anr_id = ssc.anr_id
                 AND t.type = "soa-scale-comment"
             SET ssc.comment = t.value;'
