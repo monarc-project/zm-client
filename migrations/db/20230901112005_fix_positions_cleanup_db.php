@@ -148,6 +148,7 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->removeColumn('asset_type')
             ->removeColumn('exportable')
             ->update();
+        $this->execute('ALTER TABLE objects ROW_FORMAT=DYNAMIC;');
         $this->table('objects')
             ->removeColumn('disponibility')
             ->removeColumn('token_import')
@@ -221,35 +222,33 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->addIndex(['master_measure_id', 'linked_measure_id'], ['unique' => true])
             ->update();
         /* Apply measures relation to soa. */
-        $this->table('soa')
-            ->dropForeignKey(['measure_id', 'anr_id'])
-            ->renameColumn('measure_id', 'measure_uuid')
-            ->update();
-        $this->table('soa')
-            ->addColumn('measure_id', 'integer', ['signed' => false, 'after' => 'id'])
-            ->update();
+        $soaTable = $this->table('soa');
+        $soaTable->dropForeignKey(['measure_id', 'anr_id'])->update();
+        $soaTable->renameColumn('measure_id', 'measure_uuid')->update();
+        $soaTable->addColumn('measure_id', 'integer', ['signed' => false, 'after' => 'id'])->update();
         $this->execute('UPDATE soa s INNER JOIN measures m '
             . 'ON s.measure_uuid = m.`uuid` AND s.anr_id = m.anr_id SET s.measure_id = m.id;');
-        $this->table('soa')
+        $soaTable
             ->addForeignKey('measure_id', 'measures', 'id', ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
             ->removeColumn('measure_uuid')
             ->update();
         /* Apply measures relation to measures_amvs. */
-        $this->table('measures_amvs')
+        $measuresAmvsTable = $this->table('measures_amvs');
+        $measuresAmvsTable->dropForeignKey(['measure_id', 'anr_id'])->update();
+        $measuresAmvsTable
             ->removeColumn('anr_id2')
             ->removeColumn('creator')
             ->removeColumn('created_at')
             ->removeColumn('updater')
             ->removeColumn('updated_at')
-            ->dropForeignKey(['measure_id', 'anr_id'])
             ->renameColumn('measure_id', 'measure_uuid')
             ->update();
-        $this->table('measures_amvs')
+        $measuresAmvsTable
             ->addColumn('measure_id', 'integer', ['signed' => false, 'after' => MysqlAdapter::FIRST])
             ->update();
         $this->execute('UPDATE measures_amvs ma INNER JOIN measures m '
             . 'ON ma.measure_uuid = m.`uuid` AND ma.anr_id = m.anr_id SET ma.measure_id = m.id;');
-        $this->table('measures_amvs')
+        $measuresAmvsTable
             ->changePrimaryKey(['measure_id', 'amv_id', 'anr_id'])
             ->addForeignKey('measure_id', 'measures', 'id', ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
             ->addForeignKey(
@@ -259,22 +258,23 @@ class FixPositionsCleanupDb extends AbstractMigration
                 ['delete' => 'CASCADE', 'update' => 'RESTRICT']
             )
             ->update();
-        $this->table('measures_amvs')->removeColumn('measure_uuid')->update();
+        $measuresAmvsTable->removeColumn('measure_uuid')->update();
         /* Apply measures relation to measures_rolf_risks. */
-        $this->table('measures_rolf_risks')
+        $measuresRolfRisksTable = $this->table('measures_rolf_risks');
+        $measuresRolfRisksTable->dropForeignKey(['measure_id', 'anr_id'])->update();
+        $measuresRolfRisksTable
             ->removeColumn('creator')
             ->removeColumn('created_at')
             ->removeColumn('updater')
             ->removeColumn('updated_at')
-            ->dropForeignKey(['measure_id', 'anr_id'])
             ->renameColumn('measure_id', 'measure_uuid')
             ->update();
-        $this->table('measures_rolf_risks')
+        $measuresRolfRisksTable
             ->addColumn('measure_id', 'integer', ['signed' => false, 'after' => 'id'])
             ->update();
         $this->execute('UPDATE measures_rolf_risks mr INNER JOIN measures m '
             . 'ON mr.measure_uuid = m.`uuid` AND mr.anr_id = m.anr_id SET mr.measure_id = m.id;');
-        $this->table('measures_rolf_risks')
+        $measuresRolfRisksTable
             ->addForeignKey('measure_id', 'measures', 'id', ['delete' => 'CASCADE', 'update' => 'RESTRICT'])
             ->removeColumn('measure_uuid')
             ->removeColumn('anr_id')
@@ -335,7 +335,7 @@ class FixPositionsCleanupDb extends AbstractMigration
 
         $this->execute(
             'UPDATE anr_instance_metadata_fields aim
-            INNER JOIN translations t ON aim.label_translation_key = t.translation_key
+            INNER JOIN translations t ON aim.label_translation_key COLLATE utf8mb4_general_ci = t.translation_key
                 AND t.anr_id = aim.anr_id
                 AND t.type = "anr-metadatas-on-instances"
             SET aim.label = t.value;'
@@ -343,28 +343,28 @@ class FixPositionsCleanupDb extends AbstractMigration
         $this->execute(
             'UPDATE instances_metadata im
             INNER JOIN anr_instance_metadata_fields aimf ON im.metadata_id = aimf.id
-            INNER JOIN translations t ON im.comment_translation_key = t.translation_key
+            INNER JOIN translations t ON im.comment_translation_key COLLATE utf8mb4_general_ci = t.translation_key
                 AND t.anr_id = aimf.anr_id
                 AND t.type = "instance-metadata"
             SET im.comment = t.value;'
         );
         $this->execute(
             'UPDATE operational_risks_scales_types orst
-            INNER JOIN translations t ON orst.label_translation_key = t.translation_key
+            INNER JOIN translations t ON orst.label_translation_key COLLATE utf8mb4_general_ci = t.translation_key
                 AND t.anr_id = orst.anr_id
                 AND t.type = "operational-risk-scale-type"
             SET orst.label = t.value;'
         );
         $this->execute(
             'UPDATE operational_risks_scales_comments orsc
-            INNER JOIN translations t ON orsc.comment_translation_key = t.translation_key
+            INNER JOIN translations t ON orsc.comment_translation_key COLLATE utf8mb4_general_ci = t.translation_key
                 AND t.anr_id = orsc.anr_id
                 AND t.type = "operational-risk-scale-comment"
             SET orsc.comment = t.value;'
         );
         $this->execute(
             'UPDATE soa_scale_comments ssc
-            INNER JOIN translations t ON ssc.comment_translation_key = t.translation_key
+            INNER JOIN translations t ON ssc.comment_translation_key COLLATE utf8mb4_general_ci = t.translation_key
                 AND t.anr_id = ssc.anr_id
                 AND t.type = "soa-scale-comment"
             SET ssc.comment = t.value;'
