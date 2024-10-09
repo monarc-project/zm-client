@@ -223,6 +223,7 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->update();
         /* Apply measures relation to soa. */
         $soaTable = $this->table('soa');
+        $this->execute('ALTER TABLE `soa` DROP FOREIGN KEY `soa_ibfk_2`');
         $soaTable->dropForeignKey(['measure_id', 'anr_id'])->update();
         $soaTable->renameColumn('measure_id', 'measure_uuid')->update();
         $soaTable->addColumn('measure_id', 'integer', ['signed' => false, 'after' => 'id'])->update();
@@ -234,7 +235,7 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->update();
         /* Apply measures relation to measures_amvs. */
         $measuresAmvsTable = $this->table('measures_amvs');
-        $measuresAmvsTable->dropForeignKey(['measure_id', 'anr_id'])->update();
+        $this->execute('ALTER TABLE `measures_amvs` DROP FOREIGN KEY `measures_amvs_ibfk_3`');
         $measuresAmvsTable
             ->removeColumn('anr_id2')
             ->removeColumn('creator')
@@ -261,7 +262,7 @@ class FixPositionsCleanupDb extends AbstractMigration
         $measuresAmvsTable->removeColumn('measure_uuid')->update();
         /* Apply measures relation to measures_rolf_risks. */
         $measuresRolfRisksTable = $this->table('measures_rolf_risks');
-        $measuresRolfRisksTable->dropForeignKey(['measure_id', 'anr_id'])->update();
+        $this->execute('ALTER TABLE `measures_rolf_risks` DROP FOREIGN KEY `measures_rolf_risks_ibfk_3`');
         $measuresRolfRisksTable
             ->removeColumn('creator')
             ->removeColumn('created_at')
