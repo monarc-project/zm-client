@@ -336,6 +336,12 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->update();
 
         $this->execute(
+            'ALTER TABLE anr_instance_metadata_fields CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'
+        );
+        $this->execute('ALTER TABLE instances_metadata CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;');
+        $this->execute('ALTER TABLE translations CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;');
+
+        $this->execute(
             'UPDATE anr_instance_metadata_fields aim
             INNER JOIN translations t ON aim.label_translation_key COLLATE utf8mb4_general_ci = t.translation_key
                 AND t.anr_id = aim.anr_id
