@@ -36,7 +36,7 @@ return array(
             'user' => $globalConf['doctrine']['connection'][$paramToUse]['params']['user'],
             'pass' => $globalConf['doctrine']['connection'][$paramToUse]['params']['password'],
             'port' => $globalConf['doctrine']['connection'][$paramToUse]['params']['port'],
-            'charset' => 'utf8',
+            'charset' => 'utf8mb4',
         ),
     ),
 );

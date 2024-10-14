@@ -283,7 +283,15 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->update();
 
         /* Rename column of owner_id to risk_owner_id. */
+        $this->table('instances_risks')->dropForeignKey('owner_id')->update();
         $this->table('instances_risks')->renameColumn('owner_id', 'risk_owner_id')->update();
+        $this->table('instances_risks')->addForeignKey(
+            'risk_owner_id',
+            'instance_risk_owners',
+            'id',
+            ['delete' => 'SET NULL', 'update' => 'CASCADE']
+        )->update();
+        $this->table('instances_risks_op')->dropForeignKey('owner_id')->update();
         $this->table('instances_risks_op')
             ->renameColumn('owner_id', 'risk_owner_id')
             ->removeColumn('brut_r')
@@ -302,6 +310,12 @@ class FixPositionsCleanupDb extends AbstractMigration
             ->removeColumn('targeted_f')
             ->removeColumn('targeted_p')
             ->update();
+        $this->table('instances_risks_op')->addForeignKey(
+            'risk_owner_id',
+            'instance_risk_owners',
+            'id',
+            ['delete' => 'SET NULL', 'update' => 'CASCADE']
+        )->update();
 
         /* The tables are not needed. */
         $this->table('anrs_objects')->drop()->update();
@@ -334,6 +348,11 @@ class FixPositionsCleanupDb extends AbstractMigration
         $this->table('soa_scale_comments')
             ->addColumn('comment', 'text', ['null' => true, 'limit' => MysqlAdapter::TEXT_REGULAR])
             ->update();
+        $this->execute(
+            'ALTER TABLE anr_instance_metadata_fields CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;'
+        );
+        $this->execute('ALTER TABLE instances_metadata CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;');
+        $this->execute('ALTER TABLE soa_scale_comments CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;');
         $this->execute(
             'UPDATE anr_instance_metadata_fields aim
             INNER JOIN translations t ON aim.label_translation_key = t.translation_key
@@ -395,9 +414,13 @@ class FixPositionsCleanupDb extends AbstractMigration
             }
             $descriptionName = 'description' . $anrData['language'];
             $languageCode = $languageCodes[$anrData['language']];
-            $this->execute('UPDATE anrs SET label = "' . $uniqueLabels[$anrData[$labelName]] .
-                '", description = "' . $anrData[$descriptionName] .
-                '", language_code = "' . $languageCode . '" WHERE id = ' . (int)$anrData['id']);
+            $builder = $this->getQueryBuilder();
+            $builder->update('anrs')
+                ->set('label', $uniqueLabels[$anrData[$labelName]])
+                ->set('description', $anrData[$descriptionName])
+                ->set('language_code', $languageCode)
+                ->where(['id' => (int)$anrData['id']])
+                ->execute();
         }
         $this->execute('UPDATE anrs SET created_at = NOW(), creator = "System"
             WHERE created_at IS NULL OR creator IS NULL');
@@ -413,7 +436,7 @@ class FixPositionsCleanupDb extends AbstractMigration
             $labelName = 'label' . $recSetData['language'];
             /* Check if the label is already exist. */
             $recSetExistenceQuery = $this->fetchRow('SELECT uuid FROM recommandations_sets WHERE anr_id = '
-                . (int)$recSetData['anr_id'] . ' AND label = "' . htmlspecialchars($recSetData[$labelName]) . '"');
+                . (int)$recSetData['anr_id'] . ' AND label = "' . addslashes($recSetData[$labelName]) . '"');
             if ($recSetExistenceQuery !== false) {
                 /* MOve all the recommendation to the existing set and remove it. */
                 $this->execute('UPDATE recommandations SET recommandation_set_uuid = "' . $recSetExistenceQuery['uuid']
@@ -422,8 +445,13 @@ class FixPositionsCleanupDb extends AbstractMigration
                 $this->execute('DELETE FROM recommandations_sets WHERE uuid = "' . $recSetData['uuid'] . '"
                     AND anr_id = ' . (int)$recSetData['anr_id']);
             } else {
-                $this->execute('UPDATE recommandations_sets SET label = "' . htmlspecialchars($recSetData[$labelName])
-                    . '" WHERE uuid = "' . $recSetData['uuid'] . '" AND anr_id = ' . (int)$recSetData['anr_id']);
+                $builder = $this->getQueryBuilder();
+                $builder->update('recommandations_sets')
+                    ->set('label', $recSetData[$labelName])
+                    ->where([
+                        'uuid' => $recSetData['uuid'],
+                        'anr_id' => (int)$recSetData['anr_id'],
+                    ])->execute();
             }
         }
         /* Make anr_id and label unique. */
