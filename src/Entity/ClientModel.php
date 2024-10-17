@@ -48,7 +48,7 @@ class ClientModel
 
     public function getModelId(): int
     {
-        return $this->modelId;
+        return (int)$this->modelId;
     }
 
     public function setModelId(int $modelId): self
