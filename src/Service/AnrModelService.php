@@ -36,7 +36,7 @@ class AnrModelService
         foreach ($this->clientTable->findFirstClient()->getClientModels() as $clientModel) {
             $modelIds[] = $clientModel->getModelId();
         }
-        foreach ($this->modelTable->fundGenericsAndSpecificsByIds($modelIds) as $model) {
+        foreach ($this->modelTable->findGenericsAndSpecificsByIds($modelIds) as $model) {
             $result[] = array_merge(['id' => $model->getId()], $model->getLabels());
         }
 

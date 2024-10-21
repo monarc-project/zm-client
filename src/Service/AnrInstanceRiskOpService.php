@@ -150,8 +150,18 @@ class AnrInstanceRiskOpService
             ->setObject($instance->getObject())
             ->setIsSpecific(true)
             ->setRiskCacheCode($rolfRisk->getCode())
-            ->setRiskCacheLabels($rolfRisk->getLabels())
-            ->setRiskCacheDescriptions($rolfRisk->getDescriptions())
+            ->setRiskCacheLabels([
+                'riskCacheLabel1' => $rolfRisk->getLabel(1),
+                'riskCacheLabel2' => $rolfRisk->getLabel(2),
+                'riskCacheLabel3' => $rolfRisk->getLabel(3),
+                'riskCacheLabel4' => $rolfRisk->getLabel(4),
+            ])
+            ->setRiskCacheDescriptions([
+                'riskCacheDescription1' => $rolfRisk->getDescription(1),
+                'riskCacheDescription2' => $rolfRisk->getDescription(2),
+                'riskCacheDescription3' => $rolfRisk->getDescription(3),
+                'riskCacheDescription4' => $rolfRisk->getDescription(4),
+            ])
             ->setCreator($this->connectedUser->getEmail());
 
         $operationalRiskScaleTypes = $this->operationalRiskScaleTypeTable->findByAnrAndScaleType(

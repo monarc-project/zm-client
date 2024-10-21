@@ -46,7 +46,6 @@ class ApiAnrAmvsController extends AbstractRestfulControllerRequestHandler
         return $this->getPreparedJsonResponse($this->anrAmvService->getAmvData($anr, $id));
     }
 
-
     /**
      * @param array $data
      */

@@ -87,7 +87,7 @@ class AnrRecommendationHistoryService
 
         $recommendationHistory = (new RecommendationHistory())
             ->setAnr($anr)
-            ->setImplComment($data['comment'])
+            ->setImplComment((string)$data['comment'])
             ->setIsFinal($isFinal)
             ->setRecoCode($recommendation->getCode())
             ->setRecoDescription($recommendation->getDescription())

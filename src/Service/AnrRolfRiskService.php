@@ -153,26 +153,20 @@ class AnrRolfRiskService
 
         if ($rolfRisk->areLabelsDifferent($data) || $rolfRisk->areDescriptionsDifferent($data)) {
             $rolfRisk->setLabels($data)->setDescriptions($data);
-            /* If the labels or descriptions changed the operational risks labels have to be updated as well. */
-            foreach ($rolfRisk->getTags() as $rolfTag) {
-                foreach ($rolfTag->getObjects() as $monarcObject) {
-                    $instancesRisksOp = $this->instanceRiskOpTable->findByObjectAndRolfRisk($monarcObject, $rolfRisk);
-                    foreach ($instancesRisksOp as $instanceRiskOp) {
-                        $instanceRiskOp->setRiskCacheCode($rolfRisk->getCode())
-                            ->setRiskCacheLabels([
-                                'riskCacheLabel1' => $rolfRisk->getLabel(1),
-                                'riskCacheLabel2' => $rolfRisk->getLabel(2),
-                                'riskCacheLabel3' => $rolfRisk->getLabel(3),
-                                'riskCacheLabel4' => $rolfRisk->getLabel(4),
-                            ])
-                            ->setRiskCacheDescriptions([
-                                'riskCacheDescription1' => $rolfRisk->getDescription(1),
-                                'riskCacheDescription2' => $rolfRisk->getDescription(2),
-                                'riskCacheDescription3' => $rolfRisk->getDescription(3),
-                                'riskCacheDescription4' => $rolfRisk->getDescription(4),
-                            ]);
-
-                        $this->instanceRiskOpTable->save($instanceRiskOp, false);
+            /* If there is no tag linked, search directly by the rolf risk. */
+            if ($rolfRisk->getTags()->isEmpty()) {
+                /** @var Entity\InstanceRiskOp[] $instancesRisksOp */
+                $instancesRisksOp = $this->instanceRiskOpTable->findByRolfRisk($rolfRisk);
+                $this->updateOperationalRisksCacheValues($instancesRisksOp, $rolfRisk);
+            } else {
+                /* If the labels or descriptions changed the operational risks labels have to be updated as well. */
+                foreach ($rolfRisk->getTags() as $rolfTag) {
+                    foreach ($rolfTag->getObjects() as $monarcObject) {
+                        $instancesRisksOp = $this->instanceRiskOpTable->findByObjectAndRolfRisk(
+                            $monarcObject,
+                            $rolfRisk
+                        );
+                        $this->updateOperationalRisksCacheValues($instancesRisksOp, $rolfRisk);
                     }
                 }
             }
@@ -220,6 +214,31 @@ class AnrRolfRiskService
             }
         }
         $this->measureTable->flush();
+    }
+
+    /**
+     * @param Entity\InstanceRiskOp[] $instanceRisksOp
+     */
+    private function updateOperationalRisksCacheValues(array $instanceRisksOp, Entity\RolfRisk $rolfRisk): void
+    {
+        foreach ($instanceRisksOp as $instanceRiskOp) {
+            $instanceRiskOp->setRiskCacheCode($rolfRisk->getCode())
+                ->setRiskCacheLabels([
+                    'riskCacheLabel1' => $rolfRisk->getLabel(1),
+                    'riskCacheLabel2' => $rolfRisk->getLabel(2),
+                    'riskCacheLabel3' => $rolfRisk->getLabel(3),
+                    'riskCacheLabel4' => $rolfRisk->getLabel(4),
+                ])
+                ->setRiskCacheDescriptions([
+                    'riskCacheDescription1' => $rolfRisk->getDescription(1),
+                    'riskCacheDescription2' => $rolfRisk->getDescription(2),
+                    'riskCacheDescription3' => $rolfRisk->getDescription(3),
+                    'riskCacheDescription4' => $rolfRisk->getDescription(4),
+                ])
+                ->setUpdater($this->connectedUser->getEmail());
+
+            $this->instanceRiskOpTable->save($instanceRiskOp, false);
+        }
     }
 
     private function removeRolfRisk(Entity\Anr $anr, Entity\RolfRisk $rolfRisk, bool $saveInDb = true): void
