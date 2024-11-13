@@ -188,7 +188,7 @@ class AnrInstanceService
         /** @var Entity\Instance $instance */
         $instance = $this->instanceTable->findByIdAndAnr($id, $anr);
 
-        $this->updateInstanceParent($instance, $data);
+        $this->updateInstanceParentAndItsChildrenRoot($instance, $data);
 
         $this->updatePositions(
             $instance,
@@ -421,16 +421,32 @@ class AnrInstanceService
         }
     }
 
-    private function updateInstanceParent(Entity\Instance $instance, array $data): void
+    private function updateInstanceParentAndItsChildrenRoot(Entity\Instance $instance, array $data): void
     {
         if (!empty($data['parent']) && $instance->getParent()?->getId() !== $data['parent']) {
+            /* A new parent is set (or just set if it was empty). */
             /** @var Entity\Instance|null $parentInstance */
             $parentInstance = $this->instanceTable->findById((int)$data['parent'], false);
             if ($parentInstance !== null) {
+                /* Update children's root instance if changed. */
+                if ($parentInstance->getRoot()?->getId() !== $instance->getRoot()?->getId()) {
+                    $this->updateRootOfChildrenInstances($instance, $parentInstance->getRoot() ?? $parentInstance);
+                }
                 $instance->setParent($parentInstance)->setRoot($parentInstance->getRoot() ?? $parentInstance);
             }
         } elseif (empty($data['parent']) && $instance->hasParent()) {
+            /* Parent was set before, and now it set as empty (the instance becomes root). */
             $instance->setParent(null)->setRoot(null);
+            /* Set current instance as root for all its children. */
+            $this->updateRootOfChildrenInstances($instance, $instance);
+        }
+    }
+
+    private function updateRootOfChildrenInstances(Entity\Instance $instance, Entity\Instance $rootInstance): void
+    {
+        foreach ($instance->getChildren() as $childInstance) {
+            $this->instanceTable->save($childInstance->setRoot($rootInstance), false);
+            $this->updateRootOfChildrenInstances($childInstance, $rootInstance);
         }
     }
 }
