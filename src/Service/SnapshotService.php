@@ -75,7 +75,7 @@ class SnapshotService
     public function delete(Anr $anr, int $id): void
     {
         /** @var Snapshot $snapshot */
-        $snapshot = $this->snapshotTable->findByIdAndAnr($id, $anr);
+        $snapshot = $this->snapshotTable->findByIdAndAnrReference($id, $anr);
 
         $this->snapshotTable->remove($snapshot);
     }
