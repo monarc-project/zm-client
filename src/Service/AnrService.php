@@ -790,7 +790,7 @@ class AnrService
             $assets = $this->coreAssetTable->findByMode(CoreEntity\AssetSuperClass::MODE_GENERIC);
             /** @var CoreEntity\Anr $sourceAnr */
             if (!$sourceAnr->getModel()->isGeneric()) {
-                $assets = array_merge($assets, $sourceAnr->getModel()->getAssets());
+                $assets = array_merge($assets, $sourceAnr->getModel()->getAssets()->toArray());
             }
         } else {
             $assets = $this->assetTable->findByAnr($sourceAnr);
@@ -823,7 +823,7 @@ class AnrService
             $threats = $this->coreThreatTable->findByMode(CoreEntity\ThreatSuperClass::MODE_GENERIC);
             /** @var CoreEntity\Anr $sourceAnr */
             if (!$sourceAnr->getModel()->isGeneric()) {
-                $threats = array_merge($threats, $sourceAnr->getModel()->getThreats());
+                $threats = array_merge($threats, $sourceAnr->getModel()->getThreats()->toArray());
             }
         } else {
             $threats = $this->threatTable->findByAnr($sourceAnr);
@@ -874,7 +874,10 @@ class AnrService
             );
             /** @var CoreEntity\Anr $sourceAnr */
             if (!$sourceAnr->getModel()->isGeneric()) {
-                $vulnerabilities = array_merge($vulnerabilities, $sourceAnr->getModel()->getVulnerabilities());
+                $vulnerabilities = array_merge(
+                    $vulnerabilities,
+                    $sourceAnr->getModel()->getVulnerabilities()->toArray()
+                );
             }
         } else {
             $vulnerabilities = $this->vulnerabilityTable->findByAnr($sourceAnr);
