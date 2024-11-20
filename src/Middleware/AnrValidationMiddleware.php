@@ -74,7 +74,7 @@ class AnrValidationMiddleware implements MiddlewareInterface
             return $result;
         }
 
-        /* Ensure the record in the anr is presented in the table, means at least read permissions are allowed.
+        /* Ensure the record of the anr is presented in the table, means at least read permissions are allowed.
          * It's necessary e.g. for the "monarc_api_duplicate_client_anr" route. */
         $userAnr = $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser);
         if (($userAnr === null && !$anr->isAnrSnapshot())
@@ -128,8 +128,9 @@ class AnrValidationMiddleware implements MiddlewareInterface
         return $method === Request::METHOD_POST
             && ($routeName === 'monarc_api_global_client_anr/export' // export ANR
                 || $routeName === 'monarc_api_global_client_anr/instance_export' // export Instance
-                || $routeName === 'monarc_api_global_client_anr/objects_export' // export  Object
-                || $routeName === 'monarc_api_global_client_anr/deliverable' // generate a report
+                || $routeName === 'monarc_api_global_client_anr/objects_export' // export Object
+                || $routeName === 'monarc_api_global_client_anr/deliverable' // generate Report
+                || $routeName === 'monarc_api_duplicate_client_anr' // duplicate anr when read only access.
             );
     }
 
