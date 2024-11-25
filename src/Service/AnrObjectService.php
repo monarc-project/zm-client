@@ -236,7 +236,7 @@ class AnrObjectService
         $anrLanguage = $anr->getLanguage();
         $directParents = [];
         foreach ($object->getParentsLinks() as $parentLink) {
-            $directParents = [
+            $directParents[] = [
                 'uuid' => $parentLink->getParent()->getUuid(),
                 'linkid' => $parentLink->getId(),
                 'label' . $anrLanguage => $parentLink->getParent()->getLabel($anrLanguage),
