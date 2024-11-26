@@ -163,6 +163,9 @@ class AnrInstanceRiskService
                 ->setAsset($amv !== null ? $amv->getAsset() : $instance->getAsset())
                 ->setThreat($amv !== null ? $amv->getThreat() : $threat)
                 ->setVulnerability($amv !== null ? $amv->getVulnerability() : $vulnerability);
+            if ($amv === null) {
+                $instanceRisk->setSpecific(CoreEntity\InstanceRiskSuperClass::TYPE_SPECIFIC);
+            }
         } else {
             /* The evaluation values are only set when the object is created based on the other instance risk. */
             $this->recalculateRiskRates($instanceRisk);

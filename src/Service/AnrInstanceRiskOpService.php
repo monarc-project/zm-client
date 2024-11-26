@@ -245,6 +245,9 @@ class AnrInstanceRiskOpService
                 'riskCacheDescription4' => $rolfRisk->getDescription(4),
             ] : ['riskCacheDescription' . $anr->getLanguage() => $data['riskCacheDescription']])
             ->setCreator($this->connectedUser->getEmail());
+        if ($rolfRisk === null) {
+            $instanceRiskOp->setSpecific(CoreEntity\InstanceRiskOpSuperClass::TYPE_SPECIFIC);
+        }
 
         $this->instanceRiskOpTable->save($instanceRiskOp, false);
 
