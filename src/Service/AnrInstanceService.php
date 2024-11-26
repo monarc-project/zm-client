@@ -426,14 +426,18 @@ class AnrInstanceService
 
     private function updateInstanceParentAndItsChildrenRoot(Entity\Instance $instance, array $data): void
     {
-        if (!empty($data['parent']) && $instance->getParent()?->getId() !== $data['parent']) {
+        if (!empty($data['parent']) && (
+            $instance->getParent() === null || $instance->getParent()->getId() !== $data['parent']
+        )) {
             /* A new parent is set (or just set if it was empty). */
             /** @var Entity\Instance|null $parentInstance */
             $parentInstance = $this->instanceTable->findById((int)$data['parent'], false);
             if ($parentInstance !== null) {
                 /* Update children's root instance if changed. */
-                if ($parentInstance->getRoot()?->getId() !== $instance->getRoot()?->getId()) {
-                    $this->updateRootOfChildrenInstances($instance, $parentInstance->getRoot() ?? $parentInstance);
+                /** @var Entity\Instance $parentRoot */
+                $parentRoot = $parentInstance->getRootInstance();
+                if ($parentRoot->getId() !== $instance->getRootInstance()->getId()) {
+                    $this->updateRootOfChildrenInstances($instance, $parentRoot);
                 }
                 $instance->setParent($parentInstance)->setRoot($parentInstance->getRoot() ?? $parentInstance);
             }
