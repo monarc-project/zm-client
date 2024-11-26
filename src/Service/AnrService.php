@@ -1443,11 +1443,10 @@ class AnrService
             if ($sourceInstanceRisk instanceof Entity\InstanceRisk
                 && $sourceInstanceRisk->getInstanceRiskOwner() !== null
             ) {
-                /** @var Entity\Anr $sourceAnr */
-                $sourceAnr = $sourceInstance->getAnr();
                 $newInstanceRisk->setInstanceRiskOwner($this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
                     $newAnr,
                     $sourceInstanceRisk->getInstanceRiskOwner()->getName(),
+                    false
                 ));
             }
 
@@ -1482,11 +1481,10 @@ class AnrService
             if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp
                 && $sourceInstanceRiskOp->getInstanceRiskOwner() !== null
             ) {
-                /** @var Entity\Anr $sourceAnr */
-                $sourceAnr = $sourceInstance->getAnr();
                 $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
                     $newAnr,
                     $sourceInstanceRiskOp->getInstanceRiskOwner()->getName(),
+                    false
                 );
                 $newInstanceRiskOp->setInstanceRiskOwner($instanceRiskOwner);
             }
