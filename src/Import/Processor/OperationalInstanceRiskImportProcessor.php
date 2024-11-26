@@ -92,7 +92,8 @@ class OperationalInstanceRiskImportProcessor
             /** @var Entity\MonarcObject $object */
             $object = $instance->getObject();
             $operationalInstanceRisk = $this->anrInstanceRiskOpService
-                ->createInstanceRiskOpObject($instance, $object, $operationalRisk, $operationalInstanceRiskData);
+                ->createInstanceRiskOpObject($instance, $object, $operationalRisk, $operationalInstanceRiskData)
+                ->setSpecific($operationalInstanceRiskData['specific'] ?? 0);
             if ($this->importCacheHelper->getValueFromArrayCache('with_eval')) {
                 $operationalInstanceRisk
                     ->setBrutProb((int)$operationalInstanceRiskData['brutProb'])
