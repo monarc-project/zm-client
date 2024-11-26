@@ -214,7 +214,6 @@ class AnrInstanceRiskService
                             $anr = $instance->getAnr();
                             $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
                                 $anr,
-                                $anr,
                                 $instanceRiskData['riskOwner']
                             );
                             $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);

@@ -40,12 +40,12 @@ class InstanceRiskOwnerService
         return $instanceRiskOwner;
     }
 
-    public function getOrCreateInstanceRiskOwner(Anr $sourceAnr, Anr $anr, string $ownerName): InstanceRiskOwner
+    public function getOrCreateInstanceRiskOwner(Anr $anr, string $ownerName): InstanceRiskOwner
     {
         if (!isset($this->cachedData['isInstanceRiskOwnersCacheLoaded'])) {
             $this->cachedData['isInstanceRiskOwnersCacheLoaded'] = true;
             /** @var InstanceRiskOwner $instanceRiskOwner */
-            foreach ($this->instanceRiskOwnerTable->findByAnr($sourceAnr) as $instanceRiskOwner) {
+            foreach ($this->instanceRiskOwnerTable->findByAnr($anr) as $instanceRiskOwner) {
                 $this->cachedData['instanceRiskOwners'][$instanceRiskOwner->getName()] = $instanceRiskOwner;
             }
         }
@@ -63,7 +63,7 @@ class InstanceRiskOwnerService
         } else {
             /** @var Anr $anr */
             $anr = $instanceRisk->getAnr();
-            $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner($anr, $anr, $ownerName);
+            $instanceRiskOwner = $this->getOrCreateInstanceRiskOwner($anr, $ownerName);
             $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
         }
     }

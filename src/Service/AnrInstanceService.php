@@ -181,6 +181,9 @@ class AnrInstanceService
 
     public function patchInstance(Entity\Anr $anr, int $id, array $data): Entity\Instance
     {
+        if (!empty($data['root']) && $id === $data['root']) {
+            throw new Exception('Instance can not be a root of itself.', 412);
+        }
         if (!empty($data['parent']) && $id === $data['parent']) {
             throw new Exception('Instance can not be a parent of itself.', 412);
         }

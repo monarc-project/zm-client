@@ -1446,7 +1446,6 @@ class AnrService
                 /** @var Entity\Anr $sourceAnr */
                 $sourceAnr = $sourceInstance->getAnr();
                 $newInstanceRisk->setInstanceRiskOwner($this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
-                    $sourceAnr,
                     $newAnr,
                     $sourceInstanceRisk->getInstanceRiskOwner()->getName(),
                 ));
@@ -1486,7 +1485,6 @@ class AnrService
                 /** @var Entity\Anr $sourceAnr */
                 $sourceAnr = $sourceInstance->getAnr();
                 $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
-                    $sourceAnr,
                     $newAnr,
                     $sourceInstanceRiskOp->getInstanceRiskOwner()->getName(),
                 );
