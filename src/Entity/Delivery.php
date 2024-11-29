@@ -137,7 +137,7 @@ class Delivery
 
     public function getName(): string
     {
-        return $this->name;
+        return (string)$this->name;
     }
 
     public function setName(string $name): self
@@ -149,7 +149,7 @@ class Delivery
 
     public function getVersion(): string
     {
-        return $this->version;
+        return (string)$this->version;
     }
 
     public function setVersion(string $version): self
@@ -173,7 +173,7 @@ class Delivery
 
     public function getClassification(): string
     {
-        return $this->classification;
+        return (string)$this->classification;
     }
 
     public function setClassification(string $classification): self
@@ -185,7 +185,7 @@ class Delivery
 
     public function getRespCustomer(): string
     {
-        return $this->respCustomer;
+        return (string)$this->respCustomer;
     }
 
     public function setRespCustomer(string $respCustomer): self
@@ -197,7 +197,7 @@ class Delivery
 
     public function getResponsibleManager(): string
     {
-        return $this->responsibleManager;
+        return (string)$this->responsibleManager;
     }
 
     public function setResponsibleManager(string $responsibleManager): self
@@ -209,7 +209,7 @@ class Delivery
 
     public function getSummaryEvalRisk(): string
     {
-        return $this->summaryEvalRisk;
+        return (string)$this->summaryEvalRisk;
     }
 
     public function setSummaryEvalRisk(string $summaryEvalRisk): self

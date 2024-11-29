@@ -27,7 +27,7 @@ class RecordProcessor extends AbstractEntity
     use UpdateEntityTrait;
 
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
@@ -54,7 +54,7 @@ class RecordProcessor extends AbstractEntity
 
 
     /**
-     * @var array
+     * @var string
      *
      * @ORM\Column(name="contact", type="string", length=255, nullable=true)
      */
@@ -160,9 +160,9 @@ class RecordProcessor extends AbstractEntity
     /**
     * @return string
     */
-    public function getActivities()
+    public function getActivities(): string
     {
-        return $this->activities;
+        return (string)$this->activities;
     }
     /**
     * @param string $activities
@@ -177,9 +177,9 @@ class RecordProcessor extends AbstractEntity
     /**
     * @return string
     */
-    public function getSecMeasures()
+    public function getSecMeasures(): string
     {
-        return $this->secMeasures;
+        return (string)$this->secMeasures;
     }
     /**
     * @param string $secMeasures
@@ -188,6 +188,30 @@ class RecordProcessor extends AbstractEntity
     public function setSecMeasures($secMeasures)
     {
         $this->secMeasures = $secMeasures;
+        return $this;
+    }
+
+    public function getLabel(): string
+    {
+        return (string)$this->label;
+    }
+
+    public function setLabel($label): self
+    {
+        $this->label = $label;
+
+        return $this;
+    }
+
+    public function getContact(): string
+    {
+        return (string)$this->contact;
+    }
+
+    public function setContact($contact): self
+    {
+        $this->contact = $contact;
+
         return $this;
     }
 }

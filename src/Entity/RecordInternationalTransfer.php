@@ -96,11 +96,13 @@ class RecordInternationalTransfer extends AbstractEntity
 
     /**
      * @param int $id
+     *
      * @return Record
      */
     public function setId($id)
     {
         $this->id = $id;
+
         return $this;
     }
 
@@ -113,12 +115,14 @@ class RecordInternationalTransfer extends AbstractEntity
     }
 
     /**
-    * @param int $anr
-    * @return Record
-    */
+     * @param int $anr
+     *
+     * @return Record
+     */
     public function setAnr($anr)
     {
         $this->anr = $anr;
+
         return $this;
     }
 
@@ -131,12 +135,62 @@ class RecordInternationalTransfer extends AbstractEntity
     }
 
     /**
-    * @param int $record
-    * @return RecordInternationalTransfer
-    */
+     * @param int $record
+     *
+     * @return RecordInternationalTransfer
+     */
     public function setRecord($record)
     {
         $this->record = $record;
+
+        return $this;
+    }
+
+    public function getOrganisation(): string
+    {
+        return (string)$this->organisation;
+    }
+
+    public function setOrganisation($organisation): self
+    {
+        $this->organisation = $organisation;
+
+        return $this;
+    }
+
+    public function getDescription(): string
+    {
+        return (string)$this->description;
+    }
+
+    public function setDescription($description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getCountry(): string
+    {
+        return (string)$this->country;
+    }
+
+    public function setCountry($country): self
+    {
+        $this->country = $country;
+
+        return $this;
+    }
+
+    public function getDocuments(): string
+    {
+        return (string)$this->documents;
+    }
+
+    public function setDocuments($documents): self
+    {
+        $this->documents = $documents;
+
         return $this;
     }
 }

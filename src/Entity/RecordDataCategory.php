@@ -87,4 +87,16 @@ class RecordDataCategory extends AbstractEntity
         $this->anr = $anr;
         return $this;
     }
+
+    public function getLabel(): string
+    {
+        return (string)$this->label;
+    }
+
+    public function setLabel($label): self
+    {
+        $this->label = $label;
+
+        return $this;
+    }
 }

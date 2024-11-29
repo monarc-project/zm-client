@@ -283,6 +283,9 @@ class Record extends AbstractEntity
         return $this;
     }
 
+    /**
+     * @return RecordPersonalData[]
+     */
     public function getPersonalData()
     {
         return $this->personalData;
@@ -304,7 +307,7 @@ class Record extends AbstractEntity
     }
 
     /**
-     * @param int $internationalTransfers
+     * @param RecordInternationalTransfer[] $internationalTransfers
      * @return Record
      */
     public function setInternationalTransfers($internationalTransfers)

@@ -108,4 +108,28 @@ class RecordRecipient extends AbstractEntity
     {
         return (int)$this->type;
     }
+
+    public function getLabel(): string
+    {
+        return (string)$this->label;
+    }
+
+    public function setLabel($label): self
+    {
+        $this->label = $label;
+
+        return $this;
+    }
+
+    public function getDescription(): string
+    {
+        return (string)$this->description;
+    }
+
+    public function setDescription($description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
 }

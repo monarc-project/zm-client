@@ -7,7 +7,6 @@
 
 namespace Monarc\FrontOffice\Entity;
 
-use Doctrine\Common\Collections\Collection;
 use Monarc\Core\Entity\AbstractEntity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
@@ -30,7 +29,7 @@ class RecordPersonalData extends AbstractEntity
     use UpdateEntityTrait;
 
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
@@ -65,7 +64,7 @@ class RecordPersonalData extends AbstractEntity
     protected $dataSubject;
 
     /**
-     * @var Collection
+     * @var RecordDataCategory[]
      * @ORM\ManyToMany(targetEntity="RecordDataCategory", cascade={"persist"})
      * @ORM\JoinTable(name="record_personal_data_record_data_categories",
      *  joinColumns={@ORM\JoinColumn(name="personal_data_id", referencedColumnName="id")},
@@ -182,7 +181,7 @@ class RecordPersonalData extends AbstractEntity
     }
 
     /**
-     * @return RecordDataCategory
+     * @return RecordDataCategory[]
      */
     public function getDataCategories()
     {
@@ -196,6 +195,54 @@ class RecordPersonalData extends AbstractEntity
     public function setDataCategories($dataCategories)
     {
         $this->dataCategories = $dataCategories;
+        return $this;
+    }
+
+    public function getDescription(): string
+    {
+        return (string)$this->description;
+    }
+
+    public function setDescription($description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getRetentionPeriod(): int
+    {
+        return (int)$this->retentionPeriod;
+    }
+
+    public function setRetentionPeriod(int $retentionPeriod): self
+    {
+        $this->retentionPeriod = $retentionPeriod;
+
+        return $this;
+    }
+
+    public function getRetentionPeriodMode(): int
+    {
+        return (int)$this->retentionPeriodMode;
+    }
+
+    public function setRetentionPeriodMode($retentionPeriodMode): self
+    {
+        $this->retentionPeriodMode = $retentionPeriodMode;
+
+        return $this;
+    }
+
+    public function getRetentionPeriodDescription(): string
+    {
+        return (string)$this->retentionPeriodDescription;
+    }
+
+    public function setRetentionPeriodDescription($retentionPeriodDescription): self
+    {
+        $this->retentionPeriodDescription = $retentionPeriodDescription;
+
         return $this;
     }
 }
