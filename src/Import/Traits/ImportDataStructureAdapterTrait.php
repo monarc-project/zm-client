@@ -339,7 +339,9 @@ trait ImportDataStructureAdapterTrait
                         ];
                     }
                 }
-                $rolfRiskData['rolfTags'] = $rolfTagsData;
+                if (!empty($rolfRiskData)) {
+                    $rolfRiskData['rolfTags'] = $rolfTagsData;
+                }
             }
             $recommendationsData = [];
             if (!empty($data['recosop'][$operationalInstanceRiskData['id']])) {

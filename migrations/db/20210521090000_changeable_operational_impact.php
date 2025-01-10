@@ -1,8 +1,7 @@
 <?php
 
 use Monarc\FrontOffice\Entity\OperationalRiskScale;
-use Monarc\FrontOffice\Entity\OperationalRiskScaleComment;
-use Monarc\FrontOffice\Entity\Translation;
+use Monarc\Core\Entity\TranslationSuperClass;
 use Phinx\Migration\AbstractMigration;
 use Ramsey\Uuid\Uuid;
 
@@ -185,7 +184,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                 $operationalRiskScaleTypeId = $this->getAdapter()->getConnection()->lastInsertId();
                 $this->createTranslations(
                     $scaleData,
-                    Translation::OPERATIONAL_RISK_SCALE_TYPE,
+                    TranslationSuperClass::OPERATIONAL_RISK_SCALE_TYPE,
                     'label',
                     $labelTranslationKey
                 );
@@ -232,7 +231,7 @@ class ChangeableOperationalImpact extends AbstractMigration
                             'comment3' => $comments3[$valueKey] ?? '',
                             'comment4' => $comments4[$valueKey] ?? '',
                         ],
-                        Translation::OPERATIONAL_RISK_SCALE_COMMENT,
+                        TranslationSuperClass::OPERATIONAL_RISK_SCALE_COMMENT,
                         'comment',
                         $commentTranslationKey
                     );

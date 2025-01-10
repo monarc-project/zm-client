@@ -1,8 +1,6 @@
 <?php
 
 use Phinx\Migration\AbstractMigration;
-use Ramsey\Uuid\Uuid;
-use Monarc\Core\Entity\Translation;
 
 class FixIssueWithSpecificModel extends AbstractMigration
 {
@@ -39,6 +37,4 @@ class FixIssueWithSpecificModel extends AbstractMigration
         $this->execute('UPDATE vulnerabilities v SET v.mode = 0');
         $this->execute('UPDATE objects o SET o.mode = 0');
     }
-
-
 }

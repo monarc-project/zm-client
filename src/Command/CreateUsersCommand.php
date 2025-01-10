@@ -34,7 +34,13 @@ class CreateUsersCommand extends Command
                 'Users language number 1(fr), 2(en)[default], 3(de), 4(dutch)',
                 2
             )
-            ->addArgument('namesPrefix', InputArgument::OPTIONAL, 'Names prefix', 'user_');
+            ->addArgument('namesPrefix', InputArgument::OPTIONAL, 'Names prefix', 'user_')
+            ->addArgument(
+                'generate_password',
+                InputArgument::OPTIONAL,
+                'Generate stronger password or not (1 - yes, 0 - no)',
+                0
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -46,12 +52,15 @@ class CreateUsersCommand extends Command
         for ($userNum = 1; $userNum <= (int)$input->getArgument('numberOfUsers'); $userNum++) {
             $userNamePostfix = $userNum < 10 ? '0' . $userNum : $userNum;
             $usernamePrefix = $input->getArgument('namesPrefix') . $userNamePostfix;
+            $password = (int)$input->getArgument('language') === 0
+                ? $input->getArgument('password')
+                : substr(md5(uniqid(mt_rand(), true)), 8, 10);
 
             $user = new User([
                 'firstname' => 'First name ' . $userNum,
                 'lastname' => 'Last name ' . $userNum,
                 'email' => $usernamePrefix . '@monarc.lu',
-                'password' => $input->getArgument('password'),
+                'password' => $password,
                 'creator' => 'admin',
                 'language' => $usersLang,
                 'role' => [UserRole::USER_FO],
@@ -62,7 +71,8 @@ class CreateUsersCommand extends Command
             $output->writeln([
                 'FirstName: ' . $user->getFirstname(),
                 'LastName: ' . $user->getLastname(),
-                'Email: ' . $user->getEmail()
+                'Email: ' . $user->getEmail(),
+                'Password: ' . $password,
             ]);
         }
 
