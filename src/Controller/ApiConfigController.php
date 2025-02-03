@@ -19,13 +19,16 @@ class ApiConfigController extends AbstractRestfulController
 
     public function getList()
     {
+        $isExportDefaultWithEval = $this->configService->getConfigOption('export', [])['defaultWithEval'] ?? false;
+
         return new JsonModel(array_merge(
             $this->configService->getLanguage(),
             $this->configService->getAppVersion(),
             $this->configService->getCheckVersion(),
             $this->configService->getAppCheckingURL(),
             $this->configService->getMospApiUrl(),
-            $this->configService->getTerms()
+            $this->configService->getTerms(),
+            ['isExportDefaultWithEval' => $isExportDefaultWithEval],
         ));
     }
 }
