@@ -161,6 +161,7 @@ class AnrObjectService
             $object = $this->create($anr, $objectData, false);
             $createdObjectsUuids[] = $object->getUuid();
         }
+        $this->monarcObjectTable->flush();
 
         return $createdObjectsUuids;
     }

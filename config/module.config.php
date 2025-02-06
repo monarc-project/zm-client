@@ -45,6 +45,16 @@ if (!empty($appConfigDir)) {
 return [
     'router' => [
         'routes' => [
+            'captcha' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/captcha',
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(Controller\ApiCaptchaController::class),
+                    ],
+                ],
+            ],
             'monarc_api_admin_users_roles' => [
                 'type' => 'segment',
                 'options' => [
@@ -1475,6 +1485,7 @@ return [
             DeprecatedTable\RecordTable::class => AutowireFactory::class,
             DeprecatedTable\QuestionTable::class => AutowireFactory::class,
             DeprecatedTable\QuestionChoiceTable::class => AutowireFactory::class,
+            Table\ActionHistoryTable::class => ClientEntityManagerFactory::class,
             Table\AnrTable::class => ClientEntityManagerFactory::class,
             Table\AnrInstanceMetadataFieldTable::class => ClientEntityManagerFactory::class,
             Table\AmvTable::class => ClientEntityManagerFactory::class,
@@ -1613,7 +1624,8 @@ return [
             AdapterAuthentication::class => static function (ContainerInterface $container) {
                 return new AdapterAuthentication(
                     $container->get(Table\UserTable::class),
-                    $container->get(ConfigService::class)
+                    $container->get(ConfigService::class),
+                    $container->get(Service\ActionHistoryService::class),
                 );
             },
             ConnectedUserService::class => static function (ContainerInterface $container) {
@@ -1793,6 +1805,9 @@ return [
         'router' => [
             'routes' => [],
         ],
+    ],
+    'permissions' => [
+        'captcha',
     ],
     'roles' => [
         // Super Admin : Management of users (and guides, models, referentials, etc.)
