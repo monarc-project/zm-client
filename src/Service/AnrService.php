@@ -798,16 +798,18 @@ class AnrService
 
         foreach ($assets as $asset) {
             $assetUuid = $asset->getUuid();
-            $assetsOldIdsToNewObjects[$assetUuid] = $this->anrAssetService->create(
-                $newAnr,
-                array_merge([
-                    'uuid' => $assetUuid,
-                    'code' => $asset->getCode(),
-                    'type' => $asset->getType(),
-                    'status' => $asset->getStatus(),
-                ], $asset->getLabels(), $asset->getDescriptions()),
-                false
-            );
+            if (!isset($assetsOldIdsToNewObjects[$assetUuid])) {
+                $assetsOldIdsToNewObjects[$assetUuid] = $this->anrAssetService->create(
+                    $newAnr,
+                    array_merge([
+                        'uuid' => $assetUuid,
+                        'code' => $asset->getCode(),
+                        'type' => $asset->getType(),
+                        'status' => $asset->getStatus(),
+                    ], $asset->getLabels(), $asset->getDescriptions()),
+                    false
+                );
+            }
         }
 
         return $assetsOldIdsToNewObjects;
@@ -831,6 +833,10 @@ class AnrService
 
         $themesOldIdsToNewObjects = [];
         foreach ($threats as $threat) {
+            $threatUuid = $threat->getUuid();
+            if (isset($threatsOldIdsToNewObjects[$threatUuid])) {
+                continue;
+            }
             if ($threat->getTheme() !== null && !isset($themesOldIdsToNewObjects[$threat->getTheme()->getId()])) {
                 $themesOldIdsToNewObjects[$threat->getTheme()->getId()] = $this->anrThemeService->create(
                     $newAnr,
@@ -838,7 +844,6 @@ class AnrService
                     false
                 );
             }
-            $threatUuid = $threat->getUuid();
             $threatsOldIdsToNewObjects[$threatUuid] = $this->anrThreatService->create(
                 $newAnr,
                 array_merge([
@@ -885,15 +890,17 @@ class AnrService
 
         foreach ($vulnerabilities as $vulnerability) {
             $vulnerabilityUuid = $vulnerability->getUuid();
-            $vulnerabilitiesOldIdsToNewObjects[$vulnerabilityUuid] = $this->anrVulnerabilityService->create(
-                $newAnr,
-                array_merge([
-                    'uuid' => $vulnerabilityUuid,
-                    'code' => $vulnerability->getCode(),
-                    'status' => $vulnerability->getStatus(),
-                ], $vulnerability->getLabels(), $vulnerability->getDescriptions()),
-                false
-            );
+            if (!isset($vulnerabilitiesOldIdsToNewObjects[$vulnerabilityUuid])) {
+                $vulnerabilitiesOldIdsToNewObjects[$vulnerabilityUuid] = $this->anrVulnerabilityService->create(
+                    $newAnr,
+                    array_merge([
+                        'uuid' => $vulnerabilityUuid,
+                        'code' => $vulnerability->getCode(),
+                        'status' => $vulnerability->getStatus(),
+                    ], $vulnerability->getLabels(), $vulnerability->getDescriptions()),
+                    false
+                );
+            }
         }
 
         return $vulnerabilitiesOldIdsToNewObjects;

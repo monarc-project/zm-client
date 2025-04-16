@@ -80,11 +80,15 @@ class StatsAnrService
 
     public function isStatsAvailable(): bool
     {
+        if ($this->connectedUser === null || !$this->connectedUser->hasRole(UserRole::USER_ROLE_CEO)) {
+            return false;
+        }
+
         if ($this->apiKey === '') {
             return false;
         }
 
-        if (!$this->connectedUser?->hasRole(UserRole::USER_ROLE_CEO)) {
+        if (!$this->connectedUser->hasRole(UserRole::USER_ROLE_CEO)) {
             $anrUuids = $this->getAvailableUserAnrsUuids();
             if (empty($anrUuids)) {
                 return false;

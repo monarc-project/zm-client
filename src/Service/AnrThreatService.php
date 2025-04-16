@@ -241,7 +241,9 @@ class AnrThreatService
     private function validateCia(Threat $threat): void
     {
         if ($threat->getConfidentiality() === 0 && $threat->getAvailability() === 0 && $threat->getIntegrity() === 0) {
-            throw new \Exception();
+            throw new \Exception(
+                \sprintf('One of the CIA criteria is required to be set for the threat "%s".', $threat->getUuid())
+            );
         }
     }
 }
