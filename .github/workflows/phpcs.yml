@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -41,7 +41,7 @@ jobs:
     # We need to run to validate only files' changes.
     - name: Get changed files using a comma separator
       id: changed-files-comma
-      uses: tj-actions/changed-files@v41
+      uses: tj-actions/changed-files@v46
       with:
         separator: " "
         files: |
