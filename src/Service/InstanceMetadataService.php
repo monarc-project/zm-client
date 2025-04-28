@@ -88,7 +88,7 @@ class InstanceMetadataService
     public function update(Entity\Anr $anr, int $id, array $data): Entity\InstanceMetadata
     {
         /** @var Entity\InstanceMetadata $instanceMetadata */
-        $instanceMetadata = $this->instanceMetadataTable->findByIdAndAnr($id, $anr);
+        $instanceMetadata = $this->instanceMetadataTable->findById($id);
 
         $commentValue = $data[$anr->getLanguageCode()] ?? '';
         $instanceMetadata->setComment($commentValue)
