@@ -433,6 +433,10 @@ class AnrInstanceService
             /** @var Entity\Instance|null $parentInstance */
             $parentInstance = $this->instanceTable->findById((int)$data['parent'], false);
             if ($parentInstance !== null) {
+                /* Validate if parent is not a child of this instance. */
+                if ($parentInstance->isInstanceOneOfParents($instance)) {
+                    throw new Exception('The parent instance or one of its parents is a child of the instance.', 412);
+                }
                 /* Update children's root instance if changed. */
                 /** @var Entity\Instance $parentRoot */
                 $parentRoot = $parentInstance->getRootInstance();
