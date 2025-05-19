@@ -51,7 +51,11 @@ class ApiAnrRolfRisksController extends AbstractRestfulControllerRequestHandler
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
         $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postRolfRiskDataInputValidator, $data, $isBatchData);
+        $this->validatePostParams(
+            $this->postRolfRiskDataInputValidator->setIncludeFilter(['anr' => $anr]),
+            $data,
+            $isBatchData
+        );
 
         if ($this->isBatchData($data)) {
             return $this->getSuccessfulJsonResponse([

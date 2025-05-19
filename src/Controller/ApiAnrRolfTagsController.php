@@ -48,7 +48,11 @@ class ApiAnrRolfTagsController extends AbstractRestfulControllerRequestHandler
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
         $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postRolfTagDataInputValidator, $data, $isBatchData);
+        $this->validatePostParams(
+            $this->postRolfTagDataInputValidator->setIncludeFilter(['anr' => $anr]),
+            $data,
+            $isBatchData
+        );
 
         if ($this->isBatchData($data)) {
             return $this->getSuccessfulJsonResponse([

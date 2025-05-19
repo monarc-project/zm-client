@@ -50,11 +50,14 @@ class ApiAnrMeasuresController extends AbstractRestfulControllerRequestHandler
 
     public function create($data)
     {
-        $isBatchData = $this->isBatchData($data);
-        $this->validatePostParams($this->postMeasureDataInputValidator, $data, $isBatchData);
-
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+        $isBatchData = $this->isBatchData($data);
+        $this->validatePostParams(
+            $this->postMeasureDataInputValidator->setIncludeFilter(['anr' => $anr]),
+            $data,
+            $isBatchData
+        );
 
         if ($this->isBatchData($data)) {
             return $this->getSuccessfulJsonResponse([
@@ -75,10 +78,14 @@ class ApiAnrMeasuresController extends AbstractRestfulControllerRequestHandler
      */
     public function update($id, $data)
     {
-        $this->validatePostParams($this->updateMeasureDataInputValidator->setExcludeFilter(['uuid' => $id]), $data);
-
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+        $this->validatePostParams(
+            $this->updateMeasureDataInputValidator
+                ->setIncludeFilter(['anr' => $anr])
+                ->setExcludeFilter(['uuid' => $id]),
+            $data
+        );
 
         $this->anrMeasureService->update($anr, $id, $this->updateMeasureDataInputValidator->getValidData());
 
