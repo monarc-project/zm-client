@@ -10,8 +10,8 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\InputFormatter\Measure\GetMeasuresInputFormatter;
-use Monarc\Core\Validator\InputValidator\Measure\PostMeasureDataInputValidator;
-use Monarc\Core\Validator\InputValidator\Measure\UpdateMeasureDataInputValidator;
+use Monarc\FrontOffice\Validator\InputValidator\Measure\PostMeasureDataInputValidator;
+use Monarc\FrontOffice\Validator\InputValidator\Measure\UpdateMeasureDataInputValidator;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrMeasureService;
 

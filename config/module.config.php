@@ -1724,19 +1724,19 @@ return [
                     $container->get(Table\RolfTagTable::class)
                 );
             },
-            CoreInputValidator\Measure\PostMeasureDataInputValidator::class => static function (
+            InputValidator\Measure\PostMeasureDataInputValidator::class => static function (
                 Containerinterface $container
             ) {
-                return new CoreInputValidator\Measure\PostMeasureDataInputValidator(
+                return new InputValidator\Measure\PostMeasureDataInputValidator(
                     $container->get('config'),
                     $container->get(CoreInputValidator\InputValidationTranslator::class),
                     $container->get(Table\MeasureTable::class)
                 );
             },
-            CoreInputValidator\Measure\UpdateMeasureDataInputValidator::class => static function (
+            InputValidator\Measure\UpdateMeasureDataInputValidator::class => static function (
                 Containerinterface $container
             ) {
-                return new CoreInputValidator\Measure\UpdateMeasureDataInputValidator(
+                return new InputValidator\Measure\UpdateMeasureDataInputValidator(
                     $container->get('config'),
                     $container->get(CoreInputValidator\InputValidationTranslator::class),
                     $container->get(Table\MeasureTable::class)
