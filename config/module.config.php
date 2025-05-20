@@ -1724,6 +1724,24 @@ return [
                     $container->get(Table\RolfTagTable::class)
                 );
             },
+            CoreInputValidator\Measure\PostMeasureDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new CoreInputValidator\Measure\PostMeasureDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\MeasureTable::class)
+                );
+            },
+            CoreInputValidator\Measure\UpdateMeasureDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new CoreInputValidator\Measure\UpdateMeasureDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\MeasureTable::class)
+                );
+            },
 
             // Commands
             Import\Command\ImportAnalysesCommand::class => static function (ContainerInterface $container) {
