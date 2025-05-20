@@ -9,11 +9,15 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
+use Monarc\Core\Table\Interfaces\UniqueCodeTableInterface;
+use Monarc\Core\Table\Traits\CodeExistenceValidationTableTrait;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\Measure;
 
-class MeasureTable extends AbstractTable
+class MeasureTable extends AbstractTable implements UniqueCodeTableInterface
 {
+    use CodeExistenceValidationTableTrait;
+
     public function __construct(EntityManager $entityManager, string $entityName = Measure::class)
     {
         parent::__construct($entityManager, $entityName);
