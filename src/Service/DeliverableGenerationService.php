@@ -3909,7 +3909,7 @@ class DeliverableGenerationService
                     PhpWord\Shared\Converter::cmToTwip($sizeColumn),
                     $this->vAlignCenterCell
                 )->addText(
-                    $translationComment !== null ? _WT($translationComment->getValue()) : '',
+                    $translationComment !== null ? _WT($translationComment) : '',
                     $this->normalFont,
                     $this->leftParagraph
                 );
