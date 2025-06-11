@@ -3842,7 +3842,7 @@ class DeliverableGenerationService
         $anrMetadataFields = $this->anrInstanceMetadataFieldTable->findByAnr($this->anr);
         $metadataFieldsHeaders = [];
         foreach ($anrMetadataFields as $anrMetadataField) {
-            $metadataFieldsHeaders[] = $anrMetadataField->getLabel();
+            $metadataFieldsHeaders[$anrMetadataField->getId()] = $anrMetadataField->getLabel();
         }
         if (empty($metadataFieldsHeaders)) {
             return null;
@@ -3859,10 +3859,12 @@ class DeliverableGenerationService
         $instances = $this->instanceTable->findByAnr($this->anr);
         foreach ($instances as $instance) {
             $assetUuid = $instance->getAsset()->getUuid();
-            if (in_array($assetUuid, $assetUuids, true)) {
+            $instanceMetadata = $instance->getInstanceMetadata();
+            if (in_array($assetUuid, $assetUuids, true) || $instanceMetadata->isEmpty()) {
                 continue;
             }
             $assetUuids[] = $assetUuid;
+
             $typeAsset = $instance->getAsset()->isPrimary() ? 'PrimaryAssets' : 'SecondaryAssets';
             $assetLabel = $instance->getName($this->currentLangAnrIndex);
             if ($instance->getObject()->isScopeGlobal()) {
@@ -3888,35 +3890,21 @@ class DeliverableGenerationService
             ${'table' . $typeAsset}->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
                 ->addText(_WT($assetLabel), $this->normalFont, $this->leftParagraph);
 
-            $instanceMetadata = $instance->getInstanceMetadata();
-            foreach ($anrMetadataFields as $anrMetadataField) {
-                if (!$instanceMetadata->isEmpty()) {
-                    /** @var Entity\InstanceMetadata[] $metadataFiltered */
-                    $metadataFiltered = array_filter(
-                        $instanceMetadata->toArray(),
-                        static function ($im) use ($anrMetadataField) {
-                            /** @var Entity\InstanceMetadata $im */
-                            return $anrMetadataField->getId() === $im->getAnrInstanceMetadataField()->getId();
-                        }
-                    );
+            foreach ($metadataFieldsHeaders as $fieldId => $fieldLabel) {
+                $instanceContext = '';
+                foreach ($instanceMetadata as $instanceMetadataRow) {
+                    if ($instanceMetadataRow->getAnrInstanceMetadataField()->getId() === $fieldId) {
+                        $instanceContext = $instanceMetadataRow->getComment();
+                    }
                 }
-                $translationComment = null;
-                if (!empty($metadataFiltered)) {
-                    $translationComment = reset($metadataFiltered)->getComment();
-                }
-
                 ${'table' . $typeAsset}->addCell(
                     PhpWord\Shared\Converter::cmToTwip($sizeColumn),
                     $this->vAlignCenterCell
-                )->addText(
-                    $translationComment !== null ? _WT($translationComment) : '',
-                    $this->normalFont,
-                    $this->leftParagraph
-                );
+                )->addText(_WT($instanceContext), $this->normalFont, $this->leftParagraph);
             }
         }
 
-        return $this->getWordXmlFromWordObject($tableWord);
+        return empty($assetUuids) ? null : $this->getWordXmlFromWordObject($tableWord);
     }
 
     /**
