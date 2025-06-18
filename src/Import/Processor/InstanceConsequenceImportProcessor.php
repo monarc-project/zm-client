@@ -78,9 +78,8 @@ class InstanceConsequenceImportProcessor
         return $this->anrInstanceConsequenceService->createInstanceConsequence(
             $instance,
             $scaleImpactType,
-            (bool)$instanceConsequenceData['isHidden'],
-            $instanceConsequenceData,
-            false
+            $instanceConsequenceData['isHidden'] || $scaleImpactType->isHidden(),
+            $instanceConsequenceData
         );
     }
 
