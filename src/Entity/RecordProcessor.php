@@ -115,7 +115,7 @@ class RecordProcessor extends AbstractEntity
     }
 
     /**
-    * @param int $anr
+    * @param int|Anr $anr
     * @return RecordProcessor
     */
     public function setAnr($anr)

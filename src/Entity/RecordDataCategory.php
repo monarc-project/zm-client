@@ -79,7 +79,7 @@ class RecordDataCategory extends AbstractEntity
     }
 
     /**
-    * @param int $anr
+    * @param int|Anr $anr
     * @return Record
     */
     public function setAnr($anr)

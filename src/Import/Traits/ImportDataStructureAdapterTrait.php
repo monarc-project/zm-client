@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Import\Traits;
 
+use Monarc\Core\Entity\AmvSuperClass;
 use Monarc\Core\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Entity\ScaleSuperClass;
 
@@ -128,7 +129,7 @@ trait ImportDataStructureAdapterTrait
                 'threat' => $threatData,
                 'vulnerability' => $data['asset']['vuls'][$amvData['vulnerability']],
                 'measures' => $measuresData,
-                'status' => $amvData['status'],
+                'status' => $amvData['status'] ?? AmvSuperClass::STATUS_ACTIVE,
             ];
         }
         $newStructure['object']['rolfTag'] = null;
@@ -180,8 +181,12 @@ trait ImportDataStructureAdapterTrait
         $newCategoryStructure = [];
         if (isset($data['object']['category'], $data['categories'][$data['object']['category']])) {
             $newCategoryStructure = $data['categories'][$data['object']['category']];
-            $newCategoryStructure['parent'] = $this
-                ->prepareNewStructureOfParentsHierarchy($data['categories'], (int)$newCategoryStructure['parent']);
+            $newCategoryStructure['parent'] = empty($newCategoryStructure['parent'])
+                ? null
+                : $this->prepareNewStructureOfParentsHierarchy(
+                    $data['categories'],
+                    (int)$newCategoryStructure['parent']
+                );
         }
 
         return $newCategoryStructure;

@@ -1595,6 +1595,7 @@ class AnrService
     private function duplicateRopa(Entity\Anr $sourceAnr, Entity\Anr $newAnr): void
     {
         /* Recreate record actors. */
+        /** @var Entity\RecordActor[] $recordActors */
         $recordActors = $this->recordActorTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
         $actorNewIds = [];
         foreach ($recordActors as $a) {
@@ -1602,42 +1603,41 @@ class AnrService
             $newActor->set('id', null);
             $newActor->setAnr($newAnr);
             $this->recordActorTable->save($newActor, false);
-            $actorNewIds[$a->id] = $newActor;
+            $actorNewIds[$a->getId()] = $newActor;
         }
 
         /* Recreate record data categories. */
+        /** @var Entity\RecordDataCategory[] $recordDataCategories */
         $recordDataCategories = $this->recordDataCategoryTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
         $dataCategoryNewIds = [];
         foreach ($recordDataCategories as $dc) {
             $newDataCategory = new Entity\RecordDataCategory($dc);
             $newDataCategory->set('id', null);
             $newDataCategory->setAnr($newAnr);
-            $this->recordDataCategoryTable->save($newDataCategory, true);
-            $dataCategoryNewIds[$dc->id] = $newDataCategory;
+            $this->recordDataCategoryTable->save($newDataCategory, false);
+            $dataCategoryNewIds[$dc->getId()] = $newDataCategory;
         }
 
         /* Recreate record processors. */
+        /** @var Entity\RecordProcessor[] $recordProcessors */
         $recordProcessors = $this->recordProcessorTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
         $processorNewIds = [];
         foreach ($recordProcessors as $p) {
             $newProcessor = new Entity\RecordProcessor($p);
             $newProcessor->set('id', null);
             $newProcessor->setAnr($newAnr);
-            $activities = [];
-            $newProcessor->setActivities($activities);
-            $secMeasures = [];
-            $newProcessor->setSecMeasures($secMeasures);
-            if ($p->representative != null) {
-                $newProcessor->setRepresentative($actorNewIds[$p->representative->id]);
+            if ($p->getRepresentative() !== null) {
+                $newProcessor->setRepresentative($actorNewIds[$p->getRepresentative()->getId()]);
             }
-            if ($p->dpo != null) {
-                $newProcessor->setDpo($actorNewIds[$p->dpo->id]);
+            if ($p->getDpo() !== null) {
+                $newProcessor->setDpo($actorNewIds[$p->getDpo()->getId()]);
             }
             $this->recordProcessorTable->save($newProcessor, false);
-            $processorNewIds[$p->id] = $newProcessor;
+            $processorNewIds[$p->getId()] = $newProcessor;
         }
 
         /* Recreate record recipients. */
+        /** @var Entity\RecordRecipient[] $recordRecipients */
         $recordRecipients = $this->recordRecipientTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
         $recipientNewIds = [];
         foreach ($recordRecipients as $r) {
@@ -1645,88 +1645,78 @@ class AnrService
             $newRecipient->set('id', null);
             $newRecipient->setAnr($newAnr);
             $this->recordRecipientTable->save($newRecipient, false);
-            $recipientNewIds[$r->id] = $newRecipient;
+            $recipientNewIds[$r->getId()] = $newRecipient;
         }
 
         /* Recreate record. */
+        /** @var Entity\Record[] $records */
         $records = $this->recordTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
         $recordNewIds = [];
         foreach ($records as $record) {
             $newRecord = new Entity\Record($record);
             $newRecord->set('id', null);
             $newRecord->setAnr($newAnr);
-            if ($record->controller != null) {
-                $newRecord->setController($actorNewIds[$record->controller->id]);
+            if ($record->getController() !== null) {
+                $newRecord->setController($actorNewIds[$record->getController()->getId()]);
             }
-            if ($record->representative != null) {
-                $newRecord->setRepresentative($actorNewIds[$record->representative->id]);
+            if ($record->getRepresentative() !== null) {
+                $newRecord->setRepresentative($actorNewIds[$record->getRepresentative()->getId()]);
             }
-            if ($record->dpo != null) {
-                $newRecord->setDpo($actorNewIds[$record->dpo->id]);
+            if ($record->getDpo() !== null) {
+                $newRecord->setDpo($actorNewIds[$record->getDpo()->getId()]);
             }
 
             $jointControllerNewIds = [];
             $jointControllers = $record->getJointControllers();
             foreach ($jointControllers as $jc) {
-                $jointControllerNewIds[] = $actorNewIds[$jc->id];
+                $jointControllerNewIds[] = $actorNewIds[$jc->getId()];
             }
             $newRecord->setJointControllers($jointControllerNewIds);
 
             $processorIds = [];
             $processors = $record->getProcessors();
             foreach ($processors as $p) {
-                $processorIds[] = $processorNewIds[$p->id];
+                $processorIds[$p->getId()] = $processorNewIds[$p->getId()];
             }
             $newRecord->setProcessors($processorIds);
 
             $recipientIds = [];
             $recipients = $record->getRecipients();
             foreach ($recipients as $r) {
-                $recipientIds[$r->id] = $recipientNewIds[$r->id];
+                $recipientIds[$r->getId()] = $recipientNewIds[$r->getId()];
             }
             $newRecord->setRecipients($recipientIds);
 
             $this->recordTable->save($newRecord, false);
-            $recordNewIds[$record->id] = $newRecord;
-        }
-
-        foreach ($recordProcessors as $p) {
-            $data = [];
-            $activities = $p->getActivities();
-            foreach ($activities as $recordId => $value) {
-                $data["activities"][$recordNewIds[$recordId]->getId()] = $value;
-            }
-            $secMeasures = $p->getSecMeasures();
-            foreach ($secMeasures as $recordId => $value) {
-                $data["secMeasures"][$recordNewIds[$recordId]->getId()] = $value;
-            }
-            $this->anrRecordProcessorService->patch($processorNewIds[$p->id]->getId(), $data);
+            $recordNewIds[$record->getId()] = $newRecord;
         }
 
         //duplicate record personal data
+        /** @var Entity\RecordPersonalData[] $recordPersonalData */
         $recordPersonalData = $this->recordPersonalDataTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
         foreach ($recordPersonalData as $pd) {
             $newPersonalData = new Entity\RecordPersonalData($pd);
             $newPersonalData->set('id', null);
             $newPersonalData->setAnr($newAnr);
-            $newPersonalData->setRecord($recordNewIds[$pd->record->id]);
+            $newPersonalData->setRecord($recordNewIds[$pd->getRecord()->getId()]);
             $newDataCategoryIds = [];
             $dataCategories = $pd->getDataCategories();
             foreach ($dataCategories as $dc) {
-                $newDataCategoryIds[] = $dataCategoryNewIds[$dc->id];
+                $newDataCategoryIds[] = $dataCategoryNewIds[$dc->getId()];
             }
             $newPersonalData->setDataCategories($newDataCategoryIds);
             $this->recordPersonalDataTable->save($newPersonalData, false);
         }
 
         /* Recreate record international transfers. */
+        /** @var Entity\RecordInternationalTransfer[] $recordInternationalTransfers */
         $recordInternationalTransfers = $this->recordInternationalTransferTable
             ->getEntityByFields(['anr' => $sourceAnr->getId()]);
         foreach ($recordInternationalTransfers as $it) {
             $newInternationalTransfer = new Entity\RecordInternationalTransfer($it);
             $newInternationalTransfer->set('id', null);
             $newInternationalTransfer->setAnr($newAnr);
-            $newInternationalTransfer->setRecord($recordNewIds[$it->record->id]);
+            $newInternationalTransfer->setRecord($recordNewIds[$it->getRecord()->getId()]);
             $this->recordInternationalTransferTable->save($newInternationalTransfer, false);
         }
     }

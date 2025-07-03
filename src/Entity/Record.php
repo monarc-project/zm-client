@@ -169,7 +169,7 @@ class Record extends AbstractEntity
     }
 
     /**
-     * @param int $anr
+     * @param int|Anr $anr
      * @return Record
      */
     public function setAnr($anr)
@@ -225,7 +225,7 @@ class Record extends AbstractEntity
     }
 
     /**
-     * @param int $controller
+     * @param int|RecordActor $controller
      * @return Record
      */
     public function setController($controller)
