@@ -62,7 +62,7 @@ class AnrMeasureService
 
         $measure = $this->createMeasureObject($anr, $referential, $soaCategory, $data, $saveInDb);
 
-        $this->soaService->createSoaObject($anr, $measure);
+        $this->soaService->createSoaObject($anr, $measure, [], $saveInDb);
 
         return $measure;
     }

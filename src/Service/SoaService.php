@@ -104,12 +104,16 @@ class SoaService
         return $this->soaTable->countByParams($params);
     }
 
-    public function createSoaObject(Entity\Anr $anr, Entity\Measure $measure, array $data = []): Entity\Soa
-    {
+    public function createSoaObject(
+        Entity\Anr $anr,
+        Entity\Measure $measure,
+        array $data = [],
+        bool $saveInDb = false
+    ): Entity\Soa {
         $soa = (new Entity\Soa())->setAnr($anr)->setMeasure($measure);
         $this->setSoaData($anr, $soa, $data);
 
-        $this->soaTable->save($soa, false);
+        $this->soaTable->save($soa, $saveInDb);
 
         return $soa;
     }
