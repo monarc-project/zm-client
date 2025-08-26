@@ -202,9 +202,9 @@ class OperationalInstanceRiskImportProcessor
                         $scalesValueData = $operationalInstanceRiskData['operationalInstanceRiskScales'][
                             $externalScaleTypeId
                         ];
-                        $operationalInstanceRiskScale->setBrutValue($scalesValueData['brutValue']);
-                        $operationalInstanceRiskScale->setNetValue($scalesValueData['netValue']);
-                        $operationalInstanceRiskScale->setTargetedValue($scalesValueData['targetedValue']);
+                        $operationalInstanceRiskScale->setBrutValue((int)$scalesValueData['brutValue']);
+                        $operationalInstanceRiskScale->setNetValue((int)$scalesValueData['netValue']);
+                        $operationalInstanceRiskScale->setTargetedValue((int)$scalesValueData['targetedValue']);
                         if ($areImpactScaleTypesValuesDifferent) {
                             /* We convert from the importing new scales to the current anr scales. */
                             $this->operationalRiskScaleImportProcessor->adjustOperationalInstanceRisksScales(
@@ -217,7 +217,7 @@ class OperationalInstanceRiskImportProcessor
                     /* The format before v2.11.0. Update only first 5 scales (ROLFP if not changed by user). */
                 } elseif ($index < 5) {
                     foreach (static::$oldInstanceRiskFieldsMapToScaleTypesFields[$index] as $oldFiled => $typeField) {
-                        $operationalInstanceRiskScale->{'set' . $typeField}($operationalInstanceRiskData[$oldFiled]);
+                        $operationalInstanceRiskScale->{'set' . $typeField}((int)$operationalInstanceRiskData[$oldFiled]);
                     }
                     if ($areImpactScaleTypesValuesDifferent) {
                         /* We convert from the importing new scales to the current anr scales. */
