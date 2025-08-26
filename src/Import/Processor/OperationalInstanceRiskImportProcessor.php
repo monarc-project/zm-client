@@ -66,7 +66,7 @@ class OperationalInstanceRiskImportProcessor
         if ($withEval && $isImportTypeInstance) {
             $externalOperationalRiskScalesData = $this->operationalRiskScaleImportProcessor
                 ->getExternalOperationalRiskScalesData($anr, []);
-            if ($externalOperationalRiskScalesData === null) {
+            if (empty($externalOperationalRiskScalesData)) {
                 throw new Exception('The scales have to be prepared before the process of the operational risks.', 412);
             }
             $areScalesLevelsOfLikelihoodDifferent = $this->areLikelihoodScalesLevelsOfTypeDifferent(

@@ -92,15 +92,15 @@ class InstanceRiskImportProcessor
             }
 
             $instanceRisk
-                ->setRiskConfidentiality($instanceRiskData['riskConfidentiality'])
-                ->setRiskIntegrity($instanceRiskData['riskIntegrity'])
-                ->setRiskAvailability($instanceRiskData['riskAvailability'])
-                ->setThreatRate($instanceRiskData['threatRate'])
-                ->setVulnerabilityRate($instanceRiskData['vulnerabilityRate'])
-                ->setReductionAmount($instanceRiskData['reductionAmount'])
-                ->setCacheMaxRisk($instanceRiskData['cacheMaxRisk'])
-                ->setCacheTargetedRisk($instanceRiskData['cacheTargetedRisk'])
-                ->setKindOfMeasure($instanceRiskData['kindOfMeasure'])
+                ->setRiskConfidentiality((int)$instanceRiskData['riskConfidentiality'])
+                ->setRiskIntegrity((int)$instanceRiskData['riskIntegrity'])
+                ->setRiskAvailability((int)$instanceRiskData['riskAvailability'])
+                ->setThreatRate((int)$instanceRiskData['threatRate'])
+                ->setVulnerabilityRate((int)$instanceRiskData['vulnerabilityRate'])
+                ->setReductionAmount((int)$instanceRiskData['reductionAmount'])
+                ->setCacheMaxRisk((int)$instanceRiskData['cacheMaxRisk'])
+                ->setCacheTargetedRisk((int)$instanceRiskData['cacheTargetedRisk'])
+                ->setKindOfMeasure((int)$instanceRiskData['kindOfMeasure'])
                 ->setComment($instanceRiskData['comment'] ?? '')
                 ->setCommentAfter($instanceRiskData['commentAfter'] ?? '')
                 ->setIsThreatRateNotSetOrModifiedExternally(
