@@ -97,7 +97,7 @@ class InstanceImportProcessor
         }
 
         $siblingInstances = [];
-        if (!$this->importCacheHelper->getValueFromArrayCache('with_eval') && $instance->getObject()->isScopeGlobal()) {
+        if ($instance->getObject()->isScopeGlobal()) {
             $siblingInstances = $this->getGlobalObjectInstancesFromCache($anr, $instance->getObject()->getUuid());
         }
         $this->instanceRiskImportProcessor
