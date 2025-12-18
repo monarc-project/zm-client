@@ -1029,22 +1029,21 @@ class AnrService
         }
         $anrInstanceMetadataFieldOldIdsToNewObjects = [];
         foreach ($sourceAnr->getAnrInstanceMetadataFields() as $sourceAnrInstanceMetadataField) {
+            $isDeletable = false;
             if ($isSourceCommon) {
                 /** @var CoreEntity\AnrInstanceMetadataField $sourceAnrInstanceMetadataField */
-                $label = $commonTranslations[$sourceAnrInstanceMetadataField->getLabelTranslationKey()] ?? '';
+                $label = (string)($commonTranslations[$sourceAnrInstanceMetadataField->getLabelTranslationKey()]
+                    ?->getValue());
             } else {
                 /** @var Entity\AnrInstanceMetadataField $sourceAnrInstanceMetadataField */
                 $label = $sourceAnrInstanceMetadataField->getLabel();
+                $isDeletable = $sourceAnrInstanceMetadataField->isDeletable();
             }
             $anrInstanceMetadataFieldOldIdsToNewObjects[$sourceAnrInstanceMetadataField->getId()] = $this
-                ->anrInstanceMetadataFieldService->create(
-                    $newAnr,
-                    [[
-                        $newAnr->getLanguageCode() => $label,
-                        'isDeletable' => $sourceAnrInstanceMetadataField->isDeletable(),
-                    ]],
-                    false
-                );
+                ->anrInstanceMetadataFieldService->create($newAnr, [[
+                    $newAnr->getLanguageCode() => $label,
+                    'isDeletable' => $isDeletable,
+                ]], false);
         }
 
         return $anrInstanceMetadataFieldOldIdsToNewObjects;
