@@ -2420,8 +2420,13 @@ class DeliverableGenerationService
         }
 
         $globalObjectsRecommendationsKeys = [];
+        $processedRecommendationsUuids = [];
         foreach ($recommendationRisks as $recommendationRisk) {
             $recommendation = $recommendationRisk->getRecommendation();
+            if (isset($processedRecommendationsUuids[$recommendation->getUuid()])) {
+                continue;
+            }
+            $processedRecommendationsUuids[$recommendation->getUuid()] = true;
             if ($recommendationRisk->hasGlobalObjectRelation()) {
                 $key = 'o' . $recommendationRisk->getGlobalObject()->getUuid()
                     . '-' . $recommendationRisk->getInstanceRisk()->getThreat()->getUuid()

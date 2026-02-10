@@ -46,21 +46,22 @@ class AnrRecommendationRiskService
         $globalObjectsUuids = [];
         /** @var Entity\RecommendationRisk $recommendationRisk */
         foreach ($this->recommendationRiskTable->findByParams($formattedInputParams) as $recommendationRisk) {
-            if ($includeRelations
-                && $recommendationRisk->getGlobalObject() !== null
-                && isset($globalObjectsUuids[$recommendationRisk->getGlobalObject()->getUuid()])
-            ) {
-                continue;
+            if ($includeRelations && $recommendationRisk->hasGlobalObjectRelation()) {
+                $recommendation = $recommendationRisk->getRecommendation();
+                $key = 'o' . $recommendationRisk->getGlobalObject()->getUuid()
+                    . '-' . $recommendationRisk->getInstanceRisk()->getThreat()->getUuid()
+                    . '-' . $recommendationRisk->getInstanceRisk()->getVulnerability()->getUuid()
+                    . '-' . $recommendation->getUuid();
+                if (isset($globalObjectsRecommendationsKeys[$key])) {
+                    continue;
+                }
+                $globalObjectsRecommendationsKeys[$key] = $key;  
             }
 
             $recommendationRisksData[] = $this->getPreparedRecommendationRiskData(
                 $recommendationRisk,
                 $includeRelations
             );
-
-            if ($includeRelations && $recommendationRisk->getGlobalObject() !== null) {
-                $globalObjectsUuids[$recommendationRisk->getGlobalObject()->getUuid()] = true;
-            }
         }
 
         return $recommendationRisksData;
@@ -238,7 +239,9 @@ class AnrRecommendationRiskService
                         'maxRisk' => $instanceRisk->getCacheMaxRisk(),
                     ];
                 } else {
-                    $path = $instanceRisk->getInstance()->getHierarchyString();
+                    /** @var Entity\Instance $instance */
+                    $instance = $instanceRisk->getInstance();
+                    $path = $instance->getHierarchyString();
                 }
 
                 $instanceRisksData[$type][$index] = array_merge($instanceRiskData, [
