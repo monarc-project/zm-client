@@ -52,6 +52,7 @@ class RecommendationTable extends AbstractTable implements PositionUpdatableTabl
     ): array {
         $queryBuilder = $this->getRepository()
             ->createQueryBuilder('r')
+            ->distinct()
             ->innerJoin('r.recommendationRisks', 'rr')
             ->where('r.anr = :anr')
             ->andWhere('r.importance > 0')
@@ -69,7 +70,6 @@ class RecommendationTable extends AbstractTable implements PositionUpdatableTabl
         }
 
         return $queryBuilder
-            ->groupBy('r.uuid')
             ->getQuery()
             ->getResult();
     }
