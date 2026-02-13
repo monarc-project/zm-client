@@ -77,9 +77,6 @@ class ObjectImportProcessor
                 $objectScope,
                 $objectCategory?->getId()
             );
-            if ($object !== null) {
-                $this->objectObjectTable->deleteLinksByParentObject($object);
-            }
         }
 
         $isImportTypeObject = $this->importCacheHelper
@@ -115,6 +112,13 @@ class ObjectImportProcessor
             );
             $this->importCacheHelper
                 ->addItemToArrayCache('objects_names', $objectData[$nameFiledKey], $objectData[$nameFiledKey]);
+        } elseif ($this->importCacheHelper->isItemInArrayCache(
+            'processed_objects_by_current_uuids',
+            $object->getUuid()
+        )) {
+            $this->importCacheHelper->addItemToArrayCache('processed_objects_by_old_uuids', $object, $currentObjectUuid);
+
+            return $object;
         } elseif ($isImportTypeObject) {
             /* If asset's amvs (information risks) are different, then update them. */
             if (!empty($objectData['asset']['informationRisks'])) {
@@ -124,22 +128,41 @@ class ObjectImportProcessor
             $this->mergeRolfTagOperationalRisks($anr, $object, $objectData['rolfTag']);
         }
 
+        $this->importCacheHelper->addItemToArrayCache('processed_objects_by_current_uuids', $object, $object->getUuid());
         $this->importCacheHelper->addItemToArrayCache('processed_objects_by_old_uuids', $object, $currentObjectUuid);
 
-        /* Process objects links. */
+        /* Process objects links by syncing existing relations with the imported children list. */
+        $existingChildrenLinksByChildUuid = [];
+        foreach ($object->getChildrenLinks() as $childLinkObject) {
+            $existingChildrenLinksByChildUuid[$childLinkObject->getChild()->getUuid()] = $childLinkObject;
+        }
         foreach ($objectData['children'] as $positionIndex => $childObjectData) {
             $objectCategory = $this->objectCategoryImportProcessor
                 ->processObjectCategoryData($anr, $childObjectData['category'], $importMode);
             $childObject = $this->processObjectData($anr, $objectCategory, $childObjectData, $importMode);
 
-            $linksCacheKey = $object->getUuid() . $childObject->getUuid();
-            if (!$object->hasChild($childObject)
-                && !$this->importCacheHelper->isItemInArrayCache('objects_links_uuids', $linksCacheKey)
-            ) {
-                $this->anrObjectObjectService->createObjectLink($object, $childObject, [
-                    'position' => $positionIndex + 1,
-                    'forcePositionUpdate' => true,
-                ], false);
+            $childObjectUuid = $childObject->getUuid();
+            $expectedPosition = $positionIndex + 1;
+            $existingChildLink = $existingChildrenLinksByChildUuid[$childObjectUuid]
+                ?? $this->objectObjectTable->findByParentAndChild($object, $childObject);
+            if ($existingChildLink !== null) {
+                $existingChildrenLinksByChildUuid[$childObjectUuid] = $existingChildLink;
+                if ($existingChildLink->getPosition() !== $expectedPosition) {
+                    $this->objectObjectTable->save($existingChildLink->setPosition($expectedPosition), false);
+                }
+                continue;
+            }
+            $linksCacheKey = $object->getUuid() . $childObjectUuid;
+            if (!$this->importCacheHelper->isItemInArrayCache('objects_links_uuids', $linksCacheKey)) {
+                $existingChildrenLinksByChildUuid[$childObjectUuid] = $this->anrObjectObjectService->createObjectLink(
+                    $object,
+                    $childObject,
+                    [
+                        'position' => $expectedPosition,
+                        'setOnlyExactPosition' => true,
+                    ],
+                    false
+                );
                 $this->importCacheHelper->addItemToArrayCache('objects_links_uuids', $linksCacheKey, $linksCacheKey);
             }
         }
