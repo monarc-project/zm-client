@@ -12,8 +12,6 @@ use Monarc\FrontOffice\Entity\Recommendation;
 
 class GetRecommendationsInputFormatter extends AbstractInputFormatter
 {
-    protected const DEFAULT_LIMIT = 25;
-
     protected static array $allowedSearchFields = [
         'code',
         'description',
