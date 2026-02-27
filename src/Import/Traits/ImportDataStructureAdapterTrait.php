@@ -113,6 +113,9 @@ trait ImportDataStructureAdapterTrait
         $newStructure['object']['asset']['informationRisks'] = [];
         foreach ($data['asset']['amvs'] ?? [] as $amvData) {
             $threatData = $data['asset']['threats'][$amvData['threat']];
+
+            $this->convertThreatCIA($threatData);
+
             $threatData['theme'] = !empty($data['asset']['themes'][$threatData['theme'] ?? -1])
                 ? $data['asset']['themes'][$threatData['theme']]
                 : null;
@@ -227,6 +230,7 @@ trait ImportDataStructureAdapterTrait
         foreach ($data['risks'] ?? [] as $instanceRiskDatum) {
             $informationRiskData = null;
             $threatData = $data['threats'][$instanceRiskDatum['threat']] ?? ['uuid' => $instanceRiskDatum['threat']];
+            $this->convertThreatCIA($threatData);
             if (!empty($threatData['theme'])) {
                 $threatData['theme'] = $data['object']['asset']['themes'][$threatData['theme']];
             }
@@ -410,5 +414,18 @@ trait ImportDataStructureAdapterTrait
                 'label' => $data['recSets'][$recommendationSetUuid]['label' . $languageIndex] ?? 'Imported',
             ],
         ];
+    }
+
+    private function convertThreatCIA(array &$threatData): void
+    {
+        if (isset($threatData['c'])) {
+            $threatData['confidentiality'] = (int)$threatData['c'];
+        }
+        if (isset($threatData['i'])) {
+            $threatData['integrity'] = (int)$threatData['i'];
+        }
+        if (isset($threatData['a'])) {
+            $threatData['availability'] = (int)$threatData['a'];
+        }
     }
 }

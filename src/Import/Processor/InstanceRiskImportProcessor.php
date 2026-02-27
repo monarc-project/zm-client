@@ -92,6 +92,7 @@ class InstanceRiskImportProcessor
             }
 
             $instanceRisk
+                ->setContext($instanceRiskData['context'] ?? '')
                 ->setRiskConfidentiality((int)$instanceRiskData['riskConfidentiality'])
                 ->setRiskIntegrity((int)$instanceRiskData['riskIntegrity'])
                 ->setRiskAvailability((int)$instanceRiskData['riskAvailability'])
@@ -105,8 +106,7 @@ class InstanceRiskImportProcessor
                 ->setCommentAfter($instanceRiskData['commentAfter'] ?? '')
                 ->setIsThreatRateNotSetOrModifiedExternally(
                     (bool)$instanceRiskData['isThreatRateNotSetOrModifiedExternally']
-                )
-                ->setContext($instanceRiskData['context'] ?? '');
+                );
             if (!empty($instanceRiskData['riskOwner'])) {
                 $this->instanceRiskOwnerService
                     ->processRiskOwnerNameAndAssign($instanceRiskData['riskOwner'], $instanceRisk);
@@ -187,6 +187,8 @@ class InstanceRiskImportProcessor
         Entity\InstanceRisk $toInstanceRisk
     ): void {
         $toInstanceRisk
+            ->setContext($fromInstanceRisk->getContext())
+            ->setInstanceRiskOwner($fromInstanceRisk->getInstanceRiskOwner())
             ->setThreatRate($fromInstanceRisk->getThreatRate())
             ->setVulnerabilityRate($fromInstanceRisk->getVulnerabilityRate())
             ->setKindOfMeasure($fromInstanceRisk->getKindOfMeasure())
@@ -197,9 +199,14 @@ class InstanceRiskImportProcessor
             ->setCacheMaxRisk($fromInstanceRisk->getCacheMaxRisk())
             ->setCacheTargetedRisk($fromInstanceRisk->getCacheTargetedRisk())
             ->setSpecific((int)$fromInstanceRisk->isSpecific())
-            ->setAmv($fromInstanceRisk->getAmv())
-            ->setContext($fromInstanceRisk->getContext())
-            ->setInstanceRiskOwner($fromInstanceRisk->getInstanceRiskOwner());
+            ->setAmv($fromInstanceRisk->getAmv());
+        if ($fromInstanceRisk->getComment() !== '') {
+            $toInstanceRisk->setComment($fromInstanceRisk->getComment());
+        }
+        if ($fromInstanceRisk->getCommentAfter() !== '') {
+            $toInstanceRisk->setCommentAfter($fromInstanceRisk->getCommentAfter());
+        }
+
         $this->anrInstanceRiskService->recalculateRiskRates($toInstanceRisk);
 
         $this->instanceRiskTable->save($toInstanceRisk, false);

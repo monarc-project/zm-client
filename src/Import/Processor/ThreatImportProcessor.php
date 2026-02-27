@@ -36,6 +36,7 @@ class ThreatImportProcessor
     {
         $threat = $this->getThreatFromCache($anr, $threatData['uuid']);
         if ($threat !== null) {
+            $this->syncThreatCiaCriteria($threat, $threatData);
             return $threat;
         }
 
@@ -110,5 +111,21 @@ class ThreatImportProcessor
         }
 
         return $this->importCacheHelper->getItemFromArrayCache('themes_by_labels', $label);
+    }
+
+    private function syncThreatCiaCriteria(Entity\Threat $threat, array $threatData): void
+    {
+        if (empty($threatData['confidentiality'])
+            || empty($threatData['integrity'])
+            || empty($threatData['availability'])
+        ) {
+            return;
+        }
+
+        $threat
+            ->setConfidentiality((int)$threatData['confidentiality'])
+            ->setIntegrity((int)$threatData['integrity'])
+            ->setAvailability((int)$threatData['availability']);
+        $this->threatTable->save($threat, false);
     }
 }

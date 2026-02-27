@@ -66,14 +66,14 @@ class AnrThreatService
         if (isset($data['uuid'])) {
             $threat->setUuid($data['uuid']);
         }
-        if (isset($data['c'])) {
-            $threat->setConfidentiality((int)$data['c']);
+        if (isset($data['c']) || isset($data['confidentiality'])) {
+            $threat->setConfidentiality(isset($data['c']) ? (int)$data['c'] : (int)$data['confidentiality']);
         }
-        if (isset($data['i'])) {
-            $threat->setIntegrity((int)$data['i']);
+        if (isset($data['i']) || isset($data['integrity'])) {
+            $threat->setIntegrity(isset($data['i']) ? (int)$data['i'] : (int)$data['integrity']);
         }
-        if (isset($data['a'])) {
-            $threat->setAvailability((int)$data['a']);
+        if (isset($data['a']) || isset($data['availability'])) {
+            $threat->setAvailability(isset($data['a']) ? (int)$data['a'] : (int)$data['availability']);
         }
         if (isset($data['mode'])) {
             $threat->setMode((int)$data['mode']);
