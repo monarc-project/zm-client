@@ -36,7 +36,7 @@ class FixRecommendationsPosition extends AbstractMigration
                 INNER JOIN `recommandations_risks` rr ON r.`uuid` = rr.`recommandation_id` AND r.`anr_id` = rr.`anr_id`
                 WHERE r.`anr_id` = ' . $anr['id'] . '
                   AND r.`importance` > 0
-                GROUP BY r.`uuid`
+                GROUP BY r.`uuid`, r.`position`, r.`code`
                 ORDER BY r.`position`, r.`code`'
             );
             $position = 1;
