@@ -1974,5 +1974,4 @@ return [
             'monarc_api_system_messages',
         ],
     ],
-    'activeLanguages' => ['fr'],
 ];
