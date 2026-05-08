@@ -47,6 +47,10 @@ trait InformationInstanceRiskExportTrait
         return [
             'id' => $instanceRisk->getId(),
             'informationRisk' => $informationRiskData,
+            'riskSource' => $instanceRisk->getRiskSource() === null ? null : [
+                'id' => $instanceRisk->getRiskSource()->getId(),
+                'label' => $instanceRisk->getRiskSource()->getLabel(),
+            ],
             'threat' => $this->prepareThreatData($threat, $languageIndex, $withEval),
             'vulnerability' => $this->prepareVulnerabilityData($vulnerability, $languageIndex),
             'specific' => (int)$instanceRisk->isSpecific(),

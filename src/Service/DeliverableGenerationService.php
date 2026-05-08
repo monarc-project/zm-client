@@ -1248,6 +1248,7 @@ class DeliverableGenerationService
                 }
 
                 $mem_risks[$key]['risks'][] = [
+                    'riskSource' => $instanceRisk->getRiskSource()?->getLabel() ?? '-',
                     'impactC' => $instance->getConfidentiality(),
                     'impactI' => $instance->getIntegrity(),
                     'impactA' => $instance->getAvailability(),
@@ -1295,6 +1296,8 @@ class DeliverableGenerationService
                     $section->addTitle(_WT($data['ctx']), 4);
                     $table = $section->addTable($this->borderTable);
                     $table->addRow(400, $this->tblHeader);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->restartAndBlackCell)
+                        ->addText($this->anrTranslate('Risk source'), $this->whiteFont, $this->centerParagraph);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->setColSpanCell(3, '444444'))
                         ->addText($this->anrTranslate('Impact'), $this->whiteFont, $this->centerParagraph);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.70), $this->setColSpanCell(2, '444444'))
@@ -1309,6 +1312,7 @@ class DeliverableGenerationService
                         ->addText($this->anrTranslate('Residual risk'), $this->whiteFont, $this->centerParagraph);
 
                     $table->addRow(400, $this->tblHeader);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndBlackCell);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
                         ->addText('C', $this->whiteFont, $this->centerParagraph);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
@@ -1347,6 +1351,10 @@ class DeliverableGenerationService
                                 $table = $section->addTable($this->borderTable);
                                 $table->addRow(400, $this->tblHeader);
                                 $table->addCell(
+                                    PhpWord\Shared\Converter::cmToTwip(2.50),
+                                    $this->restartAndBlackCell
+                                )->addText($this->anrTranslate('Risk source'), $this->whiteFont, $this->centerParagraph);
+                                $table->addCell(
                                     PhpWord\Shared\Converter::cmToTwip(2.10),
                                     $this->setColSpanCell(3, '444444')
                                 )->addText($this->anrTranslate('Impact'), $this->whiteFont, $this->centerParagraph);
@@ -1384,6 +1392,7 @@ class DeliverableGenerationService
                                     );
 
                                 $table->addRow(400, $this->tblHeader);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndBlackCell);
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
                                     ->addText('C', $this->whiteFont, $this->centerParagraph);
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->blackCell)
@@ -1432,6 +1441,8 @@ class DeliverableGenerationService
                         }
 
                         $table->addRow(400);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->vAlignCenterCell)
+                            ->addText(_WT($r['riskSource']), $this->normalFont, $this->leftParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                             ->addText($r['impactC'], $this->normalFont, $this->centerParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
@@ -1860,6 +1871,8 @@ class DeliverableGenerationService
                 $tableRiskInfo->addRow(400);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->restartAndGrayCell)
                     ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->restartAndGrayCell)
+                    ->addText($this->anrTranslate('Risk source'), $this->boldFont, $this->centerParagraph);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.10), $this->setColSpanCell(3, 'DFDFDF'))
                     ->addText($this->anrTranslate('Impact'), $this->boldFont, $this->centerParagraph);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(5.50), $this->setColSpanCell(2, 'DFDFDF'))
@@ -1872,6 +1885,7 @@ class DeliverableGenerationService
                     ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
                 $tableRiskInfo->addRow(400);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndGrayCell);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
                     ->addText('C', $this->boldFont, $this->centerParagraph);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
@@ -1920,6 +1934,12 @@ class DeliverableGenerationService
                     $tableRiskInfo->addRow(400);
                     $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                         ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->vAlignCenterCell)
+                        ->addText(
+                            _WT($r['riskSourceLabel'] !== '' ? $r['riskSourceLabel'] : '-'),
+                            $this->normalFont,
+                            $this->leftParagraph
+                        );
                     $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                         ->addText($r['c_impact'], $this->normalFont, $this->centerParagraph);
                     $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
@@ -2800,6 +2820,8 @@ class DeliverableGenerationService
                         $tableRiskInfo->addRow(400);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->restartAndGrayCell)
                             ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Risk source'), $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(
                             PhpWord\Shared\Converter::cmToTwip(2.10),
                             $this->setColSpanCell(3, 'DFDFDF')
@@ -2822,6 +2844,7 @@ class DeliverableGenerationService
                             ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addRow(400);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndGrayCell);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
                             ->addText('C', $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->grayCell)
@@ -2963,6 +2986,12 @@ class DeliverableGenerationService
                         $tableRiskInfo->addRow(400);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                             ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->vAlignCenterCell)
+                            ->addText(
+                                _WT($instanceRisk['riskSourceLabel'] !== '' ? $instanceRisk['riskSourceLabel'] : '-'),
+                                $this->normalFont,
+                                $this->leftParagraph
+                            );
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
                             ->addText($instanceRisk['c_impact'], $this->normalFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(0.70), $this->vAlignCenterCell)
@@ -3780,6 +3809,7 @@ class DeliverableGenerationService
                     }
                     $risksByOwner[$owner->getName()][] = [
                         'asset' => $asset,
+                        'riskSource' => $ir->getRiskSource()?->getLabel() ?? '-',
                         'threat' => $ir->getThreat()->getLabel($this->currentLangAnrIndex),
                         'vulnerability' => $ir->getVulnerability()->getLabel($this->currentLangAnrIndex),
                     ];
@@ -3805,7 +3835,7 @@ class DeliverableGenerationService
                 ->addText($this->anrTranslate('Owner'), $this->boldFont, $this->centerParagraph);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
                 ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(2, 'DFDFDF'))
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(3, 'DFDFDF'))
                 ->addText($this->anrTranslate('Risk'), $this->boldFont, $this->centerParagraph);
             foreach ($risksByOwner as $owner => $risks) {
                 $isOwnerHeader = true;
@@ -3821,11 +3851,13 @@ class DeliverableGenerationService
                         ->addText(_WT($risk['asset']), $this->normalFont, $this->leftParagraph);
                     if (isset($risk['threat'])) {
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+                            ->addText(_WT($risk['riskSource']), $this->normalFont, $this->leftParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                             ->addText(_WT($risk['threat']), $this->normalFont, $this->leftParagraph);
-                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(7.00), $this->vAlignCenterCell)
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
                             ->addText(_WT($risk['vulnerability']), $this->normalFont, $this->leftParagraph);
                     } else {
-                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(2))
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(3))
                             ->addText(_WT($risk['risk']), $this->normalFont, $this->leftParagraph);
                     }
                     $isOwnerHeader = false;

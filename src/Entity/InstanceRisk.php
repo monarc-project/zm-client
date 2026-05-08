@@ -16,6 +16,7 @@ use Monarc\Core\Entity\InstanceRiskSuperClass;
  *      @ORM\Index(name="anr", columns={"anr_id"}),
  *      @ORM\Index(name="amv_id", columns={"amv_id"}),
  *      @ORM\Index(name="asset_id", columns={"asset_id"}),
+ *      @ORM\Index(name="risk_source_id", columns={"risk_source_id"}),
  *      @ORM\Index(name="threat_id", columns={"threat_id"}),
  *      @ORM\Index(name="vulnerability_id", columns={"vulnerability_id"}),
  *      @ORM\Index(name="instance_id", columns={"instance_id"}),
@@ -125,13 +126,15 @@ class InstanceRisk extends InstanceRiskSuperClass
 
     public static function constructFromObjectOfTheSameAnr(InstanceRisk $instanceRisk): static
     {
-        return self::constructFromObject($instanceRisk)
+        /** @var InstanceRisk $instanceRiskCopy */
+        $instanceRiskCopy = self::constructFromObject($instanceRisk)
             ->setAnr($instanceRisk->getAnr())
             ->setAsset($instanceRisk->getAsset())
             ->setThreat($instanceRisk->getThreat())
             ->setVulnerability($instanceRisk->getVulnerability())
-            ->setAmv($instanceRisk->getAmv())
-            ->setInstanceRiskOwner($instanceRisk->getInstanceRiskOwner());
+            ->setAmv($instanceRisk->getAmv());
+
+        return $instanceRiskCopy->setInstanceRiskOwner($instanceRisk->getInstanceRiskOwner());
     }
 
     public function getRecommendationRisks()

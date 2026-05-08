@@ -1,14 +1,16 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
+use Dom\Entity as DomEntity;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Entity as CoreEntity;
+use Monarc\Core\Entity\Anr;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Traits\ImpactVerificationTrait;
 use Monarc\Core\Service\Traits\RiskCalculationTrait;
@@ -36,6 +38,7 @@ class AnrInstanceRiskService
         private Table\ThreatTable $threatTable,
         private Table\VulnerabilityTable $vulnerabilityTable,
         private Table\ScaleTable $scaleTable,
+        private Table\RiskSourceTable $riskSourceTable,
         private TranslateService $translateService,
         private InstanceRiskOwnerService $instanceRiskOwnerService,
         ConnectedUserService $connectedUserService
@@ -61,6 +64,7 @@ class AnrInstanceRiskService
             $object = $instanceRisk->getInstance()->getObject();
             $threat = $instanceRisk->getThreat();
             $vulnerability = $instanceRisk->getVulnerability();
+            $riskSource = $instanceRisk->getRiskSource();
             $key = $object->isScopeGlobal()
                 ? 'o' . $object->getUuid() . '-' . $threat->getUuid() . '-' . $vulnerability->getUuid()
                 : 'r' . $instanceRisk->getId();
@@ -95,6 +99,8 @@ class AnrInstanceRiskService
                     'asset' => $instanceRisk->getAsset()->getUuid(),
                     'assetLabel' . $languageIndex => $instanceRisk->getAsset()->getLabel($languageIndex),
                     'assetDescription' . $languageIndex => $instanceRisk->getAsset()->getDescription($languageIndex),
+                    'riskSourceId' => $riskSource?->getId(),
+                    'riskSourceLabel' => $riskSource?->getLabel() ?? '',
                     'threat' => $threat->getUuid(),
                     'threatCode' => $threat->getCode(),
                     'threatLabel' . $languageIndex => $threat->getLabel($languageIndex),
@@ -212,9 +218,14 @@ class AnrInstanceRiskService
                     if ($riskKey !== false) {
                         $instanceRiskData = array_values($params['risks'])[$riskKey];
                         $instanceRisk->setContext($instanceRiskData['context'] ?? '');
+                        $riskSourceLabel = $instanceRiskData['riskSourceLabel']
+                            ?? ($instanceRiskData['riskSource']['label'] ?? null);
+                        /** @var Entity\Anr $anr */
+                        $anr = $instance->getAnr();
+                        if (!empty($riskSourceLabel)) {
+                            $instanceRisk->setRiskSource($this->getOrCreateRiskSourceByLabel($anr, $riskSourceLabel));
+                        }
                         if (!empty($instanceRiskData['riskOwner'])) {
-                            /** @var Entity\Anr $anr */
-                            $anr = $instance->getAnr();
                             $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
                                 $anr,
                                 $instanceRiskData['riskOwner']
@@ -352,6 +363,7 @@ class AnrInstanceRiskService
         // Fill in the header
         $output = implode(';', [
             $this->translateService->translate('Asset', $languageIndex),
+            $this->translateService->translate('Risk source', $languageIndex),
             $this->translateService->translate('C Impact', $languageIndex),
             $this->translateService->translate('I Impact', $languageIndex),
             $this->translateService->translate('A Impact', $languageIndex),
@@ -413,6 +425,7 @@ class AnrInstanceRiskService
 
                 $values[$key] = [
                     $instance->getName($languageIndex),
+                    $instanceRisk->getRiskSource()?->getLabel(),
                     $instance->getConfidentiality() === -1 ? null : $instance->getConfidentiality(),
                     $instance->getIntegrity() === -1 ? null : $instance->getIntegrity(),
                     $instance->getAvailability() === -1 ? null : $instance->getAvailability(),
@@ -454,6 +467,10 @@ class AnrInstanceRiskService
 
     private function updateInstanceRiskData(Entity\InstanceRisk $instanceRisk, array $data): void
     {
+        if (isset($data['riskSourceId'])) {
+            $riskSourceId = empty($data['riskSourceId']) ? null : $data['riskSourceId'];
+            $instanceRisk->setRiskSource($this->riskSourceTable->findById((int)$riskSourceId));
+        }
         if (isset($data['owner'])) {
             $this->instanceRiskOwnerService->processRiskOwnerNameAndAssign((string)$data['owner'], $instanceRisk);
         }
@@ -480,6 +497,25 @@ class AnrInstanceRiskService
         $instanceRisk->setUpdater($this->connectedUser->getEmail());
 
         $this->recalculateRiskRatesAndUpdateRecommendationsPositions($instanceRisk);
+    }
+
+    private function getOrCreateRiskSourceByLabel(Entity\Anr $anr, string $label): Entity\RiskSource
+    {
+        $normalizedLabel = trim($label);
+        $riskSource = $this->riskSourceTable->findOneByAnrAndLabel($anr, $normalizedLabel);
+        if ($riskSource !== null) {
+            return $riskSource;
+        }
+
+        $riskSource = (new Entity\RiskSource())
+            ->setAnr($anr)
+            ->setLabel($normalizedLabel)
+            ->setIsDefault(false)
+            ->setIsActive(true)
+            ->setCreator($this->connectedUser->getEmail());
+        $this->riskSourceTable->save($riskSource);
+
+        return $riskSource;
     }
 
     private function duplicateRecommendationRisks(
