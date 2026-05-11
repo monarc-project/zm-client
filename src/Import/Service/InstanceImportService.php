@@ -32,6 +32,7 @@ class InstanceImportService
         private Processor\AssetImportProcessor $assetImportProcessor,
         private Processor\ThreatImportProcessor $threatImportProcessor,
         private Processor\VulnerabilityImportProcessor $vulnerabilityImportProcessor,
+        private Processor\RiskSourceImportProcessor $riskSourceImportProcessor,
         private Processor\ReferentialImportProcessor $referentialImportProcessor,
         private Processor\InformationRiskImportProcessor $informationRiskImportProcessor,
         private Processor\RolfTagImportProcessor $rolfTagImportProcessor,
@@ -216,6 +217,7 @@ class InstanceImportService
         $this->assetImportProcessor->processAssetsData($anr, $knowledgeBaseData['assets']);
         $this->threatImportProcessor->processThreatsData($anr, $knowledgeBaseData['threats']);
         $this->vulnerabilityImportProcessor->processVulnerabilitiesData($anr, $knowledgeBaseData['vulnerabilities']);
+        $this->riskSourceImportProcessor->processRiskSourcesData($anr, $knowledgeBaseData['riskSources'] ?? []);
         $this->referentialImportProcessor->processReferentialsData($anr, $knowledgeBaseData['referentials']);
         $this->informationRiskImportProcessor->processInformationRisksData(
             $anr,

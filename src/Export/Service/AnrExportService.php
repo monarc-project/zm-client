@@ -34,6 +34,7 @@ class AnrExportService
         private Table\AssetTable $assetTable,
         private Table\ThreatTable $threatTable,
         private Table\VulnerabilityTable $vulnerabilityTable,
+        private Table\RiskSourceTable $riskSourceTable,
         private Table\AmvTable $amvTable,
         private Table\RolfTagTable $rolfTagTable,
         private Table\RolfRiskTable $rolfRiskTable,
@@ -155,6 +156,7 @@ class AnrExportService
                 'assets' => [],
                 'threats' => [],
                 'vulnerabilities' => [],
+                'riskSources' => [],
                 'referentials' => $this->prepareReferentialsData($anr),
                 'informationRisks' => [],
                 'rolfTags' => [],
@@ -167,6 +169,7 @@ class AnrExportService
             'assets' => $this->prepareAssetsData($anr),
             'threats' => $this->prepareThreatsData($anr, $withEval),
             'vulnerabilities' => $this->prepareVulnerabilitiesData($anr),
+            'riskSources' => $this->prepareRiskSourcesData($anr),
             'referentials' => $this->prepareReferentialsData($anr),
             'informationRisks' => $this->prepareInformationRisksData($anr, $withEval, $withControls),
             'rolfTags' => $this->prepareRolfTagsData($anr),
@@ -206,6 +209,22 @@ class AnrExportService
         /** @var Entity\Vulnerability $vulnerability */
         foreach ($this->vulnerabilityTable->findByAnr($anr) as $vulnerability) {
             $result[] = $this->prepareVulnerabilityData($vulnerability, $languageIndex);
+        }
+
+        return $result;
+    }
+
+    private function prepareRiskSourcesData(Entity\Anr $anr): array
+    {
+        $result = [];
+        /** @var Entity\RiskSource $riskSource */
+        foreach ($this->riskSourceTable->findByAnr($anr) as $riskSource) {
+            $result[] = [
+                'id' => $riskSource->getId(),
+                'label' => $riskSource->getLabel(),
+                'isDefault' => $riskSource->isDefault(),
+                'isActive' => $riskSource->isActive(),
+            ];
         }
 
         return $result;

@@ -1623,6 +1623,7 @@ return [
             /* Import services. */
             Import\Service\ObjectImportService::class => AutowireFactory::class,
             Import\Service\InstanceImportService::class => AutowireFactory::class,
+            Import\Processor\RiskSourceImportProcessor::class => AutowireFactory::class,
 
             // Helpers
             Import\Helper\ImportCacheHelper::class => AutowireFactory::class,

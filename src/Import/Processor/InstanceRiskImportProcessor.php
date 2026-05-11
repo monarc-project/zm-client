@@ -26,6 +26,7 @@ class InstanceRiskImportProcessor
         private AnrInstanceRiskService $anrInstanceRiskService,
         private InformationRiskImportProcessor $informationRiskImportProcessor,
         private RecommendationImportProcessor $recommendationImportProcessor,
+        private RiskSourceImportProcessor $riskSourceImportProcessor,
         private ThreatImportProcessor $threatImportProcessor,
         private VulnerabilityImportProcessor $vulnerabilityImportProcessor,
         private ImportCacheHelper $importCacheHelper,
@@ -69,6 +70,12 @@ class InstanceRiskImportProcessor
 
         $instanceRisk = $this->anrInstanceRiskService
             ->createInstanceRisk($instance, $amv, null, $threat, $vulnerability);
+
+        if (!empty($instanceRiskData['riskSource'])) {
+            $instanceRisk->setRiskSource(
+                $this->riskSourceImportProcessor->processRiskSourceData($anr, $instanceRiskData['riskSource'])
+            );
+        }
 
         foreach ($instanceRiskData['recommendations'] as $recommendationData) {
             $recommendationSet = $this->recommendationImportProcessor
