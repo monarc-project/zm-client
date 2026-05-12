@@ -35,6 +35,7 @@ class AnrExportService
         private Table\ThreatTable $threatTable,
         private Table\VulnerabilityTable $vulnerabilityTable,
         private Table\RiskSourceTable $riskSourceTable,
+        private Table\ReassessmentTriggerTable $reassessmentTriggerTable,
         private Table\AmvTable $amvTable,
         private Table\RolfTagTable $rolfTagTable,
         private Table\RolfRiskTable $rolfRiskTable,
@@ -84,6 +85,7 @@ class AnrExportService
         $withInterviews = $withEval && !empty($exportParams['interviews']);
         $withSoas = $withEval && !empty($exportParams['soas']);
         $withRecords = $withEval && !empty($exportParams['records']);
+        $withReassessmentTriggers = $withEval && !empty($exportParams['reassessmentTriggers']);
         $withLibrary = !empty($exportParams['assetsLibrary']);
         $withKnowledgeBase = !empty($exportParams['knowledgeBase']);
 
@@ -98,6 +100,7 @@ class AnrExportService
             'withInterviews' => $withInterviews,
             'withSoas' => $withSoas,
             'withRecords' => $withRecords,
+            'withReassessmentTriggers' => $withReassessmentTriggers,
             'withLibrary' => $withLibrary,
             'withKnowledgeBase' => $withKnowledgeBase,
             'languageCode' => $anr->getLanguageCode(),
@@ -126,6 +129,7 @@ class AnrExportService
             'method' => $withMethodSteps ? $this->prepareMethodData($anr, !$withKnowledgeBase) : [],
             'thresholds' => $withEval ? $this->prepareAnrTrashholdsData($anr) : [],
             'interviews' => $withInterviews ? $this->prepareInterviewsData($anr) : [],
+            'reassessmentTriggers' => $withReassessmentTriggers ? $this->prepareReassessmentTriggersData($anr) : [],
             'gdprRecords' => $withRecords ? $this->prepareGdprRecordsData($anr) : [],
         ];
     }
@@ -557,6 +561,21 @@ class AnrExportService
                 'date' => $interview->getDate(),
                 'service' => $interview->getService(),
                 'content' => $interview->getContent(),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function prepareReassessmentTriggersData(Entity\Anr $anr): array
+    {
+        $result = [];
+        foreach ($this->reassessmentTriggerTable->findByAnrOrderedByPosition($anr) as $reassessmentTrigger) {
+            $result[] = [
+                'triggerType' => $reassessmentTrigger->getTriggerType(),
+                'description' => $reassessmentTrigger->getDescription(),
+                'isActive' => $reassessmentTrigger->isActive(),
+                'position' => $reassessmentTrigger->getPosition(),
             ];
         }
 

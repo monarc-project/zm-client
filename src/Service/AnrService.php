@@ -94,6 +94,7 @@ class AnrService
         private AnrRecommendationSetService $anrRecommendationSetService,
         private AnrRecommendationService $anrRecommendationService,
         private AnrRecommendationRiskService $anrRecommendationRiskService,
+        private ReassessmentTriggerService $reassessmentTriggerService,
         private SoaScaleCommentService $soaScaleCommentService,
         private CronTaskService $cronTaskService,
         private StatsAnrService $statsAnrService,
@@ -263,6 +264,7 @@ class AnrService
             ->duplicateAnrMetadataInstanceFields($sourceAnr, $newAnr, $isSourceCommon);
 
         $this->duplicateRiskSources($sourceAnr, $newAnr, $isSourceCommon);
+        $this->duplicateReassessmentTriggers($sourceAnr, $newAnr, $isSourceCommon);
 
         /* Recreate Instances, InstanceRisks, InstanceConsequences and InstanceMetadata. */
         $this->duplicateInstancesTreeRisksSequencesRecommendationsMetadataAndScales(
@@ -396,15 +398,12 @@ class AnrService
 
         foreach ($sourceRiskSources as $sourceRiskSource) {
             $label = $sourceRiskSource->getLabel();
-            if ($isSourceCommon && $sourceRiskSource->getLabelTranslationKey() !== '') {
-                $translation = $this->coreTranslationTable->findByTypeKeyAndLanguage(
-                    CoreEntity\TranslationSuperClass::RISK_SOURCE,
-                    $sourceRiskSource->getLabelTranslationKey(),
+            if ($isSourceCommon) {
+                $label = $this->resolveCommonRiskSourceLabel(
+                    $sourceRiskSource->getLabelTranslations(),
+                    $sourceRiskSource->getLabel(),
                     $newAnr->getLanguageCode()
                 );
-                if ($translation !== null) {
-                    $label = $translation->getValue();
-                }
             }
 
             $this->riskSourceTable->save(
@@ -416,6 +415,39 @@ class AnrService
                     ->setCreator($this->connectedUser->getEmail()),
                 false
             );
+        }
+    }
+
+    /**
+     * @param array<string, string> $labels
+     */
+    private function resolveCommonRiskSourceLabel(array $labels, string $fallbackLabel, string $languageCode): string
+    {
+        if (isset($labels[$languageCode]) && $labels[$languageCode] !== '') {
+            return $labels[$languageCode];
+        }
+
+        $defaultLanguageCode = $this->configService->getLanguageCodes()[
+            $this->configService->getConfigOption('defaultLanguageIndex', 1)
+        ] ?? null;
+        if ($defaultLanguageCode !== null && isset($labels[$defaultLanguageCode]) && $labels[$defaultLanguageCode] !== '') {
+            return $labels[$defaultLanguageCode];
+        }
+
+        if ($labels !== []) {
+            return (string)reset($labels);
+        }
+
+        return $fallbackLabel;
+    }
+
+    private function duplicateReassessmentTriggers(
+        CoreEntity\AnrSuperClass $sourceAnr,
+        Entity\Anr $newAnr,
+        bool $isSourceCommon
+    ): void {
+        if (!$isSourceCommon) {
+            $this->reassessmentTriggerService->duplicateFromSourceAnr($sourceAnr, $newAnr);
         }
     }
 
