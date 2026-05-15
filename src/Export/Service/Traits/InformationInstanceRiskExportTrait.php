@@ -70,6 +70,8 @@ trait InformationInstanceRiskExportTrait
             'riskAvailability' => $withEval ? $instanceRisk->getRiskAvailability() : -1,
             'context' => $withEval ? $instanceRisk->getContext() : '',
             'riskOwner' => $withEval ? $instanceRisk->getInstanceRiskOwner()?->getName() : '',
+            'lastReviewDate' => $withEval ? $instanceRisk->getLastReviewDate()?->format('Y-m-d') : null,
+            'reviewFrequency' => $withEval ? $instanceRisk->getReviewFrequency() : null,
             'recommendations' => $recommendationsData,
         ];
     }

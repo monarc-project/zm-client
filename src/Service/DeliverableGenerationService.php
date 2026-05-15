@@ -990,14 +990,16 @@ class DeliverableGenerationService
             ->addText($this->anrTranslate('Trigger type'), $this->boldFont, $this->centerParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(11.00), $this->grayCell)
             ->addText($this->anrTranslate('Description'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->grayCell)
+            ->addText($this->anrTranslate('Monitoring approach'), $this->boldFont, $this->centerParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->grayCell)
             ->addText($this->anrTranslate('Status'), $this->boldFont, $this->centerParagraph);
 
         if (!count($reassessmentTriggers)) {
             $table->addRow(400);
             $table->addCell(
-                PhpWord\Shared\Converter::cmToTwip(18.00),
-                $this->setColSpanCell(3)
+                PhpWord\Shared\Converter::cmToTwip(26.00),
+                $this->setColSpanCell(4)
             )->addText(
                 $this->anrTranslate('No reassessment trigger criteria have been defined for this analysis.'),
                 $this->normalFont,
@@ -1017,6 +1019,12 @@ class DeliverableGenerationService
                 );
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(11.00), $this->vAlignCenterCell)
                 ->addText(_WT($reassessmentTrigger->getDescription()), $this->normalFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->vAlignCenterCell)
+                ->addText(
+                    _WT((string)$reassessmentTrigger->getMonitoringApproach()),
+                    $this->normalFont,
+                    $this->leftParagraph
+                );
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                 ->addText(
                     $reassessmentTrigger->isActive()
@@ -1383,6 +1391,7 @@ class DeliverableGenerationService
                         : $instanceRisk->getRiskAvailability(),
                     'treatmentName' => $instanceRisk->getTreatmentName(),
                     'targetRisk' => $instanceRisk->getCacheTargetedRisk(),
+                    'lastReviewDate' => $instanceRisk->getLastReviewDate()?->format('Y-m-d') ?? '-',
                 ];
             }
         }
@@ -1509,6 +1518,12 @@ class DeliverableGenerationService
                                         $this->whiteFont,
                                         $this->centerParagraph
                                     );
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndBlackCell)
+                                    ->addText(
+                                        $this->anrTranslate('Last review date'),
+                                        $this->whiteFont,
+                                        $this->centerParagraph
+                                    );
 
                                 $table->addRow(400, $this->tblHeader);
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndBlackCell);
@@ -1540,6 +1555,7 @@ class DeliverableGenerationService
                                     ->addText($this->anrTranslate('A'), $this->whiteFont, $this->centerParagraph);
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndBlackCell);
                             }
                         }
                     }
@@ -1592,6 +1608,8 @@ class DeliverableGenerationService
                             PhpWord\Shared\Converter::cmToTwip(1.00),
                             $this->setBgColorCell($r['targetRisk'])
                         )->addText($r['targetRisk'], $this->boldFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                            ->addText(_WT($r['lastReviewDate']), $this->normalFont, $this->centerParagraph);
                     }
                 }
             }
@@ -2002,6 +2020,8 @@ class DeliverableGenerationService
                     ->addText($this->anrTranslate('Current risk'), $this->boldFont, $this->centerParagraph);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndGrayCell)
                     ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndGrayCell)
+                    ->addText($this->anrTranslate('Last review date'), $this->boldFont, $this->centerParagraph);
                 $tableRiskInfo->addRow(400);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndGrayCell);
@@ -2027,6 +2047,7 @@ class DeliverableGenerationService
                     ->addText('I', $this->boldFont, $this->centerParagraph);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->grayCell)
                     ->addText($this->anrTranslate('A'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
 
                 $impacts = ['c', 'i', 'd'];
@@ -2095,6 +2116,12 @@ class DeliverableGenerationService
                     $tableRiskInfo
                         ->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->setBgColorCell($r['target_risk']))
                         ->addText($r['target_risk'], $this->boldFont, $this->centerParagraph);
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                        ->addText(
+                            _WT(!empty($r['lastReviewDate']) ? $r['lastReviewDate'] : '-'),
+                            $this->normalFont,
+                            $this->centerParagraph
+                        );
                 }
                 $section->addTextBreak();
             }
@@ -2973,6 +3000,8 @@ class DeliverableGenerationService
                             ->addText($this->anrTranslate('Treatment'), $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.50), $this->restartAndGrayCell)
                             ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Last review date'), $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addRow(400);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndGrayCell);
@@ -3004,6 +3033,7 @@ class DeliverableGenerationService
                             ->addText($this->anrTranslate('A'), $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.50), $this->continueAndGrayCell);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
                     }
                     if (!empty($operationalInstanceRisks)) {
                         $section->addText($this->anrTranslate('Operational risks'), $this->boldFont);
@@ -3174,6 +3204,12 @@ class DeliverableGenerationService
                             PhpWord\Shared\Converter::cmToTwip(1.50),
                             $this->setBgColorCell($instanceRisk['target_risk'])
                         )->addText($instanceRisk['target_risk'], $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
+                            ->addText(
+                                _WT($instanceRisk['lastReviewDate'] !== '' ? $instanceRisk['lastReviewDate'] : '-'),
+                                $this->normalFont,
+                                $this->centerParagraph
+                            );
                     }
                 }
 

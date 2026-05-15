@@ -284,6 +284,8 @@ trait ImportDataStructureAdapterTrait
                 'riskAvailability' => $instanceRiskDatum['riskD'],
                 'context' => $instanceRiskDatum['context'],
                 'riskOwner' => $instanceRiskDatum['riskOwner'],
+                'lastReviewDate' => $instanceRiskDatum['lastReviewDate'] ?? null,
+                'reviewFrequency' => $instanceRiskDatum['reviewFrequency'] ?? null,
                 'recommendations' => $recommendationsData,
             ];
         }

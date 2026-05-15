@@ -574,6 +574,7 @@ class AnrExportService
             $result[] = [
                 'triggerType' => $reassessmentTrigger->getTriggerType(),
                 'description' => $reassessmentTrigger->getDescription(),
+                'monitoringApproach' => $reassessmentTrigger->getMonitoringApproach(),
                 'isActive' => $reassessmentTrigger->isActive(),
                 'position' => $reassessmentTrigger->getPosition(),
             ];

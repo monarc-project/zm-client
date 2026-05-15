@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use DateTime;
 use Dom\Entity as DomEntity;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Entity as CoreEntity;
@@ -127,6 +128,12 @@ class AnrInstanceRiskService
                     'comment' => $instanceRisk->getComment(),
                     'scope' => $object->getScope(),
                     'kindOfMeasure' => $instanceRisk->getKindOfMeasure(),
+                    'lastReviewDate' => $instanceRisk->getLastReviewDate()?->format('Y-m-d'),
+                    'reviewFrequency' => $instanceRisk->getReviewFrequency(),
+                    'reviewFrequencyLabel' => $this->getReviewFrequencyLabel(
+                        $instanceRisk->getReviewFrequency(),
+                        $languageIndex
+                    ),
                     't' => $instanceRisk->isTreated(),
                     'tid' => $threat->getUuid(),
                     'vid' => $vulnerability->getUuid(),
@@ -231,6 +238,15 @@ class AnrInstanceRiskService
                                 $instanceRiskData['riskOwner']
                             );
                             $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+                        }
+                        if (array_key_exists('lastReviewDate', $instanceRiskData)) {
+                            $instanceRisk->setLastReviewDate(
+                                $this->createLastReviewDateFromString($instanceRiskData['lastReviewDate'])
+                            );
+                        }
+                        if (array_key_exists('reviewFrequency', $instanceRiskData)) {
+                            $reviewFrequency = trim((string)$instanceRiskData['reviewFrequency']);
+                            $instanceRisk->setReviewFrequency($reviewFrequency === '' ? null : $reviewFrequency);
                         }
                     }
                 }
@@ -380,6 +396,8 @@ class AnrInstanceRiskService
             $this->translateService->translate('Residual risk', $languageIndex),
             $this->translateService->translate('Risk owner', $languageIndex),
             $this->translateService->translate('Risk context', $languageIndex),
+            $this->translateService->translate('Last review date', $languageIndex),
+            $this->translateService->translate('Review frequency', $languageIndex),
             $this->translateService->translate('Recommendations', $languageIndex),
             $this->translateService->translate('Security referentials', $languageIndex),
         ]) . "\n";
@@ -450,6 +468,8 @@ class AnrInstanceRiskService
                     $instanceRisk->getCacheTargetedRisk() === -1 ? null : $instanceRisk->getCacheTargetedRisk(),
                     $instanceRisk->getInstanceRiskOwner() ? $instanceRisk->getInstanceRiskOwner()->getName() : '',
                     $instanceRisk->getContext(),
+                    $instanceRisk->getLastReviewDate()?->format('Y-m-d'),
+                    $this->getReviewFrequencyLabel($instanceRisk->getReviewFrequency(), $languageIndex),
                     implode("\n", $recommendationData),
                     implode("\n", $measuresData),
                 ];
@@ -470,6 +490,13 @@ class AnrInstanceRiskService
         if (isset($data['riskSourceId'])) {
             $riskSourceId = empty($data['riskSourceId']) ? null : $data['riskSourceId'];
             $instanceRisk->setRiskSource($this->riskSourceTable->findById((int)$riskSourceId));
+        }
+        if (array_key_exists('lastReviewDate', $data)) {
+            $instanceRisk->setLastReviewDate($this->prepareLastReviewDate($instanceRisk, $data['lastReviewDate']));
+        }
+        if (array_key_exists('reviewFrequency', $data)) {
+            $reviewFrequency = trim((string)$data['reviewFrequency']);
+            $instanceRisk->setReviewFrequency($reviewFrequency === '' ? null : $reviewFrequency);
         }
         if (isset($data['owner'])) {
             $this->instanceRiskOwnerService->processRiskOwnerNameAndAssign((string)$data['owner'], $instanceRisk);
@@ -516,6 +543,57 @@ class AnrInstanceRiskService
         $this->riskSourceTable->save($riskSource);
 
         return $riskSource;
+    }
+
+    private function prepareLastReviewDate(Entity\InstanceRisk $instanceRisk, mixed $lastReviewDate): ?DateTime
+    {
+        $normalizedDate = $this->createLastReviewDateFromString($lastReviewDate);
+        $currentLastReviewDate = $instanceRisk->getLastReviewDate();
+        if (
+            $normalizedDate !== null
+            && $currentLastReviewDate !== null
+            && $normalizedDate->format('Y-m-d') !== $currentLastReviewDate->format('Y-m-d')
+            && $normalizedDate <= $currentLastReviewDate
+        ) {
+            throw new Exception('Last review date must be later than the existing last review date.', 412);
+        }
+
+        return $normalizedDate;
+    }
+
+    private function createLastReviewDateFromString(mixed $lastReviewDate): ?DateTime
+    {
+        if ($lastReviewDate === null || $lastReviewDate === '') {
+            return null;
+        }
+
+        $normalizedDate = DateTime::createFromFormat('Y-m-d', (string)$lastReviewDate);
+        if ($normalizedDate === false) {
+            throw new Exception('Invalid last review date format.', 412);
+        }
+
+        return $normalizedDate;
+    }
+
+    private function getReviewFrequencyLabel(?string $reviewFrequency, int $languageIndex): string
+    {
+        if ($reviewFrequency === null || $reviewFrequency === '') {
+            return '';
+        }
+
+        $suggestedReviewFrequencies = [
+            'Monthly',
+            'Quarterly',
+            'Semi-annually',
+            'Annually',
+            'On trigger',
+        ];
+
+        if (\in_array($reviewFrequency, $suggestedReviewFrequencies, true)) {
+            return $this->translateService->translate($reviewFrequency, $languageIndex);
+        }
+
+        return $reviewFrequency;
     }
 
     private function duplicateRecommendationRisks(

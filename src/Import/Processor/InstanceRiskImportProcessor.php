@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Import\Processor;
 
+use DateTime;
 use Monarc\Core\Entity\ScaleSuperClass;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
@@ -114,6 +115,17 @@ class InstanceRiskImportProcessor
                 ->setIsThreatRateNotSetOrModifiedExternally(
                     (bool)$instanceRiskData['isThreatRateNotSetOrModifiedExternally']
                 );
+            if (array_key_exists('lastReviewDate', $instanceRiskData)) {
+                $instanceRisk->setLastReviewDate(
+                    empty($instanceRiskData['lastReviewDate'])
+                        ? null
+                        : (DateTime::createFromFormat('Y-m-d', $instanceRiskData['lastReviewDate']) ?: null)
+                );
+            }
+            if (array_key_exists('reviewFrequency', $instanceRiskData)) {
+                $reviewFrequency = trim((string)$instanceRiskData['reviewFrequency']);
+                $instanceRisk->setReviewFrequency($reviewFrequency === '' ? null : $reviewFrequency);
+            }
             if (!empty($instanceRiskData['riskOwner'])) {
                 $this->instanceRiskOwnerService
                     ->processRiskOwnerNameAndAssign($instanceRiskData['riskOwner'], $instanceRisk);
@@ -196,6 +208,8 @@ class InstanceRiskImportProcessor
         $toInstanceRisk
             ->setContext($fromInstanceRisk->getContext())
             ->setInstanceRiskOwner($fromInstanceRisk->getInstanceRiskOwner())
+            ->setLastReviewDate($fromInstanceRisk->getLastReviewDate())
+            ->setReviewFrequency($fromInstanceRisk->getReviewFrequency())
             ->setThreatRate($fromInstanceRisk->getThreatRate())
             ->setVulnerabilityRate($fromInstanceRisk->getVulnerabilityRate())
             ->setKindOfMeasure($fromInstanceRisk->getKindOfMeasure())
