@@ -72,6 +72,10 @@ trait InformationInstanceRiskExportTrait
             'riskOwner' => $withEval ? $instanceRisk->getInstanceRiskOwner()?->getName() : '',
             'lastReviewDate' => $withEval ? $instanceRisk->getLastReviewDate()?->format('Y-m-d') : null,
             'reviewFrequency' => $withEval ? $instanceRisk->getReviewFrequency() : null,
+            'residualRiskDecision' => $withEval ? $instanceRisk->getResidualRiskDecision() : null,
+            'residualRiskApprovedBy' => $withEval ? $instanceRisk->getResidualRiskApprovedBy() : null,
+            'residualRiskApprovedAt' => $withEval ? $instanceRisk->getResidualRiskApprovedAt()?->format('Y-m-d') : null,
+            'residualRiskJustification' => $withEval ? $instanceRisk->getResidualRiskJustification() : null,
             'recommendations' => $recommendationsData,
         ];
     }

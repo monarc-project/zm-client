@@ -111,6 +111,7 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
         $queryBuilder = $this->getRepository()->createQueryBuilder('iro')
             ->innerJoin('iro.instance', 'i')
             ->innerJoin('i.asset', 'a', Join::WITH, 'a.type = ' . AssetSuperClass::TYPE_PRIMARY)
+            ->leftJoin('iro.riskSource', 'rs')
             ->where('iro.anr = :anr')
             ->setParameter('anr', $anr);
 
@@ -142,6 +143,7 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
             $queryBuilder->andWhere(
                 'i.name' . $language . ' LIKE :keywords OR ' .
                 'i.label' . $language . ' LIKE :keywords OR ' .
+                'rs.label LIKE :keywords OR ' .
                 'iro.riskCacheLabel' . $language . ' LIKE :keywords OR ' .
                 'iro.riskCacheDescription' . $language . ' LIKE :keywords OR ' .
                 'iro.comment LIKE :keywords'
@@ -164,6 +166,10 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
                 break;
             case 'position':
                 $queryBuilder->orderBy('i.position', $filterParams['order_direction'])
+                    ->addOrderBy('i.name' . $language);
+                break;
+            case 'riskSource':
+                $queryBuilder->orderBy('rs.label', $filterParams['order_direction'])
                     ->addOrderBy('i.name' . $language);
                 break;
             case 'brutProb':

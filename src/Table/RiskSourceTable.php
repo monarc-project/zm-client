@@ -12,6 +12,7 @@ use Doctrine\ORM\EntityManager;
 use Monarc\Core\Table\AbstractTable;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\InstanceRisk;
+use Monarc\FrontOffice\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Entity\RiskSource;
 
 class RiskSourceTable extends AbstractTable
@@ -63,10 +64,22 @@ class RiskSourceTable extends AbstractTable
 
     public function isUsedInRisks(RiskSource $riskSource): bool
     {
-        return (bool)$this->entityManager->createQueryBuilder()
+        $isUsedInInformationRisks = (bool)$this->entityManager->createQueryBuilder()
             ->select('COUNT(ir.id)')
             ->from(InstanceRisk::class, 'ir')
             ->where('ir.riskSource = :riskSource')
+            ->setParameter('riskSource', $riskSource)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        if ($isUsedInInformationRisks) {
+            return true;
+        }
+
+        return (bool)$this->entityManager->createQueryBuilder()
+            ->select('COUNT(iro.id)')
+            ->from(InstanceRiskOp::class, 'iro')
+            ->where('iro.riskSource = :riskSource')
             ->setParameter('riskSource', $riskSource)
             ->getQuery()
             ->getSingleScalarResult();

@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use DateTime;
 use Monarc\Core\Entity\InstanceRiskSuperClass;
 
 /**
@@ -101,11 +102,63 @@ class InstanceRisk extends InstanceRiskSuperClass
     protected $anr;
 
     /**
+     * @var RiskSource|null
+     *
+     * @ORM\ManyToOne(targetEntity="RiskSource")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="risk_source_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
+     * })
+     */
+    protected $riskSource;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="context", type="string", length=255, nullable=true)
      */
     protected $context;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="residual_risk_decision", type="string", length=20, nullable=true)
+     */
+    protected $residualRiskDecision;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="residual_risk_approved_by", type="string", length=255, nullable=true)
+     */
+    protected $residualRiskApprovedBy;
+
+    /**
+     * @var DateTime|null
+     *
+     * @ORM\Column(name="residual_risk_approved_at", type="date", nullable=true)
+     */
+    protected $residualRiskApprovedAt;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="residual_risk_justification", type="text", nullable=true)
+     */
+    protected $residualRiskJustification;
+
+    /**
+     * @var DateTime|null
+     *
+     * @ORM\Column(name="last_review_date", type="date", nullable=true)
+     */
+    protected $lastReviewDate;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="review_frequency", type="string", length=50, nullable=true)
+     */
+    protected $reviewFrequency;
 
     public function __construct()
     {
@@ -118,7 +171,14 @@ class InstanceRisk extends InstanceRiskSuperClass
         $instanceRisk = parent::constructFromObject($sourceInstanceRisk);
 
         if ($sourceInstanceRisk instanceof self) {
-            $instanceRisk->setContext($sourceInstanceRisk->getContext());
+            $instanceRisk->setRiskSource($sourceInstanceRisk->getRiskSource())
+                ->setContext($sourceInstanceRisk->getContext())
+                ->setResidualRiskDecision($sourceInstanceRisk->getResidualRiskDecision())
+                ->setResidualRiskApprovedBy($sourceInstanceRisk->getResidualRiskApprovedBy())
+                ->setResidualRiskApprovedAt($sourceInstanceRisk->getResidualRiskApprovedAt())
+                ->setResidualRiskJustification($sourceInstanceRisk->getResidualRiskJustification())
+                ->setLastReviewDate($sourceInstanceRisk->getLastReviewDate())
+                ->setReviewFrequency($sourceInstanceRisk->getReviewFrequency());
         }
 
         return $instanceRisk;
@@ -189,6 +249,90 @@ class InstanceRisk extends InstanceRiskSuperClass
     public function setContext(string $context): self
     {
         $this->context = $context;
+
+        return $this;
+    }
+        
+    public function getRiskSource(): ?RiskSource
+    {
+        return $this->riskSource;
+    }
+
+    public function setRiskSource(?RiskSource $riskSource): self
+    {
+        $this->riskSource = $riskSource;
+
+        return $this;
+    }
+
+    public function getLastReviewDate(): ?DateTime
+    {
+        return $this->lastReviewDate;
+    }
+
+    public function setLastReviewDate(?DateTime $lastReviewDate): self
+    {
+        $this->lastReviewDate = $lastReviewDate;
+
+        return $this;
+    }
+
+    public function getReviewFrequency(): ?string
+    {
+        return $this->reviewFrequency;
+    }
+
+    public function setReviewFrequency(?string $reviewFrequency): self
+    {
+        $this->reviewFrequency = $reviewFrequency;
+
+        return $this;
+    }
+
+    public function getResidualRiskDecision(): ?string
+    {
+        return $this->residualRiskDecision;
+    }
+
+    public function setResidualRiskDecision(?string $residualRiskDecision): self
+    {
+        $this->residualRiskDecision = $residualRiskDecision;
+
+        return $this;
+    }
+
+    public function getResidualRiskApprovedBy(): ?string
+    {
+        return $this->residualRiskApprovedBy;
+    }
+
+    public function setResidualRiskApprovedBy(?string $residualRiskApprovedBy): self
+    {
+        $this->residualRiskApprovedBy = $residualRiskApprovedBy;
+
+        return $this;
+    }
+
+    public function getResidualRiskApprovedAt(): ?DateTime
+    {
+        return $this->residualRiskApprovedAt;
+    }
+
+    public function setResidualRiskApprovedAt(?DateTime $residualRiskApprovedAt): self
+    {
+        $this->residualRiskApprovedAt = $residualRiskApprovedAt;
+
+        return $this;
+    }
+
+    public function getResidualRiskJustification(): ?string
+    {
+        return $this->residualRiskJustification;
+    }
+
+    public function setResidualRiskJustification(?string $residualRiskJustification): self
+    {
+        $this->residualRiskJustification = $residualRiskJustification;
 
         return $this;
     }

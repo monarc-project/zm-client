@@ -1555,6 +1555,11 @@ class AnrService
                     $rolfRisksOldIdsToNewObjects[$sourceInstanceRiskOp->getRolfRisk()->getId()]
                 );
             }
+            if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp && $sourceInstanceRiskOp->getRiskSource() !== null) {
+                $newInstanceRiskOp->setRiskSource(
+                    $this->riskSourceTable->findOneByAnrAndLabel($newAnr, $sourceInstanceRiskOp->getRiskSource()->getLabel())
+                );
+            }
             if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp
                 && $sourceInstanceRiskOp->getInstanceRiskOwner() !== null
             ) {

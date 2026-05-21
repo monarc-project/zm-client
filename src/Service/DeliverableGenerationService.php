@@ -1392,6 +1392,7 @@ class DeliverableGenerationService
                     'treatmentName' => $instanceRisk->getTreatmentName(),
                     'targetRisk' => $instanceRisk->getCacheTargetedRisk(),
                     'lastReviewDate' => $instanceRisk->getLastReviewDate()?->format('Y-m-d') ?? '-',
+                    'residualRiskAcceptance' => $this->formatResidualRiskAcceptance($instanceRisk),
                 ];
             }
         }
@@ -1434,6 +1435,14 @@ class DeliverableGenerationService
                         ->addText($this->anrTranslate('Treatment'), $this->whiteFont, $this->centerParagraph);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndBlackCell)
                         ->addText($this->anrTranslate('Residual risk'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndBlackCell)
+                        ->addText($this->anrTranslate('Last review date'), $this->whiteFont, $this->centerParagraph);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->restartAndBlackCell)
+                        ->addText(
+                            $this->anrTranslate('Residual risk acceptance decision'),
+                            $this->whiteFont,
+                            $this->centerParagraph
+                        );
 
                     $table->addRow(400, $this->tblHeader);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndBlackCell);
@@ -1461,6 +1470,8 @@ class DeliverableGenerationService
                         ->addText($this->anrTranslate('A'), $this->whiteFont, $this->centerParagraph);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndBlackCell);
+                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->continueAndBlackCell);
                 } else {
                     $treeNum = count($data['tree']);
                     for ($i = 0; $i < $treeNum; $i++) {
@@ -1524,6 +1535,12 @@ class DeliverableGenerationService
                                         $this->whiteFont,
                                         $this->centerParagraph
                                     );
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->restartAndBlackCell)
+                                    ->addText(
+                                        $this->anrTranslate('Residual risk acceptance decision'),
+                                        $this->whiteFont,
+                                        $this->centerParagraph
+                                    );
 
                                 $table->addRow(400, $this->tblHeader);
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndBlackCell);
@@ -1556,6 +1573,7 @@ class DeliverableGenerationService
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndBlackCell);
                                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndBlackCell);
+                                $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->continueAndBlackCell);
                             }
                         }
                     }
@@ -1610,6 +1628,8 @@ class DeliverableGenerationService
                         )->addText($r['targetRisk'], $this->boldFont, $this->centerParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->vAlignCenterCell)
                             ->addText(_WT($r['lastReviewDate']), $this->normalFont, $this->centerParagraph);
+                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
+                            ->addText(_WT($r['residualRiskAcceptance']), $this->normalFont, $this->leftParagraph);
                     }
                 }
             }
@@ -2022,6 +2042,12 @@ class DeliverableGenerationService
                     ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndGrayCell)
                     ->addText($this->anrTranslate('Last review date'), $this->boldFont, $this->centerParagraph);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->restartAndGrayCell)
+                    ->addText(
+                        $this->anrTranslate('Residual risk acceptance decision'),
+                        $this->boldFont,
+                        $this->centerParagraph
+                    );
                 $tableRiskInfo->addRow(400);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndGrayCell);
@@ -2049,6 +2075,7 @@ class DeliverableGenerationService
                     ->addText($this->anrTranslate('A'), $this->boldFont, $this->centerParagraph);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
                 $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
+                $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->continueAndGrayCell);
 
                 $impacts = ['c', 'i', 'd'];
                 foreach ($risksByTreatment as $r) {
@@ -2121,6 +2148,12 @@ class DeliverableGenerationService
                             _WT(!empty($r['lastReviewDate']) ? $r['lastReviewDate'] : '-'),
                             $this->normalFont,
                             $this->centerParagraph
+                        );
+                    $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
+                        ->addText(
+                            _WT($this->formatResidualRiskAcceptanceFromArray($r)),
+                            $this->normalFont,
+                            $this->leftParagraph
                         );
                 }
                 $section->addTextBreak();
@@ -3002,6 +3035,12 @@ class DeliverableGenerationService
                             ->addText($this->anrTranslate('Residual risk'), $this->boldFont, $this->centerParagraph);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndGrayCell)
                             ->addText($this->anrTranslate('Last review date'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->restartAndGrayCell)
+                            ->addText(
+                                $this->anrTranslate('Residual risk acceptance decision'),
+                                $this->boldFont,
+                                $this->centerParagraph
+                            );
                         $tableRiskInfo->addRow(400);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndGrayCell);
@@ -3034,6 +3073,7 @@ class DeliverableGenerationService
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(1.50), $this->continueAndGrayCell);
                         $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueAndGrayCell);
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->continueAndGrayCell);
                     }
                     if (!empty($operationalInstanceRisks)) {
                         $section->addText($this->anrTranslate('Operational risks'), $this->boldFont);
@@ -3042,7 +3082,9 @@ class DeliverableGenerationService
                         $tableRiskOp->addRow(400);
                         $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->restartAndGrayCell)
                             ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
-                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->restartAndGrayCell)
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->restartAndGrayCell)
+                            ->addText($this->anrTranslate('Risk source'), $this->boldFont, $this->centerParagraph);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(7.50), $this->restartAndGrayCell)
                             ->addText(
                                 $this->anrTranslate('Risk description'),
                                 $this->boldFont,
@@ -3065,7 +3107,8 @@ class DeliverableGenerationService
 
                         $tableRiskOp->addRow(400, $this->tblHeader);
                         $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
-                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(7.50), $this->continueAndGrayCell);
                         if ($this->anr->showRolfBrut()) {
                             $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->restartAndGrayCell)
                                 ->addText($this->anrTranslate('Prob.'), $this->boldFont, $this->centerParagraph);
@@ -3095,7 +3138,8 @@ class DeliverableGenerationService
 
                         $tableRiskOp->addRow(PhpWord\Shared\Converter::cmToTwip(1.00), ['tblHeader' => true]);
                         $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->continueAndGrayCell);
-                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->continueAndGrayCell);
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(7.50), $this->continueAndGrayCell);
                         if ($this->anr->showRolfBrut()) {
                             $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(1.00), $this->continueAndGrayCell);
                             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
@@ -3210,6 +3254,12 @@ class DeliverableGenerationService
                                 $this->normalFont,
                                 $this->centerParagraph
                             );
+                        $tableRiskInfo->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
+                            ->addText(
+                                _WT($this->formatResidualRiskAcceptanceFromArray($instanceRisk)),
+                                $this->normalFont,
+                                $this->leftParagraph
+                            );
                     }
                 }
 
@@ -3227,7 +3277,13 @@ class DeliverableGenerationService
                         $tableRiskOp->addRow(400);
                         $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                             ->addText(_WT($path), $this->normalFont, $this->leftParagraph);
-                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->vAlignCenterCell)
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(2.50), $this->vAlignCenterCell)
+                            ->addText(
+                                _WT($riskOp['riskSourceLabel'] !== '' ? $riskOp['riskSourceLabel'] : '-'),
+                                $this->normalFont,
+                                $this->leftParagraph
+                            );
+                        $tableRiskOp->addCell(PhpWord\Shared\Converter::cmToTwip(7.50), $this->vAlignCenterCell)
                             ->addText(
                                 _WT($riskOp['label' . $this->currentLangAnrIndex]),
                                 $this->normalFont,
@@ -3952,6 +4008,55 @@ class DeliverableGenerationService
         }
 
         return $table;
+    }
+
+    private function formatResidualRiskAcceptance(InstanceRiskSuperClass $instanceRisk): string
+    {
+        return $this->formatResidualRiskAcceptanceValues(
+            $instanceRisk->getResidualRiskDecision(),
+            $instanceRisk->getResidualRiskApprovedBy(),
+            $instanceRisk->getResidualRiskApprovedAt()?->format('Y-m-d'),
+            $instanceRisk->getResidualRiskJustification()
+        );
+    }
+
+    private function formatResidualRiskAcceptanceFromArray(array $instanceRisk): string
+    {
+        return $this->formatResidualRiskAcceptanceValues(
+            $instanceRisk['residualRiskDecision'] ?? null,
+            $instanceRisk['residualRiskApprovedBy'] ?? null,
+            $instanceRisk['residualRiskApprovedAt'] ?? null,
+            $instanceRisk['residualRiskJustification'] ?? null
+        );
+    }
+
+    private function formatResidualRiskAcceptanceValues(
+        ?string $decision,
+        ?string $approvedBy,
+        ?string $approvedAt,
+        ?string $justification
+    ): string {
+        $lines = [];
+
+        if ($decision !== null && $decision !== '') {
+            $translatedDecision = match ($decision) {
+                'accepted' => $this->anrTranslate('Accepted'),
+                'rejected' => $this->anrTranslate('Rejected'),
+                default => $decision,
+            };
+            $lines[] = $this->anrTranslate('Decision') . ': ' . $translatedDecision;
+        }
+        if ($approvedBy !== null && $approvedBy !== '') {
+            $lines[] = $this->anrTranslate('Approver') . ': ' . $approvedBy;
+        }
+        if ($approvedAt !== null && $approvedAt !== '') {
+            $lines[] = $this->anrTranslate('Date') . ': ' . $approvedAt;
+        }
+        if ($justification !== null && $justification !== '') {
+            $lines[] = $this->anrTranslate('Justification') . ': ' . $justification;
+        }
+
+        return empty($lines) ? '-' : implode("\n", $lines);
     }
 
     /**

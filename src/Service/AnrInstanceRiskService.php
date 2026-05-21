@@ -8,10 +8,8 @@
 namespace Monarc\FrontOffice\Service;
 
 use DateTime;
-use Dom\Entity as DomEntity;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Entity as CoreEntity;
-use Monarc\Core\Entity\Anr;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Traits\ImpactVerificationTrait;
 use Monarc\Core\Service\Traits\RiskCalculationTrait;
@@ -28,14 +26,10 @@ class AnrInstanceRiskService
 
     private CoreEntity\UserSuperClass $connectedUser;
 
-    private array $cacheData = [];
-
     public function __construct(
         private Table\InstanceRiskTable $instanceRiskTable,
-        private Table\RecommendationTable $recommendationTable,
         private Table\RecommendationRiskTable $recommendationRiskTable,
         private Table\InstanceTable $instanceTable,
-        private Table\AmvTable $amvTable,
         private Table\ThreatTable $threatTable,
         private Table\VulnerabilityTable $vulnerabilityTable,
         private Table\ScaleTable $scaleTable,
@@ -134,6 +128,10 @@ class AnrInstanceRiskService
                         $instanceRisk->getReviewFrequency(),
                         $languageIndex
                     ),
+                    'residualRiskDecision' => $instanceRisk->getResidualRiskDecision(),
+                    'residualRiskApprovedBy' => $instanceRisk->getResidualRiskApprovedBy(),
+                    'residualRiskApprovedAt' => $instanceRisk->getResidualRiskApprovedAt()?->format('Y-m-d'),
+                    'residualRiskJustification' => $instanceRisk->getResidualRiskJustification(),
                     't' => $instanceRisk->isTreated(),
                     'tid' => $threat->getUuid(),
                     'vid' => $vulnerability->getUuid(),
@@ -398,6 +396,10 @@ class AnrInstanceRiskService
             $this->translateService->translate('Risk context', $languageIndex),
             $this->translateService->translate('Last review date', $languageIndex),
             $this->translateService->translate('Review frequency', $languageIndex),
+            $this->translateService->translate('Residual risk acceptance decision', $languageIndex),
+            $this->translateService->translate('Residual risk acceptance approver', $languageIndex),
+            $this->translateService->translate('Residual risk acceptance date', $languageIndex),
+            $this->translateService->translate('Residual risk acceptance justification', $languageIndex),
             $this->translateService->translate('Recommendations', $languageIndex),
             $this->translateService->translate('Security referentials', $languageIndex),
         ]) . "\n";
@@ -470,6 +472,12 @@ class AnrInstanceRiskService
                     $instanceRisk->getContext(),
                     $instanceRisk->getLastReviewDate()?->format('Y-m-d'),
                     $this->getReviewFrequencyLabel($instanceRisk->getReviewFrequency(), $languageIndex),
+                    $instanceRisk->getResidualRiskDecision() !== null
+                        ? $this->translateResidualRiskDecision($instanceRisk->getResidualRiskDecision(), $languageIndex)
+                        : null,
+                    $instanceRisk->getResidualRiskApprovedBy(),
+                    $instanceRisk->getResidualRiskApprovedAt()?->format('Y-m-d'),
+                    $instanceRisk->getResidualRiskJustification(),
                     implode("\n", $recommendationData),
                     implode("\n", $measuresData),
                 ];
@@ -487,9 +495,13 @@ class AnrInstanceRiskService
 
     private function updateInstanceRiskData(Entity\InstanceRisk $instanceRisk, array $data): void
     {
-        if (isset($data['riskSourceId'])) {
-            $riskSourceId = empty($data['riskSourceId']) ? null : $data['riskSourceId'];
-            $instanceRisk->setRiskSource($this->riskSourceTable->findById((int)$riskSourceId));
+        if (array_key_exists('riskSourceId', $data)) {
+            $riskSourceId = $data['riskSourceId'];
+            $instanceRisk->setRiskSource(
+                $riskSourceId === null || $riskSourceId === ''
+                    ? null
+                    : $this->riskSourceTable->findById((int)$riskSourceId)
+            );
         }
         if (array_key_exists('lastReviewDate', $data)) {
             $instanceRisk->setLastReviewDate($this->prepareLastReviewDate($instanceRisk, $data['lastReviewDate']));
@@ -497,6 +509,23 @@ class AnrInstanceRiskService
         if (array_key_exists('reviewFrequency', $data)) {
             $reviewFrequency = trim((string)$data['reviewFrequency']);
             $instanceRisk->setReviewFrequency($reviewFrequency === '' ? null : $reviewFrequency);
+        }
+        if (array_key_exists('residualRiskDecision', $data)) {
+            $residualRiskDecision = mb_strtolower(trim((string)$data['residualRiskDecision']));
+            $instanceRisk->setResidualRiskDecision($residualRiskDecision === '' ? null : $residualRiskDecision);
+        }
+        if (array_key_exists('residualRiskApprovedBy', $data)) {
+            $residualRiskApprovedBy = trim((string)$data['residualRiskApprovedBy']);
+            $instanceRisk->setResidualRiskApprovedBy($residualRiskApprovedBy === '' ? null : $residualRiskApprovedBy);
+        }
+        if (array_key_exists('residualRiskApprovedAt', $data)) {
+            $instanceRisk->setResidualRiskApprovedAt($this->createDateFromString($data['residualRiskApprovedAt']));
+        }
+        if (array_key_exists('residualRiskJustification', $data)) {
+            $residualRiskJustification = trim((string)$data['residualRiskJustification']);
+            $instanceRisk->setResidualRiskJustification(
+                $residualRiskJustification === '' ? null : $residualRiskJustification
+            );
         }
         if (isset($data['owner'])) {
             $this->instanceRiskOwnerService->processRiskOwnerNameAndAssign((string)$data['owner'], $instanceRisk);
@@ -563,16 +592,32 @@ class AnrInstanceRiskService
 
     private function createLastReviewDateFromString(mixed $lastReviewDate): ?DateTime
     {
-        if ($lastReviewDate === null || $lastReviewDate === '') {
+        return $this->createDateFromString($lastReviewDate, 'Invalid last review date format.');
+    }
+
+    private function createDateFromString(
+        mixed $dateValue,
+        string $exceptionMessage = 'Invalid date format.'
+    ): ?DateTime {
+        if ($dateValue === null || $dateValue === '') {
             return null;
         }
 
-        $normalizedDate = DateTime::createFromFormat('Y-m-d', (string)$lastReviewDate);
+        $normalizedDate = DateTime::createFromFormat('Y-m-d', (string)$dateValue);
         if ($normalizedDate === false) {
-            throw new Exception('Invalid last review date format.', 412);
+            throw new Exception($exceptionMessage, 412);
         }
 
         return $normalizedDate;
+    }
+
+    private function translateResidualRiskDecision(?string $decision, int $languageIndex): ?string
+    {
+        return match ($decision) {
+            'accepted' => $this->translateService->translate('Accepted', $languageIndex),
+            'rejected' => $this->translateService->translate('Rejected', $languageIndex),
+            default => $decision,
+        };
     }
 
     private function getReviewFrequencyLabel(?string $reviewFrequency, int $languageIndex): string
