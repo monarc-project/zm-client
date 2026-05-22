@@ -35,6 +35,7 @@ class AnrExportService
         private Table\ThreatTable $threatTable,
         private Table\VulnerabilityTable $vulnerabilityTable,
         private Table\RiskSourceTable $riskSourceTable,
+        private Table\InterestedPartyTable $interestedPartyTable,
         private Table\ReassessmentTriggerTable $reassessmentTriggerTable,
         private Table\AmvTable $amvTable,
         private Table\RolfTagTable $rolfTagTable,
@@ -85,6 +86,7 @@ class AnrExportService
         $withInterviews = $withEval && !empty($exportParams['interviews']);
         $withSoas = $withEval && !empty($exportParams['soas']);
         $withRecords = $withEval && !empty($exportParams['records']);
+        $withInterestedParties = $withEval && !empty($exportParams['interestedParties']);
         $withReassessmentTriggers = $withEval && !empty($exportParams['reassessmentTriggers']);
         $withLibrary = !empty($exportParams['assetsLibrary']);
         $withKnowledgeBase = !empty($exportParams['knowledgeBase']);
@@ -100,6 +102,7 @@ class AnrExportService
             'withInterviews' => $withInterviews,
             'withSoas' => $withSoas,
             'withRecords' => $withRecords,
+            'withInterestedParties' => $withInterestedParties,
             'withReassessmentTriggers' => $withReassessmentTriggers,
             'withLibrary' => $withLibrary,
             'withKnowledgeBase' => $withKnowledgeBase,
@@ -129,6 +132,7 @@ class AnrExportService
             'method' => $withMethodSteps ? $this->prepareMethodData($anr, !$withKnowledgeBase) : [],
             'thresholds' => $withEval ? $this->prepareAnrTrashholdsData($anr) : [],
             'interviews' => $withInterviews ? $this->prepareInterviewsData($anr) : [],
+            'interestedParties' => $withInterestedParties ? $this->prepareInterestedPartiesData($anr) : [],
             'reassessmentTriggers' => $withReassessmentTriggers ? $this->prepareReassessmentTriggersData($anr) : [],
             'gdprRecords' => $withRecords ? $this->prepareGdprRecordsData($anr) : [],
         ];
@@ -577,6 +581,20 @@ class AnrExportService
                 'monitoringApproach' => $reassessmentTrigger->getMonitoringApproach(),
                 'isActive' => $reassessmentTrigger->isActive(),
                 'position' => $reassessmentTrigger->getPosition(),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function prepareInterestedPartiesData(Entity\Anr $anr): array
+    {
+        $result = [];
+        foreach ($this->interestedPartyTable->findByAnrOrderedByPosition($anr) as $interestedParty) {
+            $result[] = [
+                'stakeholder' => $interestedParty->getStakeholder(),
+                'requirement' => $interestedParty->getRequirement(),
+                'position' => $interestedParty->getPosition(),
             ];
         }
 

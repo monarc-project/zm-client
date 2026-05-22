@@ -54,6 +54,7 @@ class DeliverableGenerationService
     private const TABLE_EVAL_TEND = 'TABLE_EVAL_TEND';
     private const TABLE_THREATS_FULL = 'TABLE_THREATS_FULL';
     private const TABLE_INTERVIEW = 'TABLE_INTERVIEW';
+    private const TABLE_INTERESTED_PARTIES = 'TABLE_INTERESTED_PARTIES';
     private const TABLE_REASSESSMENT_TRIGGERS = 'TABLE_REASSESSMENT_TRIGGERS';
     private const IMPACTS_APPRECIATION = 'IMPACTS_APPRECIATION';
     private const GRAPH_EVAL_RISK = 'GRAPH_EVAL_RISK';
@@ -131,6 +132,7 @@ class DeliverableGenerationService
         private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
         private Table\InstanceRiskOwnerTable $instanceRiskOwnerTable,
         private Table\ReassessmentTriggerTable $reassessmentTriggerTable,
+        private Table\InterestedPartyTable $interestedPartyTable,
         private Table\ThreatTable $threatTable,
         private Table\ClientTable $clientTable,
         private Table\MeasureTable $measureTable,
@@ -496,6 +498,7 @@ class DeliverableGenerationService
                 self::TABLE_EVAL_TEND => $this->generateTrendAssessmentTable(),
                 self::TABLE_THREATS_FULL => $this->generateThreatsTable(true),
                 self::TABLE_INTERVIEW => $this->generateInterviewsTable(),
+                self::TABLE_INTERESTED_PARTIES => $this->generateInterestedPartiesTable(),
                 self::TABLE_REASSESSMENT_TRIGGERS => $this->generateReassessmentTriggersTable(),
             ],
         ];
@@ -1033,6 +1036,46 @@ class DeliverableGenerationService
                     $this->normalFont,
                     $this->centerParagraph
                 );
+        }
+
+        return $table;
+    }
+
+    private function generateInterestedPartiesTable(): PhpWord\Element\Table
+    {
+        $tableWord = new PhpWord\PhpWord();
+        $section = $tableWord->addSection();
+        $table = $section->addTable($this->borderTable);
+        $interestedParties = $this->interestedPartyTable->findByAnrOrderedByPosition($this->anr);
+
+        $table->addRow(400, $this->tblHeader);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(7.00), $this->grayCell)
+            ->addText($this->anrTranslate('Stakeholder'), $this->boldFont, $this->centerParagraph);
+        $table->addCell(PhpWord\Shared\Converter::cmToTwip(19.00), $this->grayCell)
+            ->addText($this->anrTranslate('Requirement'), $this->boldFont, $this->centerParagraph);
+
+        if (!count($interestedParties)) {
+            $table->addRow(400);
+            $table->addCell(
+                PhpWord\Shared\Converter::cmToTwip(26.00),
+                $this->setColSpanCell(2)
+            )->addText(
+                $this->anrTranslate(
+                    'No interested parties and requirements have been defined for this analysis.'
+                ),
+                $this->normalFont,
+                $this->leftParagraph
+            );
+
+            return $table;
+        }
+
+        foreach ($interestedParties as $interestedParty) {
+            $table->addRow(400);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(7.00), $this->vAlignCenterCell)
+                ->addText(_WT($interestedParty->getStakeholder()), $this->normalFont, $this->leftParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(19.00), $this->vAlignCenterCell)
+                ->addText(_WT($interestedParty->getRequirement()), $this->normalFont, $this->leftParagraph);
         }
 
         return $table;

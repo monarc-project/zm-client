@@ -94,6 +94,7 @@ class AnrService
         private AnrRecommendationSetService $anrRecommendationSetService,
         private AnrRecommendationService $anrRecommendationService,
         private AnrRecommendationRiskService $anrRecommendationRiskService,
+        private InterestedPartyService $interestedPartyService,
         private ReassessmentTriggerService $reassessmentTriggerService,
         private SoaScaleCommentService $soaScaleCommentService,
         private CronTaskService $cronTaskService,
@@ -264,6 +265,7 @@ class AnrService
             ->duplicateAnrMetadataInstanceFields($sourceAnr, $newAnr, $isSourceCommon);
 
         $this->duplicateRiskSources($sourceAnr, $newAnr, $isSourceCommon);
+        $this->duplicateInterestedParties($sourceAnr, $newAnr, $isSourceCommon);
         $this->duplicateReassessmentTriggers($sourceAnr, $newAnr, $isSourceCommon);
 
         /* Recreate Instances, InstanceRisks, InstanceConsequences and InstanceMetadata. */
@@ -448,6 +450,16 @@ class AnrService
     ): void {
         if (!$isSourceCommon) {
             $this->reassessmentTriggerService->duplicateFromSourceAnr($sourceAnr, $newAnr);
+        }
+    }
+
+    private function duplicateInterestedParties(
+        CoreEntity\AnrSuperClass $sourceAnr,
+        Entity\Anr $newAnr,
+        bool $isSourceCommon
+    ): void {
+        if (!$isSourceCommon) {
+            $this->interestedPartyService->duplicateFromSourceAnr($sourceAnr, $newAnr);
         }
     }
 

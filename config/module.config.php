@@ -1249,6 +1249,23 @@ return [
                         ],
                     ],
 
+                    'interested_parties' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'interested-parties[/:id]',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => PipeSpec::class,
+                                'middleware' => new PipeSpec(
+                                    AnrValidationMiddleware::class,
+                                    Controller\ApiAnrInterestedPartiesController::class,
+                                ),
+                            ],
+                        ],
+                    ],
+
                     'reassessment_triggers' => [
                         'type' => 'segment',
                         'options' => [
@@ -1436,6 +1453,7 @@ return [
             Controller\ApiClientsController::class => AutowireFactory::class,
             Controller\ApiCoreReferentialsController::class => AutowireFactory::class,
             Controller\ApiAnrRiskSourcesController::class => AutowireFactory::class,
+            Controller\ApiAnrInterestedPartiesController::class => AutowireFactory::class,
             Controller\ApiAnrReassessmentTriggersController::class => AutowireFactory::class,
             Controller\ApiUserPasswordController::class => AutowireFactory::class,
             Controller\ApiUserTwoFAController::class => AutowireFactory::class,
@@ -1546,6 +1564,7 @@ return [
             Table\OperationalRiskScaleCommentTable::class => ClientEntityManagerFactory::class,
             Table\OperationalInstanceRiskScaleTable::class => ClientEntityManagerFactory::class,
             Table\RiskSourceTable::class => ClientEntityManagerFactory::class,
+            Table\InterestedPartyTable::class => ClientEntityManagerFactory::class,
             Table\ReassessmentTriggerTable::class => ClientEntityManagerFactory::class,
             Table\RecommendationTable::class => ClientEntityManagerFactory::class,
             Table\RecommendationHistoryTable::class => ClientEntityManagerFactory::class,
@@ -1632,6 +1651,7 @@ return [
             Service\SoaScaleCommentService::class => AutowireFactory::class,
             Service\SystemMessageService::class => AutowireFactory::class,
             Service\RiskSourceService::class => AutowireFactory::class,
+            Service\InterestedPartyService::class => AutowireFactory::class,
             Service\ReassessmentTriggerService::class => AutowireFactory::class,
             Stats\Service\StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             Stats\Service\StatsSettingsService::class => AutowireFactory::class,
@@ -1886,6 +1906,7 @@ return [
             'monarc_api_models',
             'monarc_api_referentials',
             'monarc_api_global_client_anr/risk_sources',
+            'monarc_api_global_client_anr/interested_parties',
             'monarc_api_global_client_anr/reassessment_triggers',
             'monarc_api_client',
             'monarc_api_global_client_anr/carto_risks',
@@ -1902,6 +1923,7 @@ return [
             'monarc_api_models',
             'monarc_api_referentials',
             'monarc_api_global_client_anr/risk_sources',
+            'monarc_api_global_client_anr/interested_parties',
             'monarc_api_global_client_anr/reassessment_triggers',
             'monarc_api_admin_users_roles',
             'monarc_api_global_client_anr/anr_instance_metadata_field',

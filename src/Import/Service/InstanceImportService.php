@@ -47,6 +47,7 @@ class InstanceImportService
         private Processor\SoaImportProcessor $soaImportProcessor,
         private ImportCacheHelper $importCacheHelper,
         private Service\AnrRecordService $anrRecordService,
+        private Service\InterestedPartyService $interestedPartyService,
         private Service\ReassessmentTriggerService $reassessmentTriggerService,
         private Table\InstanceTable $instanceTable,
         private Table\AnrTable $anrTable,
@@ -169,6 +170,9 @@ class InstanceImportService
         if (!empty($data['interviews'])) {
             /* Process the interviews' data. */
             $this->anrMethodStepImportProcessor->processInterviewsData($anr, $data['interviews']);
+        }
+        if (!empty($data['interestedParties'])) {
+            $this->interestedPartyService->processForImport($anr, $data['interestedParties'], $importMode === 'merge');
         }
         if (!empty($data['reassessmentTriggers'])) {
             $this->reassessmentTriggerService
