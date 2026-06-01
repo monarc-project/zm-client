@@ -32,23 +32,23 @@ class InstanceImportService
         private Processor\AssetImportProcessor $assetImportProcessor,
         private Processor\ThreatImportProcessor $threatImportProcessor,
         private Processor\VulnerabilityImportProcessor $vulnerabilityImportProcessor,
+        private Processor\RiskSourceImportProcessor $riskSourceImportProcessor,
         private Processor\ReferentialImportProcessor $referentialImportProcessor,
         private Processor\InformationRiskImportProcessor $informationRiskImportProcessor,
         private Processor\RolfTagImportProcessor $rolfTagImportProcessor,
         private Processor\OperationalRiskImportProcessor $operationalRiskImportProcessor,
         private Processor\RecommendationImportProcessor $recommendationImportProcessor,
         private Processor\ObjectCategoryImportProcessor $objectCategoryImportProcessor,
-        private Processor\ObjectImportProcessor $objectImportProcessor,
         private Processor\AnrInstanceMetadataFieldImportProcessor $anrInstanceMetadataFieldImportProcessor,
         private Processor\AnrMethodStepImportProcessor $anrMethodStepImportProcessor,
         private Processor\InstanceImportProcessor $instanceImportProcessor,
-        private Processor\InstanceConsequenceImportProcessor $instanceConsequenceImportProcessor,
         private Processor\ScaleImportProcessor $scaleImportProcessor,
         private Processor\OperationalRiskScaleImportProcessor $operationalRiskScaleImportProcessor,
-        private Processor\OperationalInstanceRiskImportProcessor $operationalInstanceRiskImportProcessor,
         private Processor\SoaImportProcessor $soaImportProcessor,
         private ImportCacheHelper $importCacheHelper,
         private Service\AnrRecordService $anrRecordService,
+        private Service\InterestedPartyService $interestedPartyService,
+        private Service\ReassessmentTriggerService $reassessmentTriggerService,
         private Table\InstanceTable $instanceTable,
         private Table\AnrTable $anrTable,
     ) {
@@ -171,6 +171,13 @@ class InstanceImportService
             /* Process the interviews' data. */
             $this->anrMethodStepImportProcessor->processInterviewsData($anr, $data['interviews']);
         }
+        if (!empty($data['interestedParties'])) {
+            $this->interestedPartyService->processForImport($anr, $data['interestedParties'], $importMode === 'merge');
+        }
+        if (!empty($data['reassessmentTriggers'])) {
+            $this->reassessmentTriggerService
+                ->processForImport($anr, $data['reassessmentTriggers'], $importMode === 'merge');
+        }
         if (!empty($data['knowledgeBase'])) {
             /* Process the Knowledge Base data. */
             $this->processKnowledgeBaseData($anr, $data['knowledgeBase']);
@@ -216,6 +223,7 @@ class InstanceImportService
         $this->assetImportProcessor->processAssetsData($anr, $knowledgeBaseData['assets']);
         $this->threatImportProcessor->processThreatsData($anr, $knowledgeBaseData['threats']);
         $this->vulnerabilityImportProcessor->processVulnerabilitiesData($anr, $knowledgeBaseData['vulnerabilities']);
+        $this->riskSourceImportProcessor->processRiskSourcesData($anr, $knowledgeBaseData['riskSources'] ?? []);
         $this->referentialImportProcessor->processReferentialsData($anr, $knowledgeBaseData['referentials']);
         $this->informationRiskImportProcessor->processInformationRisksData(
             $anr,

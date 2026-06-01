@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Import\Processor;
 
+use DateTime;
 use Monarc\Core\Entity\ScaleSuperClass;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
@@ -26,6 +27,7 @@ class InstanceRiskImportProcessor
         private AnrInstanceRiskService $anrInstanceRiskService,
         private InformationRiskImportProcessor $informationRiskImportProcessor,
         private RecommendationImportProcessor $recommendationImportProcessor,
+        private RiskSourceImportProcessor $riskSourceImportProcessor,
         private ThreatImportProcessor $threatImportProcessor,
         private VulnerabilityImportProcessor $vulnerabilityImportProcessor,
         private ImportCacheHelper $importCacheHelper,
@@ -70,6 +72,12 @@ class InstanceRiskImportProcessor
         $instanceRisk = $this->anrInstanceRiskService
             ->createInstanceRisk($instance, $amv, null, $threat, $vulnerability);
 
+        if (!empty($instanceRiskData['riskSource'])) {
+            $instanceRisk->setRiskSource(
+                $this->riskSourceImportProcessor->processRiskSourceData($anr, $instanceRiskData['riskSource'])
+            );
+        }
+
         foreach ($instanceRiskData['recommendations'] as $recommendationData) {
             $recommendationSet = $this->recommendationImportProcessor
                 ->processRecommendationSetData($anr, $recommendationData['recommendationSet']);
@@ -107,6 +115,40 @@ class InstanceRiskImportProcessor
                 ->setIsThreatRateNotSetOrModifiedExternally(
                     (bool)$instanceRiskData['isThreatRateNotSetOrModifiedExternally']
                 );
+            if (array_key_exists('lastReviewDate', $instanceRiskData)) {
+                $instanceRisk->setLastReviewDate(
+                    empty($instanceRiskData['lastReviewDate'])
+                        ? null
+                        : (DateTime::createFromFormat('Y-m-d', $instanceRiskData['lastReviewDate']) ?: null)
+                );
+            }
+            if (array_key_exists('reviewFrequency', $instanceRiskData)) {
+                $reviewFrequency = trim((string)$instanceRiskData['reviewFrequency']);
+                $instanceRisk->setReviewFrequency($reviewFrequency === '' ? null : $reviewFrequency);
+            }
+            if (array_key_exists('residualRiskDecision', $instanceRiskData)) {
+                $residualRiskDecision = mb_strtolower(trim((string)$instanceRiskData['residualRiskDecision']));
+                $instanceRisk->setResidualRiskDecision($residualRiskDecision === '' ? null : $residualRiskDecision);
+            }
+            if (array_key_exists('residualRiskApprovedBy', $instanceRiskData)) {
+                $residualRiskApprovedBy = trim((string)$instanceRiskData['residualRiskApprovedBy']);
+                $instanceRisk->setResidualRiskApprovedBy(
+                    $residualRiskApprovedBy === '' ? null : $residualRiskApprovedBy
+                );
+            }
+            if (array_key_exists('residualRiskApprovedAt', $instanceRiskData)) {
+                $instanceRisk->setResidualRiskApprovedAt(
+                    empty($instanceRiskData['residualRiskApprovedAt'])
+                        ? null
+                        : (DateTime::createFromFormat('Y-m-d', $instanceRiskData['residualRiskApprovedAt']) ?: null)
+                );
+            }
+            if (array_key_exists('residualRiskJustification', $instanceRiskData)) {
+                $residualRiskJustification = trim((string)$instanceRiskData['residualRiskJustification']);
+                $instanceRisk->setResidualRiskJustification(
+                    $residualRiskJustification === '' ? null : $residualRiskJustification
+                );
+            }
             if (!empty($instanceRiskData['riskOwner'])) {
                 $this->instanceRiskOwnerService
                     ->processRiskOwnerNameAndAssign($instanceRiskData['riskOwner'], $instanceRisk);
@@ -189,6 +231,12 @@ class InstanceRiskImportProcessor
         $toInstanceRisk
             ->setContext($fromInstanceRisk->getContext())
             ->setInstanceRiskOwner($fromInstanceRisk->getInstanceRiskOwner())
+            ->setLastReviewDate($fromInstanceRisk->getLastReviewDate())
+            ->setReviewFrequency($fromInstanceRisk->getReviewFrequency())
+            ->setResidualRiskDecision($fromInstanceRisk->getResidualRiskDecision())
+            ->setResidualRiskApprovedBy($fromInstanceRisk->getResidualRiskApprovedBy())
+            ->setResidualRiskApprovedAt($fromInstanceRisk->getResidualRiskApprovedAt())
+            ->setResidualRiskJustification($fromInstanceRisk->getResidualRiskJustification())
             ->setThreatRate($fromInstanceRisk->getThreatRate())
             ->setVulnerabilityRate($fromInstanceRisk->getVulnerabilityRate())
             ->setKindOfMeasure($fromInstanceRisk->getKindOfMeasure())

@@ -36,6 +36,7 @@ class OperationalInstanceRiskImportProcessor
         private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         private Table\InstanceRiskOpTable $instanceRiskOpTable,
         private OperationalRiskImportProcessor $operationalRiskImportProcessor,
+        private RiskSourceImportProcessor $riskSourceImportProcessor,
         private OperationalRiskScaleImportProcessor $operationalRiskScaleImportProcessor,
         private RecommendationImportProcessor $recommendationImportProcessor,
         private ImportCacheHelper $importCacheHelper,
@@ -94,6 +95,11 @@ class OperationalInstanceRiskImportProcessor
             $operationalInstanceRisk = $this->anrInstanceRiskOpService
                 ->createInstanceRiskOpObject($instance, $object, $operationalRisk, $operationalInstanceRiskData)
                 ->setSpecific($operationalInstanceRiskData['specific'] ?? 0);
+            if (!empty($operationalInstanceRiskData['riskSource'])) {
+                $operationalInstanceRisk->setRiskSource(
+                    $this->riskSourceImportProcessor->processRiskSourceData($anr, $operationalInstanceRiskData['riskSource'])
+                );
+            }
             if ($this->importCacheHelper->getValueFromArrayCache('with_eval')) {
                 $operationalInstanceRisk
                     ->setBrutProb((int)$operationalInstanceRiskData['brutProb'])

@@ -62,6 +62,14 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
             'cacheBrutRisk' => $instanceRiskOp->getCacheBrutRisk(),
             'cacheNetRisk' => $instanceRiskOp->getCacheNetRisk(),
             'cacheTargetedRisk' => $instanceRiskOp->getCacheTargetedRisk(),
+            'riskSourceId' => $instanceRiskOp->getRiskSource()?->getId(),
+            'riskSourceLabel' => $instanceRiskOp->getRiskSource()?->getLabel() ?? '',
+            'lastReviewDate' => $instanceRiskOp->getLastReviewDate()?->format('Y-m-d'),
+            'reviewFrequency' => $instanceRiskOp->getReviewFrequency(),
+            'residualRiskDecision' => $instanceRiskOp->getResidualRiskDecision(),
+            'residualRiskApprovedBy' => $instanceRiskOp->getResidualRiskApprovedBy(),
+            'residualRiskApprovedAt' => $instanceRiskOp->getResidualRiskApprovedAt()?->format('Y-m-d'),
+            'residualRiskJustification' => $instanceRiskOp->getResidualRiskJustification(),
         ]);
     }
     /**

@@ -47,6 +47,7 @@ class AnrService
         private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
+        private Table\RiskSourceTable $riskSourceTable,
         private Table\RecommendationRiskTable $recommendationRiskTable,
         private Table\RecommendationHistoryTable $recommendationHistoryTable,
         private Table\ReferentialTable $referentialTable,
@@ -71,6 +72,7 @@ class AnrService
         private CoreTable\AssetTable $coreAssetTable,
         private CoreTable\ThreatTable $coreThreatTable,
         private CoreTable\VulnerabilityTable $coreVulnerabilityTable,
+        private CoreTable\RiskSourceTable $coreRiskSourceTable,
         private CoreTable\TranslationTable $coreTranslationTable,
         private CoreTable\SoaScaleCommentTable $coreSoaScaleCommentTable,
         private CoreTable\OperationalRiskScaleTable $coreOperationalRiskScaleTable,
@@ -92,6 +94,8 @@ class AnrService
         private AnrRecommendationSetService $anrRecommendationSetService,
         private AnrRecommendationService $anrRecommendationService,
         private AnrRecommendationRiskService $anrRecommendationRiskService,
+        private InterestedPartyService $interestedPartyService,
+        private ReassessmentTriggerService $reassessmentTriggerService,
         private SoaScaleCommentService $soaScaleCommentService,
         private CronTaskService $cronTaskService,
         private StatsAnrService $statsAnrService,
@@ -183,6 +187,7 @@ class AnrService
             $data['languageCode'] = strtolower($this->configService->getLanguageCodes()[$data['language']]);
         }
 
+        /** @var Entity\Anr $newAnr */
         $newAnr = Entity\Anr::constructFromObjectAndData($sourceAnr, $data)
             ->setCreator($this->connectedUser->getEmail());
         if ($isSnapshotMode) {
@@ -258,6 +263,10 @@ class AnrService
         /* Recreate AnrInstanceMetadataFields */
         $anrInstanceMetadataFieldOldIdsToNewObjects = $this
             ->duplicateAnrMetadataInstanceFields($sourceAnr, $newAnr, $isSourceCommon);
+
+        $this->duplicateRiskSources($sourceAnr, $newAnr, $isSourceCommon);
+        $this->duplicateInterestedParties($sourceAnr, $newAnr, $isSourceCommon);
+        $this->duplicateReassessmentTriggers($sourceAnr, $newAnr, $isSourceCommon);
 
         /* Recreate Instances, InstanceRisks, InstanceConsequences and InstanceMetadata. */
         $this->duplicateInstancesTreeRisksSequencesRecommendationsMetadataAndScales(
@@ -378,6 +387,80 @@ class AnrService
         }
 
         $this->anrTable->remove($anr);
+    }
+
+    private function duplicateRiskSources(
+        CoreEntity\AnrSuperClass $sourceAnr,
+        Entity\Anr $newAnr,
+        bool $isSourceCommon
+    ): void {
+        $sourceRiskSources = $isSourceCommon
+            ? $this->coreRiskSourceTable->findByFilterParams(['isActive' => true])
+            : $this->riskSourceTable->findByAnr($sourceAnr);
+
+        foreach ($sourceRiskSources as $sourceRiskSource) {
+            $label = $sourceRiskSource->getLabel();
+            if ($isSourceCommon) {
+                $label = $this->resolveCommonRiskSourceLabel(
+                    $sourceRiskSource->getLabelTranslations(),
+                    $sourceRiskSource->getLabel(),
+                    $newAnr->getLanguageCode()
+                );
+            }
+
+            $this->riskSourceTable->save(
+                (new Entity\RiskSource())
+                    ->setAnr($newAnr)
+                    ->setLabel($label)
+                    ->setIsDefault($sourceRiskSource->isDefault())
+                    ->setIsActive($sourceRiskSource->isActive())
+                    ->setCreator($this->connectedUser->getEmail()),
+                false
+            );
+        }
+    }
+
+    /**
+     * @param array<string, string> $labels
+     */
+    private function resolveCommonRiskSourceLabel(array $labels, string $fallbackLabel, string $languageCode): string
+    {
+        if (isset($labels[$languageCode]) && $labels[$languageCode] !== '') {
+            return $labels[$languageCode];
+        }
+
+        $defaultLanguageCode = $this->configService->getLanguageCodes()[
+            $this->configService->getConfigOption('defaultLanguageIndex', 1)
+        ] ?? null;
+        if ($defaultLanguageCode !== null && isset($labels[$defaultLanguageCode]) && $labels[$defaultLanguageCode] !== '') {
+            return $labels[$defaultLanguageCode];
+        }
+
+        if ($labels !== []) {
+            return (string)reset($labels);
+        }
+
+        return $fallbackLabel;
+    }
+
+    private function duplicateReassessmentTriggers(
+        CoreEntity\AnrSuperClass $sourceAnr,
+        Entity\Anr $newAnr,
+        bool $isSourceCommon
+    ): void {
+        if (!$isSourceCommon) {
+            $this->reassessmentTriggerService->duplicateFromSourceAnr($sourceAnr, $newAnr);
+        }
+    }
+
+    private function duplicateInterestedParties(
+        CoreEntity\AnrSuperClass $sourceAnr,
+        Entity\Anr $newAnr,
+        bool $isSourceCommon
+    ): void {
+        if (!$isSourceCommon) {
+            $this->interestedPartyService->duplicateFromSourceAnr($sourceAnr, $newAnr);
+        }
     }
 
     private function getPreparedAnrData(
@@ -508,8 +591,8 @@ class AnrService
 
             /* Recreate the source's or core's referential in the analysis.  */
             $referential = (new Entity\Referential())
-                ->setUuid($referentialUuid)
                 ->setAnr($anr)
+                ->setUuid($referentialUuid)
                 ->setLabels($referentialFromSource->getLabels())
                 ->setUuid($referentialFromSource->getUuid())
                 ->setCreator($this->connectedUser->getEmail());
@@ -530,8 +613,8 @@ class AnrService
             /* Recreates the measures in the analysis. */
             foreach ($referentialFromSource->getMeasures() as $measureFromSource) {
                 $measure = (new Entity\Measure())
-                    ->setUuid($measureFromSource->getUuid())
                     ->setAnr($anr)
+                    ->setUuid($measureFromSource->getUuid())
                     ->setCode($measureFromSource->getCode())
                     ->setLabels($measureFromSource->getLabels())
                     ->setStatus($measureFromSource->getStatus())
@@ -705,9 +788,9 @@ class AnrService
                     $label = $operationalRiskScaleType->getLabel();
                 }
                 $newOperationalRiskScaleType = (new Entity\OperationalRiskScaleType())
+                    ->setLabel($label)
                     ->setAnr($newAnr)
                     ->setOperationalRiskScale($newOperationalRiskScale)
-                    ->setLabel($label)
                     ->setIsHidden($operationalRiskScaleType->isHidden())
                     ->setCreator($this->connectedUser->getEmail());
 
@@ -766,10 +849,10 @@ class AnrService
             $comment = $sourceOperationalRiskScaleComment->getComment();
         }
         $newOperationalRiskScaleComment = (new Entity\OperationalRiskScaleComment())
+            ->setComment($comment)
             ->setAnr($newAnr)
             ->setScaleIndex($sourceOperationalRiskScaleComment->getScaleIndex())
             ->setScaleValue($sourceOperationalRiskScaleComment->getScaleValue())
-            ->setComment($comment)
             ->setOperationalRiskScale($newOperationalRiskScale)
             ->setIsHidden($sourceOperationalRiskScaleComment->isHidden())
             ->setCreator($this->connectedUser->getEmail());
@@ -1131,7 +1214,7 @@ class AnrService
     }
 
     private function duplicateObjectsAndCategories(
-        CoreEntity\AnrSuperClass $sourceAnr,
+        CoreEntity\Anr|Entity\Anr $sourceAnr,
         Entity\Anr $newAnr,
         array $assetsOldIdsToNewObjects,
         array $rolfTagsOldIdsToNewObjects,
@@ -1482,6 +1565,11 @@ class AnrService
             if ($sourceInstanceRiskOp->getRolfRisk() !== null) {
                 $newInstanceRiskOp->setRolfRisk(
                     $rolfRisksOldIdsToNewObjects[$sourceInstanceRiskOp->getRolfRisk()->getId()]
+                );
+            }
+            if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp && $sourceInstanceRiskOp->getRiskSource() !== null) {
+                $newInstanceRiskOp->setRiskSource(
+                    $this->riskSourceTable->findOneByAnrAndLabel($newAnr, $sourceInstanceRiskOp->getRiskSource()->getLabel())
                 );
             }
             if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp

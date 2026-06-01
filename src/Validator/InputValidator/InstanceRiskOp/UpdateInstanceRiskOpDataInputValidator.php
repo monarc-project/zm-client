@@ -7,8 +7,12 @@
 
 namespace Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp;
 
+use Laminas\Filter\Callback;
 use Laminas\Filter\StringTrim;
 use Laminas\Filter\ToInt;
+use Laminas\Validator\Date;
+use Laminas\Validator\InArray;
+use Laminas\Validator\StringLength;
 use Monarc\Core\Validator\InputValidator\InstanceRiskOp\UpdateInstanceRiskOpDataInputValidator
     as CoreUpdateInstanceRiskOpDataInputValidator;
 
@@ -17,6 +21,16 @@ class UpdateInstanceRiskOpDataInputValidator extends CoreUpdateInstanceRiskOpDat
     protected function getRules(): array
     {
         return array_merge(parent::getRules(), [
+            [
+                'name' => 'riskSourceId',
+                'required' => false,
+                'filters' => [
+                    [
+                        'name' => ToInt::class,
+                    ],
+                ],
+                'validators' => [],
+            ],
             [
                 'name' => 'owner',
                 'required' => false,
@@ -34,6 +48,124 @@ class UpdateInstanceRiskOpDataInputValidator extends CoreUpdateInstanceRiskOpDat
                     [
                         'name' => StringTrim::class,
                     ],
+                ],
+                'validators' => [],
+            ],
+            [
+                'name' => 'residualRiskDecision',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    ['name' => StringTrim::class],
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value): ?string {
+                                $value = mb_strtolower(trim((string)$value));
+
+                                return $value === '' ? null : $value;
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [
+                    [
+                        'name' => InArray::class,
+                        'options' => [
+                            'haystack' => ['accepted', 'rejected'],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'residualRiskApprovedBy',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    ['name' => StringTrim::class],
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value): ?string {
+                                $value = trim((string)$value);
+
+                                return $value === '' ? null : $value;
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [
+                    [
+                        'name' => StringLength::class,
+                        'options' => ['max' => 255],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'residualRiskApprovedAt',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value): ?string {
+                                $value = trim((string)$value);
+
+                                return $value === '' ? null : $value;
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [
+                    [
+                        'name' => Date::class,
+                        'options' => ['format' => 'Y-m-d'],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'residualRiskJustification',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    ['name' => StringTrim::class],
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value): ?string {
+                                $value = trim((string)$value);
+
+                                return $value === '' ? null : $value;
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [],
+            ],
+            [
+                'name' => 'lastReviewDate',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    ['name' => StringTrim::class],
+                ],
+                'validators' => [
+                    [
+                        'name' => Date::class,
+                        'options' => [
+                            'format' => 'Y-m-d',
+                        ],
+                        'break_chain_on_failure' => false,
+                    ],
+                ],
+            ],
+            [
+                'name' => 'reviewFrequency',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    ['name' => StringTrim::class],
                 ],
                 'validators' => [],
             ],

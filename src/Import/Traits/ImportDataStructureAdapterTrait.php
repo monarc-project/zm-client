@@ -284,6 +284,12 @@ trait ImportDataStructureAdapterTrait
                 'riskAvailability' => $instanceRiskDatum['riskD'],
                 'context' => $instanceRiskDatum['context'],
                 'riskOwner' => $instanceRiskDatum['riskOwner'],
+                'lastReviewDate' => $instanceRiskDatum['lastReviewDate'] ?? null,
+                'reviewFrequency' => $instanceRiskDatum['reviewFrequency'] ?? null,
+                'residualRiskDecision' => $instanceRiskDatum['residualRiskDecision'] ?? null,
+                'residualRiskApprovedBy' => $instanceRiskDatum['residualRiskApprovedBy'] ?? null,
+                'residualRiskApprovedAt' => $instanceRiskDatum['residualRiskApprovedAt'] ?? null,
+                'residualRiskJustification' => $instanceRiskDatum['residualRiskJustification'] ?? null,
                 'recommendations' => $recommendationsData,
             ];
         }
@@ -366,6 +372,7 @@ trait ImportDataStructureAdapterTrait
 
             $operationalInstanceRisksData[] = [
                 'operationalRisk' => $rolfRiskData,
+                'riskSource' => $operationalInstanceRiskData['riskSource'] ?? null,
                 'riskCacheCode' => $operationalInstanceRiskData['riskCacheCode'] ?? 'empty-code-' . time(),
                 'riskCacheLabel' => $operationalInstanceRiskData['riskCacheLabel' . $languageIndex],
                 'riskCacheDescription' => $operationalInstanceRiskData['riskCacheDescription' . $languageIndex],

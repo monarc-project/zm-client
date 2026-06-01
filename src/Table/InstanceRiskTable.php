@@ -9,11 +9,13 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\QueryBuilder;
 use Monarc\Core\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Entity\InstanceSuperClass;
 use Monarc\Core\Table\InstanceRiskTable as CoreInstanceRiskTable;
 use Monarc\FrontOffice\Entity\Amv;
 use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\Asset;
 use Monarc\FrontOffice\Entity\Instance;
 use Monarc\FrontOffice\Entity\InstanceRisk;
 use Monarc\FrontOffice\Entity\Threat;
@@ -57,22 +59,30 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->setParameter('instance', $instance);
 
         if (!$excludeAmvFilter && $instanceRisk->getAmv() !== null) {
+            /** @var Amv $amv */
+            $amv = $instanceRisk->getAmv();
             $queryBuilder
                 ->innerJoin('ir.amv', 'amv')
                 ->andWhere('amv.uuid = :amvUuid')
                 ->andWhere('amv.anr = :amvAnr')
-                ->setParameter('amvUuid', $instanceRisk->getAmv()->getUuid())
-                ->setParameter('amvAnr', $instanceRisk->getAmv()->getAnr());
+                ->setParameter('amvUuid', $amv->getUuid())
+                ->setParameter('amvAnr', $amv->getAnr());
         }
         if ($includeAssetFilter) {
+            /** @var Asset $asset */
+            $asset = $instanceRisk->getAsset();
             $queryBuilder
                 ->innerJoin('ir.asset', 'a')
                 ->andWhere('a.uuid = :assetUuid')
                 ->andWhere('a.anr = :assetAnr')
-                ->setParameter('assetUuid', $instanceRisk->getAsset()->getUuid())
-                ->setParameter('assetAnr', $instanceRisk->getAsset()->getAnr());
+                ->setParameter('assetUuid', $asset->getUuid())
+                ->setParameter('assetAnr', $asset->getAnr());
         }
 
+        /** @var Threat $threat */
+        $threat = $instanceRisk->getThreat();
+        /** @var Vulnerability $vulnerability */
+        $vulnerability = $instanceRisk->getVulnerability();
         $queryBuilder
             ->innerJoin('ir.threat', 'thr')
             ->innerJoin('ir.vulnerability', 'vuln')
@@ -80,10 +90,10 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->andWhere('thr.anr = :threatAnr')
             ->andWhere('vuln.uuid = :vulnerabilityUuid')
             ->andWhere('vuln.anr = :vulnerabilityAnr')
-            ->setParameter('threatUuid', $instanceRisk->getThreat()->getUuid())
-            ->setParameter('threatAnr', $instanceRisk->getThreat()->getAnr())
-            ->setParameter('vulnerabilityUuid', $instanceRisk->getVulnerability()->getUuid())
-            ->setParameter('vulnerabilityAnr', $instanceRisk->getVulnerability()->getAnr());
+            ->setParameter('threatUuid', $threat->getUuid())
+            ->setParameter('threatAnr', $threat->getAnr())
+            ->setParameter('vulnerabilityUuid', $vulnerability->getUuid())
+            ->setParameter('vulnerabilityAnr', $vulnerability->getAnr());
 
         if ($instanceRisk->isSpecific()) {
             $queryBuilder->andWhere('ir.specific = ' . InstanceRiskSuperClass::TYPE_SPECIFIC);
@@ -267,5 +277,25 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->setParameter('vulnerability_uuid', $instanceRisk->getVulnerability()->getUuid())
             ->getQuery()
             ->getResult();
+    }
+
+    protected function applyExtraJoins(QueryBuilder $queryBuilder): void
+    {
+        $queryBuilder->leftJoin('ir.riskSource', 'rs');
+    }
+
+    protected function getExtraKeywordsCondition(): string
+    {
+        return 'rs.label LIKE :keywords OR ';
+    }
+
+    protected function applyExtraOrderBy(QueryBuilder $queryBuilder, string $orderField, string $direction): void
+    {
+        if ($orderField === 'riskSource') {
+            if (!in_array('rs', $queryBuilder->getAllAliases(), true)) {
+                $this->applyExtraJoins($queryBuilder);
+            }
+            $queryBuilder->addOrderBy('rs.label', $direction);
+        }
     }
 }

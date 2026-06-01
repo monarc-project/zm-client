@@ -7,8 +7,10 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use DateTime;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Entity as CoreEntity;
+use Monarc\Core\Entity\RiskSourceSuperClass;
 use Monarc\Core\Service as CoreService;
 use Monarc\Core\Service\Traits\OperationalRiskScaleVerificationTrait;
 use Monarc\FrontOffice\Entity;
@@ -32,12 +34,8 @@ class AnrInstanceRiskOpService
         private Table\InstanceTable $instanceTable,
         private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         private Table\RolfRiskTable $rolfRiskTable,
-        private Table\RolfTagTable $rolfTagTable,
-        private Table\OperationalRiskScaleTable $operationalRiskScaleTable,
         private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
-        private Table\RecommendationTable $recommendationTable,
-        private Table\RecommendationRiskTable $recommendationRiskTable,
-        private CoreService\ConfigService $configService,
+        private Table\RiskSourceTable $riskSourceTable,
         private CoreService\TranslateService $translateService,
         private CoreService\Helper\ScalesCacheHelper $scalesCacheHelper,
         private InstanceRiskOwnerService $instanceRiskOwnerService,
@@ -87,6 +85,8 @@ class AnrInstanceRiskOpService
             $result[] = [
                 'id' => $operationalInstanceRisk->getId(),
                 'rolfRisk' => $operationalInstanceRisk->getRolfRisk()?->getId(),
+                'riskSourceId' => $operationalInstanceRisk->getRiskSource()?->getId(),
+                'riskSourceLabel' => $operationalInstanceRisk->getRiskSource()?->getLabel() ?? '',
                 'label' . $anrLanguage => $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
                 'description' . $anrLanguage => $operationalInstanceRisk->getRiskCacheDescription($anrLanguage),
                 'context' => $operationalInstanceRisk->getContext(),
@@ -103,6 +103,12 @@ class AnrInstanceRiskOpService
                 'kindOfMeasure' => $operationalInstanceRisk->getKindOfMeasure(),
                 'comment' => $operationalInstanceRisk->getComment(),
                 'specific' => $operationalInstanceRisk->getSpecific(),
+                'lastReviewDate' => $operationalInstanceRisk->getLastReviewDate()?->format('Y-m-d'),
+                'reviewFrequency' => $operationalInstanceRisk->getReviewFrequency(),
+                'residualRiskDecision' => $operationalInstanceRisk->getResidualRiskDecision(),
+                'residualRiskApprovedBy' => $operationalInstanceRisk->getResidualRiskApprovedBy(),
+                'residualRiskApprovedAt' => $operationalInstanceRisk->getResidualRiskApprovedAt()?->format('Y-m-d'),
+                'residualRiskJustification' => $operationalInstanceRisk->getResidualRiskJustification(),
                 't' => $operationalInstanceRisk->isTreated(),
                 'position' => $operationalInstanceRisk->getInstance()->getPosition(),
                 'instanceInfos' => [
@@ -244,6 +250,7 @@ class AnrInstanceRiskOpService
                 'riskCacheDescription3' => $rolfRisk->getDescription(3),
                 'riskCacheDescription4' => $rolfRisk->getDescription(4),
             ] : ['riskCacheDescription' . $anr->getLanguage() => $data['riskCacheDescription']])
+            ->setRiskSource($this->getRiskSourceFromData($data))
             ->setCreator($this->connectedUser->getEmail());
 
         $this->instanceRiskOpTable->save($instanceRiskOp, false);
@@ -318,6 +325,45 @@ class AnrInstanceRiskOpService
         if (isset($data['context']) && (string)$data['context'] !== $operationalInstanceRisk->getContext()) {
             $operationalInstanceRisk->setContext($data['context']);
         }
+        if (array_key_exists('riskSourceId', $data)) {
+            $operationalInstanceRisk->setRiskSource($this->getRiskSourceFromData($data));
+        }
+        if (array_key_exists('residualRiskDecision', $data)) {
+            $operationalInstanceRisk->setResidualRiskDecision($data['residualRiskDecision']);
+        }
+        if (array_key_exists('residualRiskApprovedBy', $data)) {
+            $operationalInstanceRisk->setResidualRiskApprovedBy($data['residualRiskApprovedBy']);
+        }
+        if (array_key_exists('residualRiskApprovedAt', $data)) {
+            $residualRiskApprovedAt = $data['residualRiskApprovedAt'];
+            if ($residualRiskApprovedAt === null || $residualRiskApprovedAt === '') {
+                $operationalInstanceRisk->setResidualRiskApprovedAt(null);
+            } else {
+                $normalizedDate = \DateTime::createFromFormat('Y-m-d', (string)$residualRiskApprovedAt);
+                if ($normalizedDate !== false) {
+                    $operationalInstanceRisk->setResidualRiskApprovedAt($normalizedDate);
+                }
+            }
+        }
+        if (array_key_exists('residualRiskJustification', $data)) {
+            $operationalInstanceRisk->setResidualRiskJustification($data['residualRiskJustification']);
+        }
+        
+        if (array_key_exists('lastReviewDate', $data)) {
+            $lastReviewDate = $data['lastReviewDate'];
+            if ($lastReviewDate === null || $lastReviewDate === '') {
+                $operationalInstanceRisk->setLastReviewDate(null);
+            } else {
+                $normalizedDate = DateTime::createFromFormat('Y-m-d', (string)$lastReviewDate);
+                if ($normalizedDate !== false) {
+                    $operationalInstanceRisk->setLastReviewDate($normalizedDate);
+                }
+            }
+        }
+        if (array_key_exists('reviewFrequency', $data)) {
+            $reviewFrequency = trim((string)($data['reviewFrequency'] ?? ''));
+            $operationalInstanceRisk->setReviewFrequency($reviewFrequency === '' ? null : $reviewFrequency);
+        }
 
         $operationalInstanceRisk->setUpdater($this->connectedUser->getEmail());
 
@@ -373,6 +419,7 @@ class AnrInstanceRiskOpService
 
         $tableHeaders = [
             'instanceData' => $this->translateService->translate('Asset', $anrLanguage),
+            'riskSource' => $this->translateService->translate('Risk source', $anrLanguage),
             'label' => $this->translateService->translate('Risk description', $anrLanguage),
         ];
 
@@ -418,6 +465,7 @@ class AnrInstanceRiskOpService
         foreach ($operationalInstanceRisks as $operationalInstanceRisk) {
             $values = [
                 $operationalInstanceRisk->getInstance()->getName($anrLanguage),
+                $operationalInstanceRisk->getRiskSource()?->getLabel() ?? '',
                 $operationalInstanceRisk->getRiskCacheLabel($anrLanguage),
             ];
             if ($anr->showRolfBrut()) {
@@ -505,5 +553,14 @@ class AnrInstanceRiskOpService
         }
 
         return implode("\n", $csvData);
+    }
+
+    private function getRiskSourceFromData(array $data): ?RiskSourceSuperClass
+    {
+        if (!array_key_exists('riskSourceId', $data) || $data['riskSourceId'] === null || $data['riskSourceId'] === '') {
+            return null;
+        }
+
+        return $this->riskSourceTable->findById((int)$data['riskSourceId']);
     }
 }

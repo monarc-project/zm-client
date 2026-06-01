@@ -47,6 +47,10 @@ trait InformationInstanceRiskExportTrait
         return [
             'id' => $instanceRisk->getId(),
             'informationRisk' => $informationRiskData,
+            'riskSource' => $instanceRisk->getRiskSource() === null ? null : [
+                'id' => $instanceRisk->getRiskSource()->getId(),
+                'label' => $instanceRisk->getRiskSource()->getLabel(),
+            ],
             'threat' => $this->prepareThreatData($threat, $languageIndex, $withEval),
             'vulnerability' => $this->prepareVulnerabilityData($vulnerability, $languageIndex),
             'specific' => (int)$instanceRisk->isSpecific(),
@@ -66,6 +70,12 @@ trait InformationInstanceRiskExportTrait
             'riskAvailability' => $withEval ? $instanceRisk->getRiskAvailability() : -1,
             'context' => $withEval ? $instanceRisk->getContext() : '',
             'riskOwner' => $withEval ? $instanceRisk->getInstanceRiskOwner()?->getName() : '',
+            'lastReviewDate' => $withEval ? $instanceRisk->getLastReviewDate()?->format('Y-m-d') : null,
+            'reviewFrequency' => $withEval ? $instanceRisk->getReviewFrequency() : null,
+            'residualRiskDecision' => $withEval ? $instanceRisk->getResidualRiskDecision() : null,
+            'residualRiskApprovedBy' => $withEval ? $instanceRisk->getResidualRiskApprovedBy() : null,
+            'residualRiskApprovedAt' => $withEval ? $instanceRisk->getResidualRiskApprovedAt()?->format('Y-m-d') : null,
+            'residualRiskJustification' => $withEval ? $instanceRisk->getResidualRiskJustification() : null,
             'recommendations' => $recommendationsData,
         ];
     }
