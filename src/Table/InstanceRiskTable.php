@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice\Table;
 
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\QueryBuilder;
 use Monarc\Core\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Entity\InstanceSuperClass;
 use Monarc\Core\Table\InstanceRiskTable as CoreInstanceRiskTable;
@@ -267,5 +268,25 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             ->setParameter('vulnerability_uuid', $instanceRisk->getVulnerability()->getUuid())
             ->getQuery()
             ->getResult();
+    }
+
+    protected function applyExtraJoins(QueryBuilder $queryBuilder): void
+    {
+        $queryBuilder->leftJoin('ir.riskSource', 'rs');
+    }
+
+    protected function getExtraKeywordsCondition(): string
+    {
+        return 'rs.label LIKE :keywords OR ';
+    }
+
+    protected function applyExtraOrderBy(QueryBuilder $queryBuilder, string $orderField, string $direction): void
+    {
+        if ($orderField === 'riskSource') {
+            if (!in_array('rs', $queryBuilder->getAllAliases(), true)) {
+                $this->applyExtraJoins($queryBuilder);
+            }
+            $queryBuilder->addOrderBy('rs.label', $direction);
+        }
     }
 }

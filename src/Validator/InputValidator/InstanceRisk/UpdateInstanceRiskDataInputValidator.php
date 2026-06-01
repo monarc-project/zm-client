@@ -52,6 +52,78 @@ class UpdateInstanceRiskDataInputValidator extends CoreUpdateInstanceRiskDataInp
                 'validators' => [],
             ],
             [
+                'name' => 'riskSourceId',
+                'required' => false,
+                'filters' => [
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value) {
+                                if ($value === null || $value === '') {
+                                    return null;
+                                }
+
+                                return (int)$value;
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [],
+            ],
+            [
+                'name' => 'lastReviewDate',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value): ?string {
+                                $value = trim((string)$value);
+
+                                return $value === '' ? null : $value;
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [
+                    [
+                        'name' => Date::class,
+                        'options' => [
+                            'format' => 'Y-m-d',
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'reviewFrequency',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    [
+                        'name' => StringTrim::class,
+                    ],
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value): ?string {
+                                $value = trim((string)$value);
+
+                                return $value === '' ? null : $value;
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [
+                    [
+                        'name' => StringLength::class,
+                        'options' => [
+                            'max' => 50,
+                        ],
+                    ],
+                ],
+            ],
+            [
                 'name' => 'residualRiskDecision',
                 'required' => false,
                 'allow_empty' => true,
