@@ -15,7 +15,7 @@ use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Import\Service\InstanceImportService;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrRecommendationRiskService;
-use Monarc\FrontOffice\Service\InstanceRiskOwnerService;
+use Monarc\FrontOffice\Service\AnrSupervisorService;
 use Monarc\FrontOffice\Table;
 use PhpOffice\PhpWord\Exception\Exception;
 
@@ -40,7 +40,7 @@ class OperationalInstanceRiskImportProcessor
         private OperationalRiskScaleImportProcessor $operationalRiskScaleImportProcessor,
         private RecommendationImportProcessor $recommendationImportProcessor,
         private ImportCacheHelper $importCacheHelper,
-        private InstanceRiskOwnerService $instanceRiskOwnerService,
+        private AnrSupervisorService $anrSupervisorService,
         private AnrInstanceRiskOpService $anrInstanceRiskOpService,
         private AnrRecommendationRiskService $anrRecommendationRiskService,
         ConnectedUserService $connectedUserService
@@ -112,9 +112,136 @@ class OperationalInstanceRiskImportProcessor
                     ->setComment($operationalInstanceRiskData['comment'] ?? '')
                     ->setMitigation($operationalInstanceRiskData['mitigation'] ?? '')
                     ->setContext($operationalInstanceRiskData['context'] ?? '');
-                if (!empty($instanceRiskData['riskOwner'])) {
-                    $this->instanceRiskOwnerService
-                        ->processRiskOwnerNameAndAssign($instanceRiskData['riskOwner'], $operationalInstanceRisk);
+                $riskOwnerSupervisor = $operationalInstanceRiskData['riskOwnerSupervisor']
+                    ?? $operationalInstanceRiskData['risk_owner_supervisor']
+                    ?? null;
+                if (!empty($riskOwnerSupervisor)
+                    && is_array($riskOwnerSupervisor)
+                ) {
+                    $this->anrSupervisorService->assignRiskOwnerSupervisorData(
+                        $anr,
+                        $riskOwnerSupervisor,
+                        $operationalInstanceRisk
+                    );
+                }
+                if (array_key_exists('lastReviewDate', $operationalInstanceRiskData)) {
+                    $operationalInstanceRisk->setLastReviewDate(
+                        empty($operationalInstanceRiskData['lastReviewDate'])
+                            ? null
+                            : (\DateTime::createFromFormat('Y-m-d', $operationalInstanceRiskData['lastReviewDate']) ?: null)
+                    );
+                }
+                if (array_key_exists('reviewFrequency', $operationalInstanceRiskData)) {
+                    $reviewFrequency = trim((string)$operationalInstanceRiskData['reviewFrequency']);
+                    $operationalInstanceRisk->setReviewFrequency($reviewFrequency === '' ? null : $reviewFrequency);
+                }
+                if (array_key_exists('residualRiskDecision', $operationalInstanceRiskData)) {
+                    $operationalInstanceRisk->setResidualRiskDecision(
+                        $this->normalizeResidualRiskDecision($operationalInstanceRiskData['residualRiskDecision'])
+                    );
+                }
+                if (array_key_exists('residualAcceptanceUseRiskOwner', $operationalInstanceRiskData)) {
+                    $operationalInstanceRisk->setResidualAcceptanceUseRiskOwner(
+                        (bool)$operationalInstanceRiskData['residualAcceptanceUseRiskOwner']
+                    );
+                }
+                $residualAcceptanceApproverSupervisor = $operationalInstanceRiskData['residualAcceptanceApproverSupervisor'] ?? null;
+                if (!empty($residualAcceptanceApproverSupervisor) && is_array($residualAcceptanceApproverSupervisor)) {
+                    $operationalInstanceRisk->setResidualAcceptanceApproverSupervisor(
+                        $this->anrSupervisorService->getOrCreateSupervisor(
+                            $anr,
+                            $residualAcceptanceApproverSupervisor['name'] ?? null,
+                            $residualAcceptanceApproverSupervisor['email'] ?? null,
+                            [Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER]
+                        )
+                    );
+                }
+                if (array_key_exists('residualRiskDecidedAt', $operationalInstanceRiskData)) {
+                    $operationalInstanceRisk->setResidualRiskDecidedAt(
+                        empty($operationalInstanceRiskData['residualRiskDecidedAt'])
+                            ? null
+                            : (\DateTime::createFromFormat('Y-m-d', $operationalInstanceRiskData['residualRiskDecidedAt']) ?: null)
+                    );
+                }
+                if (array_key_exists('residualAcceptancePerformedByName', $operationalInstanceRiskData)) {
+                    $performedByName = trim((string)$operationalInstanceRiskData['residualAcceptancePerformedByName']);
+                    $operationalInstanceRisk->setResidualAcceptancePerformedByName(
+                        $performedByName === '' ? null : $performedByName
+                    );
+                }
+                if (array_key_exists('residualAcceptancePerformedByEmail', $operationalInstanceRiskData)) {
+                    $performedByEmail = trim((string)$operationalInstanceRiskData['residualAcceptancePerformedByEmail']);
+                    $operationalInstanceRisk->setResidualAcceptancePerformedByEmail(
+                        $performedByEmail === '' ? null : $performedByEmail
+                    );
+                }
+                if (array_key_exists('residualAcceptancePerformedOnBehalf', $operationalInstanceRiskData)) {
+                    $operationalInstanceRisk->setResidualAcceptancePerformedOnBehalf(
+                        (bool)$operationalInstanceRiskData['residualAcceptancePerformedOnBehalf']
+                    );
+                }
+                if (array_key_exists('residualRiskJustification', $operationalInstanceRiskData)) {
+                    $justification = trim((string)$operationalInstanceRiskData['residualRiskJustification']);
+                    $operationalInstanceRisk->setResidualRiskJustification($justification === '' ? null : $justification);
+                }
+                $residualRiskAcceptance = $operationalInstanceRiskData['residualRiskAcceptance']
+                    ?? $operationalInstanceRiskData['residual_risk_acceptance']
+                    ?? null;
+                if (!empty($residualRiskAcceptance)
+                    && is_array($residualRiskAcceptance)
+                ) {
+                    $operationalInstanceRisk->setResidualRiskDecision(
+                        $this->normalizeResidualRiskDecision($residualRiskAcceptance['decision'] ?? null)
+                    );
+                    if (array_key_exists('performedByName', $residualRiskAcceptance)) {
+                        $performedByName = trim((string)$residualRiskAcceptance['performedByName']);
+                        $operationalInstanceRisk->setResidualAcceptancePerformedByName(
+                            $performedByName === '' ? null : $performedByName
+                        );
+                    }
+                    if (array_key_exists('performedByEmail', $residualRiskAcceptance)) {
+                        $performedByEmail = trim((string)$residualRiskAcceptance['performedByEmail']);
+                        $operationalInstanceRisk->setResidualAcceptancePerformedByEmail(
+                            $performedByEmail === '' ? null : $performedByEmail
+                        );
+                    }
+                    if (array_key_exists('performedOnBehalf', $residualRiskAcceptance)) {
+                        $operationalInstanceRisk->setResidualAcceptancePerformedOnBehalf(
+                            (bool)$residualRiskAcceptance['performedOnBehalf']
+                        );
+                    }
+                    $approverData = $residualRiskAcceptance['approver'] ?? null;
+                    $legacyDecidedBy = trim((string)($residualRiskAcceptance['decidedBy'] ?? ''));
+                    $legacyDecidedByEmail = trim((string)($residualRiskAcceptance['decidedByEmail'] ?? ''));
+                    if (empty($approverData) && ($legacyDecidedBy !== '' || $legacyDecidedByEmail !== '')) {
+                        $approverData = [
+                            'name' => $legacyDecidedBy !== '' ? $legacyDecidedBy : null,
+                            'email' => $legacyDecidedByEmail !== '' ? $legacyDecidedByEmail : null,
+                        ];
+                    }
+                    if (!empty($approverData) && is_array($approverData)) {
+                        $approverSupervisor = !empty($riskOwnerSupervisor)
+                            && is_array($riskOwnerSupervisor)
+                            && (($riskOwnerSupervisor['name'] ?? '') === ($approverData['name'] ?? '')
+                                || ($riskOwnerSupervisor['email'] ?? '') === ($approverData['email'] ?? ''))
+                            ? $operationalInstanceRisk->getRiskOwnerSupervisor()
+                            : $this->anrSupervisorService->getOrCreateSupervisor(
+                                $anr,
+                                $approverData['name'] ?? null,
+                                $approverData['email'] ?? null,
+                                [Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER]
+                            );
+                        $operationalInstanceRisk->setResidualAcceptanceApproverSupervisor($approverSupervisor)
+                            ->setResidualRiskDecidedBySupervisor($approverSupervisor);
+                    }
+                    if (!empty($residualRiskAcceptance['date'])) {
+                        $date = \DateTime::createFromFormat('Y-m-d', (string)$residualRiskAcceptance['date']) ?: null;
+                        $operationalInstanceRisk->setResidualRiskDecidedAt($date);
+                    }
+                    if (array_key_exists('justification', $residualRiskAcceptance)) {
+                        $justification = trim((string)$residualRiskAcceptance['justification']);
+                        $operationalInstanceRisk->setResidualRiskJustification($justification === '' ? null : $justification);
+                    }
                 }
             }
             if ($areScalesLevelsOfLikelihoodDifferent) {
@@ -158,6 +285,18 @@ class OperationalInstanceRiskImportProcessor
 
             $this->instanceRiskOpTable->save($operationalInstanceRisk, false);
         }
+    }
+
+    private function normalizeResidualRiskDecision(mixed $decision): ?string
+    {
+        $decision = mb_strtolower(trim((string)$decision));
+
+        return match ($decision) {
+            '', null => null,
+            'accepted' => 'accepted',
+            'rejected', 'not_accepted' => 'not_accepted',
+            default => $decision,
+        };
     }
 
     private function processOperationalRiskScalesTypes(

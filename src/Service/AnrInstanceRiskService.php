@@ -15,6 +15,7 @@ use Monarc\Core\Service\Traits\ImpactVerificationTrait;
 use Monarc\Core\Service\Traits\RiskCalculationTrait;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Entity\AnrSupervisorRole;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
@@ -34,8 +35,9 @@ class AnrInstanceRiskService
         private Table\VulnerabilityTable $vulnerabilityTable,
         private Table\ScaleTable $scaleTable,
         private Table\RiskSourceTable $riskSourceTable,
+        private Table\RecommendationTable $recommendationTable,
         private TranslateService $translateService,
-        private InstanceRiskOwnerService $instanceRiskOwnerService,
+        private AnrSupervisorService $anrSupervisorService,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -129,16 +131,31 @@ class AnrInstanceRiskService
                         $languageIndex
                     ),
                     'residualRiskDecision' => $instanceRisk->getResidualRiskDecision(),
-                    'residualRiskApprovedBy' => $instanceRisk->getResidualRiskApprovedBy(),
-                    'residualRiskApprovedAt' => $instanceRisk->getResidualRiskApprovedAt()?->format('Y-m-d'),
+                    'residualRiskDecidedAt' => $instanceRisk->getResidualRiskDecidedAt()?->format('Y-m-d'),
+                    'residualAcceptanceUseRiskOwner' => $instanceRisk->isResidualAcceptanceUseRiskOwner(),
+                    'residualAcceptanceApproverSupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
+                        $instanceRisk->getResidualAcceptanceApproverSupervisor()
+                    ),
+                    'residualAcceptanceApproverSupervisorId' => $instanceRisk->getResidualAcceptanceApproverSupervisor()?->getId(),
+                    'residualAcceptancePerformedByName' => $instanceRisk->getResidualAcceptancePerformedByName(),
+                    'residualAcceptancePerformedByEmail' => $instanceRisk->getResidualAcceptancePerformedByEmail(),
+                    'residualAcceptancePerformedOnBehalf' => $instanceRisk->isResidualAcceptancePerformedOnBehalf(),
+                    'residualRiskDecidedBySupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
+                        $instanceRisk->getResidualRiskDecidedBySupervisor()
+                    ),
+                    'residualRiskDecidedBySupervisorId' => $instanceRisk->getResidualRiskDecidedBySupervisor()?->getId(),
+                    'residualRiskDecidedByUserId' => $instanceRisk->getResidualRiskDecidedByUser()?->getId(),
                     'residualRiskJustification' => $instanceRisk->getResidualRiskJustification(),
                     't' => $instanceRisk->isTreated(),
                     'tid' => $threat->getUuid(),
                     'vid' => $vulnerability->getUuid(),
                     'context' => $instanceRisk->getContext(),
-                    'owner' => $instanceRisk->getInstanceRiskOwner()
-                        ? $instanceRisk->getInstanceRiskOwner()->getName()
-                        : '',
+                    'owner' => $this->getRiskOwnerName($instanceRisk),
+                    'riskOwnerSupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
+                        $instanceRisk->getRiskOwnerSupervisor()
+                    ),
+                    'riskOwnerSupervisorId' => $instanceRisk->getRiskOwnerSupervisor()?->getId(),
+                    'riskOwnerSupervisorName' => $instanceRisk->getRiskOwnerSupervisor()?->getName(),
                     'recommendations' => implode(',', $recommendationsUuids),
                     'measures' => $measures,
                 ];
@@ -230,12 +247,21 @@ class AnrInstanceRiskService
                         if (!empty($riskSourceLabel)) {
                             $instanceRisk->setRiskSource($this->getOrCreateRiskSourceByLabel($anr, $riskSourceLabel));
                         }
-                        if (!empty($instanceRiskData['riskOwner'])) {
-                            $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
+                        $riskOwnerSupervisor = $instanceRiskData['riskOwnerSupervisor']
+                            ?? $instanceRiskData['risk_owner_supervisor']
+                            ?? null;
+                        if (!empty($riskOwnerSupervisor) && is_array($riskOwnerSupervisor)) {
+                            $this->anrSupervisorService->assignRiskOwnerSupervisorData(
                                 $anr,
-                                $instanceRiskData['riskOwner']
+                                $riskOwnerSupervisor,
+                                $instanceRisk
                             );
-                            $instanceRisk->setInstanceRiskOwner($instanceRiskOwner);
+                        } elseif (!empty($instanceRiskData['riskOwner'])) {
+                            $this->anrSupervisorService->assignRiskOwnerSupervisorName(
+                                $anr,
+                                (string)$instanceRiskData['riskOwner'],
+                                $instanceRisk
+                            );
                         }
                         if (array_key_exists('lastReviewDate', $instanceRiskData)) {
                             $instanceRisk->setLastReviewDate(
@@ -399,6 +425,8 @@ class AnrInstanceRiskService
             $this->translateService->translate('Residual risk acceptance decision', $languageIndex),
             $this->translateService->translate('Residual risk acceptance approver', $languageIndex),
             $this->translateService->translate('Residual risk acceptance date', $languageIndex),
+            $this->translateService->translate('Performed by', $languageIndex),
+            $this->translateService->translate('Performed on behalf', $languageIndex),
             $this->translateService->translate('Residual risk acceptance justification', $languageIndex),
             $this->translateService->translate('Recommendations', $languageIndex),
             $this->translateService->translate('Security referentials', $languageIndex),
@@ -468,15 +496,19 @@ class AnrInstanceRiskService
                         $languageIndex
                     ),
                     $instanceRisk->getCacheTargetedRisk() === -1 ? null : $instanceRisk->getCacheTargetedRisk(),
-                    $instanceRisk->getInstanceRiskOwner() ? $instanceRisk->getInstanceRiskOwner()->getName() : '',
+                    $this->getRiskOwnerName($instanceRisk),
                     $instanceRisk->getContext(),
                     $instanceRisk->getLastReviewDate()?->format('Y-m-d'),
                     $this->getReviewFrequencyLabel($instanceRisk->getReviewFrequency(), $languageIndex),
                     $instanceRisk->getResidualRiskDecision() !== null
                         ? $this->translateResidualRiskDecision($instanceRisk->getResidualRiskDecision(), $languageIndex)
                         : null,
-                    $instanceRisk->getResidualRiskApprovedBy(),
-                    $instanceRisk->getResidualRiskApprovedAt()?->format('Y-m-d'),
+                    $instanceRisk->getResidualAcceptanceApproverSupervisor()?->getName(),
+                    $instanceRisk->getResidualRiskDecidedAt()?->format('Y-m-d'),
+                    $instanceRisk->getResidualAcceptancePerformedByName(),
+                    $instanceRisk->isResidualAcceptancePerformedOnBehalf()
+                        ? $this->translateService->translate('Yes', $languageIndex)
+                        : $this->translateService->translate('No', $languageIndex),
                     $instanceRisk->getResidualRiskJustification(),
                     implode("\n", $recommendationData),
                     implode("\n", $measuresData),
@@ -495,6 +527,9 @@ class AnrInstanceRiskService
 
     private function updateInstanceRiskData(Entity\InstanceRisk $instanceRisk, array $data): void
     {
+        $previousRiskOwnerSupervisorId = $instanceRisk->getRiskOwnerSupervisor()?->getId();
+
+        // If the request is from the Supervisor who is just approving the risk (fills 3 fields) or Risk Owner (2 fields) then we allow it without changing the risk owner of approver.
         if (array_key_exists('riskSourceId', $data)) {
             $riskSourceId = $data['riskSourceId'];
             $instanceRisk->setRiskSource(
@@ -514,22 +549,25 @@ class AnrInstanceRiskService
             $residualRiskDecision = mb_strtolower(trim((string)$data['residualRiskDecision']));
             $instanceRisk->setResidualRiskDecision($residualRiskDecision === '' ? null : $residualRiskDecision);
         }
-        if (array_key_exists('residualRiskApprovedBy', $data)) {
-            $residualRiskApprovedBy = trim((string)$data['residualRiskApprovedBy']);
-            $instanceRisk->setResidualRiskApprovedBy($residualRiskApprovedBy === '' ? null : $residualRiskApprovedBy);
-        }
-        if (array_key_exists('residualRiskApprovedAt', $data)) {
-            $instanceRisk->setResidualRiskApprovedAt($this->createDateFromString($data['residualRiskApprovedAt']));
-        }
         if (array_key_exists('residualRiskJustification', $data)) {
             $residualRiskJustification = trim((string)$data['residualRiskJustification']);
             $instanceRisk->setResidualRiskJustification(
                 $residualRiskJustification === '' ? null : $residualRiskJustification
             );
         }
-        if (isset($data['owner'])) {
-            $this->instanceRiskOwnerService->processRiskOwnerNameAndAssign((string)$data['owner'], $instanceRisk);
+        if (array_key_exists('riskOwnerSupervisorId', $data)) {
+            $this->anrSupervisorService->assignRiskOwnerSupervisorById(
+                $instanceRisk->getAnr(),
+                $data['riskOwnerSupervisorId'],
+                $instanceRisk
+            );
         }
+        if ($previousRiskOwnerSupervisorId !== $instanceRisk->getRiskOwnerSupervisor()?->getId()
+            && ($instanceRisk->getRiskOwnerSupervisor() === null || $instanceRisk->isResidualAcceptanceUseRiskOwner())
+        ) {
+            $this->resetResidualRiskAcceptanceData($instanceRisk);
+        }
+        $this->applyResidualRiskAcceptanceData($instanceRisk, $data);
         if (isset($data['context'])) {
             $instanceRisk->setContext($data['context']);
         }
@@ -590,6 +628,23 @@ class AnrInstanceRiskService
         return $normalizedDate;
     }
 
+    public function prepareResidualRiskAcceptanceData(Entity\InstanceRisk $instanceRisk): array
+    {
+        return [
+            'residualRiskDecision' => $instanceRisk->getResidualRiskDecision(),
+            'residualRiskDecidedAt' => $instanceRisk->getResidualRiskDecidedAt()?->format('Y-m-d'),
+            'residualAcceptanceUseRiskOwner' => $instanceRisk->isResidualAcceptanceUseRiskOwner(),
+            'residualAcceptanceApproverSupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
+                $instanceRisk->getResidualAcceptanceApproverSupervisor()
+            ),
+            'residualAcceptanceApproverSupervisorId' => $instanceRisk->getResidualAcceptanceApproverSupervisor()?->getId(),
+            'residualAcceptancePerformedByName' => $instanceRisk->getResidualAcceptancePerformedByName(),
+            'residualAcceptancePerformedByEmail' => $instanceRisk->getResidualAcceptancePerformedByEmail(),
+            'residualAcceptancePerformedOnBehalf' => $instanceRisk->isResidualAcceptancePerformedOnBehalf(),
+            'residualRiskJustification' => $instanceRisk->getResidualRiskJustification(),
+        ];
+    }
+
     private function createLastReviewDateFromString(mixed $lastReviewDate): ?DateTime
     {
         return $this->createDateFromString($lastReviewDate, 'Invalid last review date format.');
@@ -611,13 +666,226 @@ class AnrInstanceRiskService
         return $normalizedDate;
     }
 
+    private function applyResidualRiskAcceptanceData(Entity\InstanceRisk $instanceRisk, array $data): void
+    {
+        $hasResidualAcceptancePayload = false;
+        foreach ([
+            'residualAcceptanceUseRiskOwner',
+            'residualAcceptanceApproverSupervisorId',
+            'residualRiskDecision',
+            'residualRiskDecidedAt',
+            'residualRiskJustification',
+            'residualAcceptancePerformedByName',
+            'residualAcceptancePerformedByEmail',
+            'residualAcceptancePerformedOnBehalf',
+        ] as $field) {
+            if (array_key_exists($field, $data)) {
+                $hasResidualAcceptancePayload = true;
+                break;
+            }
+        }
+
+        if (!$hasResidualAcceptancePayload) {
+            return;
+        }
+
+        $riskOwnerSupervisor = $instanceRisk->getRiskOwnerSupervisor();
+        if ($riskOwnerSupervisor === null) {
+            $this->resetResidualRiskAcceptanceData($instanceRisk);
+
+            return;
+        }
+
+        $useRiskOwner = array_key_exists('residualAcceptanceUseRiskOwner', $data)
+            ? (bool)$data['residualAcceptanceUseRiskOwner']
+            : $instanceRisk->isResidualAcceptanceUseRiskOwner();
+
+        if ($useRiskOwner) {
+            if (!$riskOwnerSupervisor->isActive()
+                || !$riskOwnerSupervisor->hasRole(AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER)
+            ) {
+                $this->resetResidualRiskAcceptanceData($instanceRisk);
+
+                return;
+            }
+
+            $approverSupervisor = $riskOwnerSupervisor;
+        } else {
+            $approverSupervisor = array_key_exists('residualAcceptanceApproverSupervisorId', $data)
+                ? $this->anrSupervisorService->getResidualRiskApproverSupervisor(
+                    $instanceRisk->getAnr(),
+                    $data['residualAcceptanceApproverSupervisorId']
+                )
+                : $instanceRisk->getResidualAcceptanceApproverSupervisor();
+        }
+
+        if ($approverSupervisor === null) {
+            $this->resetResidualRiskAcceptanceData($instanceRisk);
+
+            return;
+        }
+
+        $instanceRisk->setResidualAcceptanceUseRiskOwner($useRiskOwner)
+            ->setResidualAcceptanceApproverSupervisor($approverSupervisor);
+
+        $performedOnBehalf = false;
+        $canCurrentUserDecide = false;
+        if ($approverSupervisor->getLinkedUser() === null) {
+            $performedOnBehalf = true;
+            $canCurrentUserDecide = true;
+        } elseif ($this->isCurrentUserAllowedToApprove($approverSupervisor->getLinkedUser())) {
+            $canCurrentUserDecide = true;
+        }
+
+        $hasDecisionPayload = array_key_exists('residualRiskDecision', $data)
+            || array_key_exists('residualRiskDecidedAt', $data)
+            || array_key_exists('residualRiskJustification', $data)
+            || array_key_exists('residualAcceptancePerformedByName', $data)
+            || array_key_exists('residualAcceptancePerformedByEmail', $data)
+            || array_key_exists('residualAcceptancePerformedOnBehalf', $data);
+        if (!$hasDecisionPayload) {
+            return;
+        }
+
+        if (!$canCurrentUserDecide) {
+            if (!$this->hasResidualRiskDecisionChanges($instanceRisk, $data)) {
+                return;
+            }
+
+            throw new Exception('Residual risk acceptance decision is read-only for the current user.', 403);
+        }
+
+        if (array_key_exists('residualRiskDecision', $data)) {
+            $instanceRisk->setResidualRiskDecision($data['residualRiskDecision']);
+        }
+        if (array_key_exists('residualRiskDecidedAt', $data)) {
+            $instanceRisk->setResidualRiskDecidedAt($this->createDateFromString(
+                $data['residualRiskDecidedAt'],
+                'Invalid residual risk decision date format.'
+            ));
+        }
+        if (array_key_exists('residualRiskJustification', $data)) {
+            $instanceRisk->setResidualRiskJustification($data['residualRiskJustification']);
+        }
+
+        $instanceRisk
+            ->setResidualAcceptancePerformedByName($this->getCurrentUserSnapshotName())
+            ->setResidualAcceptancePerformedByEmail($this->connectedUser->getEmail())
+            ->setResidualAcceptancePerformedOnBehalf($performedOnBehalf)
+            ->setResidualRiskDecidedBySupervisor($approverSupervisor)
+            ->setResidualRiskDecidedByUser($this->connectedUser);
+    }
+
+    private function resetResidualRiskAcceptanceData(Entity\InstanceRisk $instanceRisk): void
+    {
+        $instanceRisk
+            ->setResidualAcceptanceUseRiskOwner(false)
+            ->setResidualAcceptanceApproverSupervisor(null)
+            ->setResidualRiskDecision(null)
+            ->setResidualRiskDecidedAt(null)
+            ->setResidualRiskJustification(null)
+            ->setResidualAcceptancePerformedByName(null)
+            ->setResidualAcceptancePerformedByEmail(null)
+            ->setResidualAcceptancePerformedOnBehalf(false)
+            ->setResidualRiskDecidedBySupervisor(null)
+            ->setResidualRiskDecidedByUser(null);
+    }
+
+    private function getCurrentUserSnapshotName(): string
+    {
+        $fullName = trim(sprintf(
+            '%s %s',
+            (string)$this->connectedUser->getFirstname(),
+            (string)$this->connectedUser->getLastname()
+        ));
+
+        return $fullName !== '' ? $fullName : (string)$this->connectedUser->getEmail();
+    }
+
+    private function isCurrentUserAllowedToApprove(?Entity\User $linkedUser): bool
+    {
+        if ($linkedUser !== null && $linkedUser->getId() === $this->connectedUser->getId()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function hasResidualRiskDecisionChanges(Entity\InstanceRisk $instanceRisk, array $data): bool
+    {
+        if (array_key_exists('residualRiskDecision', $data)
+            && $this->normalizeNullableLowercaseText($data['residualRiskDecision'])
+                !== $this->normalizeNullableLowercaseText($instanceRisk->getResidualRiskDecision())
+        ) {
+            return true;
+        }
+
+        if (array_key_exists('residualRiskDecidedAt', $data)
+            && $this->normalizeNullableDateValue($data['residualRiskDecidedAt'])
+                !== $this->normalizeNullableDateValue($instanceRisk->getResidualRiskDecidedAt()?->format('Y-m-d'))
+        ) {
+            return true;
+        }
+
+        if (array_key_exists('residualRiskJustification', $data)
+            && $this->normalizeNullableText($data['residualRiskJustification'])
+                !== $this->normalizeNullableText($instanceRisk->getResidualRiskJustification())
+        ) {
+            return true;
+        }
+
+        if (array_key_exists('residualAcceptancePerformedByName', $data)
+            && $this->normalizeNullableText($data['residualAcceptancePerformedByName'])
+                !== $this->normalizeNullableText($instanceRisk->getResidualAcceptancePerformedByName())
+        ) {
+            return true;
+        }
+
+        if (array_key_exists('residualAcceptancePerformedByEmail', $data)
+            && $this->normalizeNullableText($data['residualAcceptancePerformedByEmail'])
+                !== $this->normalizeNullableText($instanceRisk->getResidualAcceptancePerformedByEmail())
+        ) {
+            return true;
+        }
+
+        return array_key_exists('residualAcceptancePerformedOnBehalf', $data)
+            && (bool)$data['residualAcceptancePerformedOnBehalf']
+                !== $instanceRisk->isResidualAcceptancePerformedOnBehalf();
+    }
+
+    private function normalizeNullableText(mixed $value): ?string
+    {
+        $value = trim((string)$value);
+
+        return $value === '' ? null : $value;
+    }
+
+    private function normalizeNullableLowercaseText(mixed $value): ?string
+    {
+        $value = $this->normalizeNullableText($value);
+
+        return $value === null ? null : mb_strtolower($value);
+    }
+
+    private function normalizeNullableDateValue(mixed $value): ?string
+    {
+        $value = trim((string)$value);
+
+        return $value === '' ? null : $value;
+    }
+
     private function translateResidualRiskDecision(?string $decision, int $languageIndex): ?string
     {
         return match ($decision) {
             'accepted' => $this->translateService->translate('Accepted', $languageIndex),
-            'rejected' => $this->translateService->translate('Rejected', $languageIndex),
+            'rejected', 'not_accepted' => $this->translateService->translate('Not accepted', $languageIndex),
             default => $decision,
         };
+    }
+
+    private function getRiskOwnerName(Entity\InstanceRisk $instanceRisk): string
+    {
+        return $instanceRisk->getRiskOwnerSupervisor()?->getName() ?? '';
     }
 
     private function getReviewFrequencyLabel(?string $reviewFrequency, int $languageIndex): string

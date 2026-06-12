@@ -13,11 +13,7 @@ class AddResidualRiskAcceptance extends AbstractMigration
     {
         $this->table('instances_risks')
             ->addColumn('residual_risk_decision', 'string', ['limit' => 20, 'null' => true, 'after' => 'review_frequency'])
-            ->addColumn(
-                'residual_risk_approved_by',
-                'string',
-                ['limit' => 255, 'null' => true, 'after' => 'residual_risk_decision']
-            )
+            ->addColumn('residual_risk_approved_by', 'string', ['limit' => 255, 'null' => true, 'after' => 'residual_risk_decision'])
             ->addColumn('residual_risk_approved_at', 'date', ['null' => true, 'after' => 'residual_risk_approved_by'])
             ->addColumn('residual_risk_justification', 'text', ['null' => true, 'after' => 'residual_risk_approved_at'])
             ->update();

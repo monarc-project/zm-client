@@ -21,7 +21,11 @@ use Monarc\Core\Entity\InstanceRiskSuperClass;
  *      @ORM\Index(name="threat_id", columns={"threat_id"}),
  *      @ORM\Index(name="vulnerability_id", columns={"vulnerability_id"}),
  *      @ORM\Index(name="instance_id", columns={"instance_id"}),
- *      @ORM\Index(name="risk_owner_id", columns={"risk_owner_id"})
+ *      @ORM\Index(name="risk_owner_id", columns={"risk_owner_id"}),
+ *      @ORM\Index(name="risk_owner_supervisor_id", columns={"risk_owner_supervisor_id"}),
+ *      @ORM\Index(name="residual_acceptance_approver_supervisor_id", columns={"residual_acceptance_approver_supervisor_id"}),
+ *      @ORM\Index(name="residual_risk_decided_by_supervisor_id", columns={"residual_risk_decided_by_supervisor_id"}),
+ *      @ORM\Index(name="residual_risk_decided_by_user_id", columns={"residual_risk_decided_by_user_id"})
  * })
  * @ORM\Entity
  */
@@ -89,6 +93,16 @@ class InstanceRisk extends InstanceRiskSuperClass
     protected $instanceRiskOwner;
 
     /**
+     * @var AnrSupervisor|null
+     *
+     * @ORM\ManyToOne(targetEntity="AnrSupervisor", inversedBy="instanceRisks")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="risk_owner_supervisor_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
+     * })
+     */
+    protected $riskOwnerSupervisor;
+
+    /**
      * IMPORTANT! The field has to be always at the last place in the class due to the double fields' relation issue!
      * Because when a nullable relation of AMV is set, the anr value is saved as NULL as well.
      *
@@ -126,18 +140,69 @@ class InstanceRisk extends InstanceRiskSuperClass
     protected $residualRiskDecision;
 
     /**
+     * @var bool
+     *
+     * @ORM\Column(name="residual_acceptance_use_risk_owner", type="boolean", options={"default": false})
+     */
+    protected $residualAcceptanceUseRiskOwner = false;
+
+    /**
+     * @var AnrSupervisor|null
+     *
+     * @ORM\ManyToOne(targetEntity="AnrSupervisor")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="residual_acceptance_approver_supervisor_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
+     * })
+     */
+    protected $residualAcceptanceApproverSupervisor;
+
+    /**
      * @var string|null
      *
-     * @ORM\Column(name="residual_risk_approved_by", type="string", length=255, nullable=true)
+     * @ORM\Column(name="residual_acceptance_performed_by_name", type="string", length=255, nullable=true)
      */
-    protected $residualRiskApprovedBy;
+    protected $residualAcceptancePerformedByName;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="residual_acceptance_performed_by_email", type="string", length=255, nullable=true)
+     */
+    protected $residualAcceptancePerformedByEmail;
+
+    /**
+     * @var bool
+     *
+     * @ORM\Column(name="residual_acceptance_performed_on_behalf", type="boolean", options={"default": false})
+     */
+    protected $residualAcceptancePerformedOnBehalf = false;
+
+    /**
+     * @var AnrSupervisor|null
+     *
+     * @ORM\ManyToOne(targetEntity="AnrSupervisor")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="residual_risk_decided_by_supervisor_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
+     * })
+     */
+    protected $residualRiskDecidedBySupervisor;
+
+    /**
+     * @var User|null
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="residual_risk_decided_by_user_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
+     * })
+     */
+    protected $residualRiskDecidedByUser;
 
     /**
      * @var DateTime|null
      *
-     * @ORM\Column(name="residual_risk_approved_at", type="date", nullable=true)
+     * @ORM\Column(name="residual_risk_decided_at", type="datetime", nullable=true)
      */
-    protected $residualRiskApprovedAt;
+    protected $residualRiskDecidedAt;
 
     /**
      * @var string|null
@@ -173,9 +238,16 @@ class InstanceRisk extends InstanceRiskSuperClass
         if ($sourceInstanceRisk instanceof self) {
             $instanceRisk->setRiskSource($sourceInstanceRisk->getRiskSource())
                 ->setContext($sourceInstanceRisk->getContext())
+                ->setRiskOwnerSupervisor($sourceInstanceRisk->getRiskOwnerSupervisor())
                 ->setResidualRiskDecision($sourceInstanceRisk->getResidualRiskDecision())
-                ->setResidualRiskApprovedBy($sourceInstanceRisk->getResidualRiskApprovedBy())
-                ->setResidualRiskApprovedAt($sourceInstanceRisk->getResidualRiskApprovedAt())
+                ->setResidualAcceptanceUseRiskOwner($sourceInstanceRisk->isResidualAcceptanceUseRiskOwner())
+                ->setResidualAcceptanceApproverSupervisor($sourceInstanceRisk->getResidualAcceptanceApproverSupervisor())
+                ->setResidualAcceptancePerformedByName($sourceInstanceRisk->getResidualAcceptancePerformedByName())
+                ->setResidualAcceptancePerformedByEmail($sourceInstanceRisk->getResidualAcceptancePerformedByEmail())
+                ->setResidualAcceptancePerformedOnBehalf($sourceInstanceRisk->isResidualAcceptancePerformedOnBehalf())
+                ->setResidualRiskDecidedBySupervisor($sourceInstanceRisk->getResidualRiskDecidedBySupervisor())
+                ->setResidualRiskDecidedByUser($sourceInstanceRisk->getResidualRiskDecidedByUser())
+                ->setResidualRiskDecidedAt($sourceInstanceRisk->getResidualRiskDecidedAt())
                 ->setResidualRiskJustification($sourceInstanceRisk->getResidualRiskJustification())
                 ->setLastReviewDate($sourceInstanceRisk->getLastReviewDate())
                 ->setReviewFrequency($sourceInstanceRisk->getReviewFrequency());
@@ -194,7 +266,7 @@ class InstanceRisk extends InstanceRiskSuperClass
             ->setVulnerability($instanceRisk->getVulnerability())
             ->setAmv($instanceRisk->getAmv());
 
-        return $instanceRiskCopy->setInstanceRiskOwner($instanceRisk->getInstanceRiskOwner());
+        return $instanceRiskCopy->setRiskOwnerSupervisor($instanceRisk->getRiskOwnerSupervisor());
     }
 
     public function getRecommendationRisks()
@@ -237,6 +309,18 @@ class InstanceRisk extends InstanceRiskSuperClass
             $this->instanceRiskOwner = $instanceRiskOwner;
             $instanceRiskOwner->addInstanceRisk($this);
         }
+
+        return $this;
+    }
+
+    public function getRiskOwnerSupervisor(): ?AnrSupervisor
+    {
+        return $this->riskOwnerSupervisor;
+    }
+
+    public function setRiskOwnerSupervisor(?AnrSupervisor $riskOwnerSupervisor): self
+    {
+        $this->riskOwnerSupervisor = $riskOwnerSupervisor;
 
         return $this;
     }
@@ -301,26 +385,99 @@ class InstanceRisk extends InstanceRiskSuperClass
         return $this;
     }
 
-    public function getResidualRiskApprovedBy(): ?string
+    public function isResidualAcceptanceUseRiskOwner(): bool
     {
-        return $this->residualRiskApprovedBy;
+        return $this->residualAcceptanceUseRiskOwner;
     }
 
-    public function setResidualRiskApprovedBy(?string $residualRiskApprovedBy): self
+    public function setResidualAcceptanceUseRiskOwner(bool $residualAcceptanceUseRiskOwner): self
     {
-        $this->residualRiskApprovedBy = $residualRiskApprovedBy;
+        $this->residualAcceptanceUseRiskOwner = $residualAcceptanceUseRiskOwner;
 
         return $this;
     }
 
-    public function getResidualRiskApprovedAt(): ?DateTime
+    public function getResidualAcceptanceApproverSupervisor(): ?AnrSupervisor
     {
-        return $this->residualRiskApprovedAt;
+        return $this->residualAcceptanceApproverSupervisor;
     }
 
-    public function setResidualRiskApprovedAt(?DateTime $residualRiskApprovedAt): self
+    public function setResidualAcceptanceApproverSupervisor(
+        ?AnrSupervisor $residualAcceptanceApproverSupervisor
+    ): self {
+        $this->residualAcceptanceApproverSupervisor = $residualAcceptanceApproverSupervisor;
+
+        return $this;
+    }
+
+    public function getResidualAcceptancePerformedByName(): ?string
     {
-        $this->residualRiskApprovedAt = $residualRiskApprovedAt;
+        return $this->residualAcceptancePerformedByName;
+    }
+
+    public function setResidualAcceptancePerformedByName(?string $residualAcceptancePerformedByName): self
+    {
+        $this->residualAcceptancePerformedByName = $residualAcceptancePerformedByName;
+
+        return $this;
+    }
+
+    public function getResidualAcceptancePerformedByEmail(): ?string
+    {
+        return $this->residualAcceptancePerformedByEmail;
+    }
+
+    public function setResidualAcceptancePerformedByEmail(?string $residualAcceptancePerformedByEmail): self
+    {
+        $this->residualAcceptancePerformedByEmail = $residualAcceptancePerformedByEmail;
+
+        return $this;
+    }
+
+    public function isResidualAcceptancePerformedOnBehalf(): bool
+    {
+        return $this->residualAcceptancePerformedOnBehalf;
+    }
+
+    public function setResidualAcceptancePerformedOnBehalf(bool $residualAcceptancePerformedOnBehalf): self
+    {
+        $this->residualAcceptancePerformedOnBehalf = $residualAcceptancePerformedOnBehalf;
+
+        return $this;
+    }
+
+    public function getResidualRiskDecidedBySupervisor(): ?AnrSupervisor
+    {
+        return $this->residualRiskDecidedBySupervisor;
+    }
+
+    public function setResidualRiskDecidedBySupervisor(?AnrSupervisor $residualRiskDecidedBySupervisor): self
+    {
+        $this->residualRiskDecidedBySupervisor = $residualRiskDecidedBySupervisor;
+
+        return $this;
+    }
+
+    public function getResidualRiskDecidedByUser(): ?User
+    {
+        return $this->residualRiskDecidedByUser;
+    }
+
+    public function setResidualRiskDecidedByUser(?User $residualRiskDecidedByUser): self
+    {
+        $this->residualRiskDecidedByUser = $residualRiskDecidedByUser;
+
+        return $this;
+    }
+
+    public function getResidualRiskDecidedAt(): ?DateTime
+    {
+        return $this->residualRiskDecidedAt;
+    }
+
+    public function setResidualRiskDecidedAt(?DateTime $residualRiskDecidedAt): self
+    {
+        $this->residualRiskDecidedAt = $residualRiskDecidedAt;
 
         return $this;
     }

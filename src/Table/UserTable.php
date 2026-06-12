@@ -17,4 +17,21 @@ class UserTable extends CoreUserTable
     {
         parent::__construct($entityManager, $entityName);
     }
+
+    public function findBySearchString(string $searchString): array
+    {
+        $queryBuilder = $this->getRepository()->createQueryBuilder('u')
+            ->where('u.status = 1')
+            ->orderBy('u.firstname')
+            ->addOrderBy('u.lastname')
+            ->addOrderBy('u.email');
+
+        $searchString = trim($searchString);
+        if ($searchString !== '') {
+            $queryBuilder->andWhere('(u.firstname LIKE :filter OR u.lastname LIKE :filter OR u.email LIKE :filter)')
+                ->setParameter('filter', '%' . $searchString . '%');
+        }
+
+        return $queryBuilder->getQuery()->getResult();
+    }
 }

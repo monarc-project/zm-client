@@ -12,6 +12,7 @@ use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Validator\InputValidator\InstanceRiskOp\PatchInstanceRiskOpDataInputValidator;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
+use Monarc\FrontOffice\Service\AnrSupervisorService;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp\PostSpecificInstanceRiskOpDataInputValidator;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp\UpdateInstanceRiskOpDataInputValidator;
 
@@ -21,6 +22,7 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
 
     public function __construct(
         private AnrInstanceRiskOpService $anrInstanceRiskOpService,
+        private AnrSupervisorService $anrSupervisorService,
         private PostSpecificInstanceRiskOpDataInputValidator $postSpecificInstanceRiskOpDataInputValidator,
         private UpdateInstanceRiskOpDataInputValidator $updateInstanceRiskOpDataInputValidator,
         private PatchInstanceRiskOpDataInputValidator $patchInstanceRiskOpDataInputValidator
@@ -48,6 +50,7 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
     public function update($id, $data)
     {
         $this->validatePostParams($this->updateInstanceRiskOpDataInputValidator, $data);
+        $validatedData = $this->filterValidatedData($data, $this->updateInstanceRiskOpDataInputValidator->getValidData());
 
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
@@ -55,7 +58,7 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
         $instanceRiskOp = $this->anrInstanceRiskOpService->update(
             $anr,
             (int)$id,
-            $this->updateInstanceRiskOpDataInputValidator->getValidData()
+            $validatedData
         );
 
         return $this->getPreparedJsonResponse([
@@ -64,14 +67,34 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
             'cacheTargetedRisk' => $instanceRiskOp->getCacheTargetedRisk(),
             'riskSourceId' => $instanceRiskOp->getRiskSource()?->getId(),
             'riskSourceLabel' => $instanceRiskOp->getRiskSource()?->getLabel() ?? '',
+            'owner' => $instanceRiskOp->getRiskOwnerSupervisor()?->getName() ?? '',
+            'riskOwnerSupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
+                $instanceRiskOp->getRiskOwnerSupervisor()
+            ),
+            'riskOwnerSupervisorId' => $instanceRiskOp->getRiskOwnerSupervisor()?->getId(),
+            'riskOwnerSupervisorName' => $instanceRiskOp->getRiskOwnerSupervisor()?->getName(),
             'lastReviewDate' => $instanceRiskOp->getLastReviewDate()?->format('Y-m-d'),
             'reviewFrequency' => $instanceRiskOp->getReviewFrequency(),
             'residualRiskDecision' => $instanceRiskOp->getResidualRiskDecision(),
-            'residualRiskApprovedBy' => $instanceRiskOp->getResidualRiskApprovedBy(),
-            'residualRiskApprovedAt' => $instanceRiskOp->getResidualRiskApprovedAt()?->format('Y-m-d'),
+            'residualAcceptanceUseRiskOwner' => $instanceRiskOp->isResidualAcceptanceUseRiskOwner(),
+            'residualAcceptanceApproverSupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
+                $instanceRiskOp->getResidualAcceptanceApproverSupervisor()
+            ),
+            'residualAcceptanceApproverSupervisorId' => $instanceRiskOp->getResidualAcceptanceApproverSupervisor()?->getId(),
+            'residualAcceptancePerformedByName' => $instanceRiskOp->getResidualAcceptancePerformedByName(),
+            'residualAcceptancePerformedByEmail' => $instanceRiskOp->getResidualAcceptancePerformedByEmail(),
+            'residualAcceptancePerformedOnBehalf' => $instanceRiskOp->isResidualAcceptancePerformedOnBehalf(),
+            'residualRiskDecidedBySupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
+                $instanceRiskOp->getResidualRiskDecidedBySupervisor()
+            ),
+            'residualRiskDecidedBySupervisorId' => $instanceRiskOp->getResidualRiskDecidedBySupervisor()?->getId(),
+            'residualRiskDecidedByUserId' => $instanceRiskOp->getResidualRiskDecidedByUser()?->getId(),
+            'residualRiskDecidedByName' => $instanceRiskOp->getResidualRiskDecidedBySupervisor()?->getName(),
+            'residualRiskDecidedAt' => $instanceRiskOp->getResidualRiskDecidedAt()?->format('Y-m-d'),
             'residualRiskJustification' => $instanceRiskOp->getResidualRiskJustification(),
         ]);
     }
+
     /**
      * @param array $data
      */
@@ -102,5 +125,10 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
         $this->anrInstanceRiskOpService->delete($anr, (int)$id);
 
         return $this->getSuccessfulJsonResponse();
+    }
+    
+    private function filterValidatedData(array $sourceData, array $validatedData): array
+    {
+        return array_intersect_key($validatedData, $sourceData);
     }
 }

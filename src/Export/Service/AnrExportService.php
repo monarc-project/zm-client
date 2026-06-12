@@ -45,6 +45,7 @@ class AnrExportService
         private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
         private Table\ObjectCategoryTable $objectCategoryTable,
         private Table\InstanceTable $instanceTable,
+        private Table\AnrSupervisorTable $anrSupervisorTable,
         private Table\ScaleTable $scaleTable,
         private Table\OperationalRiskScaleTable $operationalRiskScaleTable,
         private Table\SoaScaleCommentTable $soaScaleCommentTable,
@@ -94,6 +95,8 @@ class AnrExportService
         return [
             'type' => 'anr',
             'monarc_version' => $this->configService->getAppVersion()['appVersion'],
+            'exportFormatVersion' => 'supervisors_v1',
+            'export_format_version' => 'supervisors_v1',
             'exportDatetime' => (new \DateTime())->format('Y-m-d H:i:s'),
             'withEval' => $withEval,
             'withControls' => $withControls,
@@ -116,6 +119,7 @@ class AnrExportService
                 !$withKnowledgeBase
             ) : [],
             'library' => $withLibrary ? $this->prepareLibraryData($anr, !$withKnowledgeBase) : [],
+            'supervisors' => $this->prepareSupervisorsData($anr),
             'instances' => $this->prepareInstancesData(
                 $anr,
                 !$withLibrary,
@@ -236,6 +240,65 @@ class AnrExportService
         }
 
         return $result;
+    }
+
+    private function prepareSupervisorsData(Entity\Anr $anr): array
+    {
+        $result = [];
+        /** @var Entity\AnrSupervisor $supervisor */
+        foreach ($this->anrSupervisorTable->findByAnrOrdered($anr) as $supervisor) {
+            $result[] = [
+                'name' => $supervisor->getName(),
+                'email' => $supervisor->getEmail(),
+                'roles' => $supervisor->getRolesArray(),
+                'isActive' => $supervisor->isActive(),
+                'is_active' => $supervisor->isActive(),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function prepareSupervisorIdentity(?Entity\AnrSupervisor $supervisor): ?array
+    {
+        if ($supervisor === null) {
+            return null;
+        }
+
+        return [
+            'name' => $supervisor->getName(),
+            'email' => $supervisor->getEmail(),
+        ];
+    }
+
+    private function prepareResidualRiskAcceptanceData(
+        ?string $decision,
+        ?Entity\AnrSupervisor $approverSupervisor,
+        ?\DateTimeInterface $decidedAt,
+        ?string $performedByName,
+        ?string $performedByEmail,
+        bool $performedOnBehalf,
+        ?string $justification
+    ): ?array {
+        if ($decision === null
+            && $approverSupervisor === null
+            && $decidedAt === null
+            && $performedByName === null
+            && $performedByEmail === null
+            && $justification === null
+        ) {
+            return null;
+        }
+
+        return [
+            'decision' => $decision,
+            'approver' => $this->prepareSupervisorIdentity($approverSupervisor),
+            'date' => $decidedAt?->format('Y-m-d'),
+            'performedByName' => $performedByName,
+            'performedByEmail' => $performedByEmail,
+            'performedOnBehalf' => $performedOnBehalf,
+            'justification' => $justification,
+        ];
     }
 
     private function prepareInformationRisksData(Entity\Anr $anr, bool $withEval, bool $withControls): array

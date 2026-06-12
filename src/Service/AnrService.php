@@ -90,7 +90,7 @@ class AnrService
         private AnrObjectService $anrObjectService,
         private AnrObjectCategoryService $anrObjectCategoryService,
         private AnrInstanceMetadataFieldService $anrInstanceMetadataFieldService,
-        private InstanceRiskOwnerService $instanceRiskOwnerService,
+        private AnrSupervisorService $anrSupervisorService,
         private AnrRecommendationSetService $anrRecommendationSetService,
         private AnrRecommendationService $anrRecommendationService,
         private AnrRecommendationRiskService $anrRecommendationRiskService,
@@ -124,9 +124,18 @@ class AnrService
                 }
             }
         } else {
+            $preparedAnrs = [];
             foreach ($this->connectedUser->getUserAnrs() as $userAnr) {
-                $anrData[] = $this->getPreparedAnrData($userAnr->getAnr(), $userAnr);
+                $preparedData = $this->getPreparedAnrData($userAnr->getAnr(), $userAnr);
+                $preparedAnrs[$preparedData['id']] = $preparedData;
             }
+            foreach ($this->anrSupervisorService->getLinkedSupervisorsByUser($this->connectedUser) as $supervisor) {
+                $anr = $supervisor->getAnr();
+                if (!$anr->isAnrSnapshot() && !isset($preparedAnrs[$anr->getId()])) {
+                    $preparedAnrs[$anr->getId()] = $this->getPreparedAnrData($anr, null);
+                }
+            }
+            $anrData = array_values($preparedAnrs);
         }
 
         return $anrData;
@@ -468,6 +477,10 @@ class AnrService
         ?Entity\UserAnr $userAnr,
         bool $includeSnapshotDetails = false
     ): array {
+        $supervisorAccessAnr = $anr->isAnrSnapshot() ? $anr->getSnapshot()?->getAnrReference() : $anr;
+        $linkedSupervisor = $supervisorAccessAnr === null
+            ? null
+            : $this->anrSupervisorService->findLinkedSupervisor($supervisorAccessAnr, $this->connectedUser);
         $referentialData = [];
         foreach ($anr->getReferentials() as $referential) {
             $referentialData[] = [
@@ -481,8 +494,15 @@ class AnrService
             'uuid' => $anr->getUuid(),
             'label' => $anr->getLabel(),
             'description' => $anr->getDescription(),
-            'rwd' => $userAnr === null ? -1 : $userAnr->getRwd(),
+            'rwd' => $userAnr === null ? ($linkedSupervisor === null ? -1 : 0) : $userAnr->getRwd(),
             'referentials' => $referentialData,
+            'isSupervisorOnly' => (int)($userAnr === null && $linkedSupervisor !== null),
+            'linkedSupervisor' => $linkedSupervisor === null
+                ? null
+                : $this->anrSupervisorService->prepareSupervisorReference($linkedSupervisor),
+            'linkedSupervisorRoles' => $linkedSupervisor?->getRolesArray() ?? [],
+            'canApproveResidualRisk' => (int)($linkedSupervisor !== null
+                && $linkedSupervisor->hasRole(Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER)),
             'isCurrentAnr' => (int)($this->connectedUser->getCurrentAnr() !== null
                 && $this->connectedUser->getCurrentAnr()->getId() === $anr->getId()),
             'status' => $anr->getStatus(),
@@ -1529,13 +1549,15 @@ class AnrService
                     $vulnerabilitiesOldIdsToNewObjects[$sourceInstanceRisk->getVulnerability()->getUuid()]
                 );
             }
-            if ($sourceInstanceRisk instanceof Entity\InstanceRisk
-                && $sourceInstanceRisk->getInstanceRiskOwner() !== null
-            ) {
-                $newInstanceRisk->setInstanceRiskOwner($this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
+            if ($sourceInstanceRisk instanceof Entity\InstanceRisk) {
+                $newInstanceRisk->setRiskOwnerSupervisor($this->duplicateSupervisorReference(
                     $newAnr,
-                    $sourceInstanceRisk->getInstanceRiskOwner()->getName(),
-                    false
+                    $sourceInstanceRisk->getRiskOwnerSupervisor(),
+                    [Entity\AnrSupervisorRole::ROLE_RISK_OWNER]
+                ));
+                $newInstanceRisk->setResidualRiskDecidedBySupervisor($this->duplicateSupervisorReference(
+                    $newAnr,
+                    $sourceInstanceRisk->getResidualRiskDecidedBySupervisor()
                 ));
             }
 
@@ -1572,15 +1594,16 @@ class AnrService
                     $this->riskSourceTable->findOneByAnrAndLabel($newAnr, $sourceInstanceRiskOp->getRiskSource()->getLabel())
                 );
             }
-            if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp
-                && $sourceInstanceRiskOp->getInstanceRiskOwner() !== null
-            ) {
-                $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
+            if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp) {
+                $newInstanceRiskOp->setRiskOwnerSupervisor($this->duplicateSupervisorReference(
                     $newAnr,
-                    $sourceInstanceRiskOp->getInstanceRiskOwner()->getName(),
-                    false
-                );
-                $newInstanceRiskOp->setInstanceRiskOwner($instanceRiskOwner);
+                    $sourceInstanceRiskOp->getRiskOwnerSupervisor(),
+                    [Entity\AnrSupervisorRole::ROLE_RISK_OWNER]
+                ));
+                $newInstanceRiskOp->setResidualRiskDecidedBySupervisor($this->duplicateSupervisorReference(
+                    $newAnr,
+                    $sourceInstanceRiskOp->getResidualRiskDecidedBySupervisor()
+                ));
             }
 
             $this->instanceRiskOpTable->save($newInstanceRiskOp, false);
@@ -1619,6 +1642,23 @@ class AnrService
                 ->setCreator($this->connectedUser->getEmail());
             $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
         }
+    }
+
+    private function duplicateSupervisorReference(
+        Entity\Anr $anr,
+        ?Entity\AnrSupervisor $sourceSupervisor,
+        array $requiredRoles = []
+    ): ?Entity\AnrSupervisor {
+        if ($sourceSupervisor === null) {
+            return null;
+        }
+
+        return $this->anrSupervisorService->getOrCreateSupervisor(
+            $anr,
+            $sourceSupervisor->getName(),
+            $sourceSupervisor->getEmail(),
+            array_values(array_unique(array_merge($sourceSupervisor->getRolesArray(), $requiredRoles)))
+        );
     }
 
     private function duplicateInstanceConsequences(

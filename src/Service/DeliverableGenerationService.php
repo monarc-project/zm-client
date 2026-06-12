@@ -130,7 +130,7 @@ class DeliverableGenerationService
         private Table\RecommendationRiskTable $recommendationRiskTable,
         private Table\RecommendationHistoryTable $recommendationHistoryTable,
         private Table\AnrInstanceMetadataFieldTable $anrInstanceMetadataFieldTable,
-        private Table\InstanceRiskOwnerTable $instanceRiskOwnerTable,
+        private Table\AnrSupervisorTable $anrSupervisorTable,
         private Table\ReassessmentTriggerTable $reassessmentTriggerTable,
         private Table\InterestedPartyTable $interestedPartyTable,
         private Table\ThreatTable $threatTable,
@@ -4057,8 +4057,10 @@ class DeliverableGenerationService
     {
         return $this->formatResidualRiskAcceptanceValues(
             $instanceRisk->getResidualRiskDecision(),
-            $instanceRisk->getResidualRiskApprovedBy(),
-            $instanceRisk->getResidualRiskApprovedAt()?->format('Y-m-d'),
+            $instanceRisk->getResidualAcceptanceApproverSupervisor()?->getName(),
+            $instanceRisk->getResidualRiskDecidedAt()?->format('Y-m-d'),
+            $instanceRisk->getResidualAcceptancePerformedByName(),
+            $instanceRisk->getResidualAcceptancePerformedOnBehalf(),
             $instanceRisk->getResidualRiskJustification()
         );
     }
@@ -4067,16 +4069,28 @@ class DeliverableGenerationService
     {
         return $this->formatResidualRiskAcceptanceValues(
             $instanceRisk['residualRiskDecision'] ?? null,
-            $instanceRisk['residualRiskApprovedBy'] ?? null,
-            $instanceRisk['residualRiskApprovedAt'] ?? null,
+            $instanceRisk['residualAcceptanceApproverSupervisor']['name']
+                ?? $instanceRisk['residualRiskAcceptance']['approver']['name']
+                ?? null,
+            $instanceRisk['residualRiskDecidedAt']
+                ?? $instanceRisk['residualRiskAcceptance']['date']
+                ?? null,
+            $instanceRisk['residualAcceptancePerformedByName']
+                ?? $instanceRisk['residualRiskAcceptance']['performedByName']
+                ?? null,
+            (bool)($instanceRisk['residualAcceptancePerformedOnBehalf']
+                ?? $instanceRisk['residualRiskAcceptance']['performedOnBehalf']
+                ?? false),
             $instanceRisk['residualRiskJustification'] ?? null
         );
     }
 
     private function formatResidualRiskAcceptanceValues(
         ?string $decision,
-        ?string $approvedBy,
-        ?string $approvedAt,
+        ?string $approver,
+        ?string $decidedAt,
+        ?string $performedBy,
+        bool $performedOnBehalf,
         ?string $justification
     ): string {
         $lines = [];
@@ -4084,16 +4098,23 @@ class DeliverableGenerationService
         if ($decision !== null && $decision !== '') {
             $translatedDecision = match ($decision) {
                 'accepted' => $this->anrTranslate('Accepted'),
-                'rejected' => $this->anrTranslate('Rejected'),
+                'rejected', 'not_accepted' => $this->anrTranslate('Not accepted'),
                 default => $decision,
             };
             $lines[] = $this->anrTranslate('Decision') . ': ' . $translatedDecision;
         }
-        if ($approvedBy !== null && $approvedBy !== '') {
-            $lines[] = $this->anrTranslate('Approver') . ': ' . $approvedBy;
+        if ($approver !== null && $approver !== '') {
+            $lines[] = $this->anrTranslate('Approver') . ': ' . $approver;
         }
-        if ($approvedAt !== null && $approvedAt !== '') {
-            $lines[] = $this->anrTranslate('Date') . ': ' . $approvedAt;
+        if ($decidedAt !== null && $decidedAt !== '') {
+            $lines[] = $this->anrTranslate('Date') . ': ' . $decidedAt;
+        }
+        if ($performedBy !== null && $performedBy !== '') {
+            $lines[] = $this->anrTranslate('Performed by') . ': ' . $performedBy;
+        }
+        if ($performedBy !== null && $performedBy !== '') {
+            $lines[] = $this->anrTranslate('Performed on behalf') . ': '
+                . ($performedOnBehalf ? $this->anrTranslate('Yes') : $this->anrTranslate('No'));
         }
         if ($justification !== null && $justification !== '') {
             $lines[] = $this->anrTranslate('Justification') . ': ' . $justification;
@@ -4108,83 +4129,59 @@ class DeliverableGenerationService
      */
     private function generateOwnersTable()
     {
-        $allOwners = $this->instanceRiskOwnerTable->findByAnr($this->anr);
-        $globalObjectsUuids = [];
-
-        foreach ($allOwners as $owner) {
-            if (!empty($owner->getInstanceRisks())) {
-                foreach ($owner->getInstanceRisks() as $ir) {
-                    /* Check if the global object is already added. */
-                    $uniqueKey = $ir->getInstance()->getObject()->getUuid()
-                        . $ir->getThreat()->getUuid()
-                        . $ir->getVulnerability()->getUuid();
-
-                    if (in_array($uniqueKey, $globalObjectsUuids, true)) {
-                        continue;
-                    }
-
-                    if ($ir->getInstance()->getObject()->isScopeGlobal()) {
-                        $asset = $ir->getInstance()->getName($this->currentLangAnrIndex) . ' ('
-                            . $this->anrTranslate('Global') . ')';
-                        $globalObjectsUuids[] = $uniqueKey;
-                    } else {
-                        $asset = $ir->getInstance()->getHierarchyString();
-                    }
-                    $risksByOwner[$owner->getName()][] = [
-                        'asset' => $asset,
-                        'riskSource' => $ir->getRiskSource()?->getLabel() ?? '-',
-                        'threat' => $ir->getThreat()->getLabel($this->currentLangAnrIndex),
-                        'vulnerability' => $ir->getVulnerability()->getLabel($this->currentLangAnrIndex),
-                    ];
-                }
-            }
-            if (!empty($owner->getOperationalInstanceRisks())) {
-                foreach ($owner->getOperationalInstanceRisks() as $oir) {
-                    $risksByOwner[$owner->getName()][] = [
-                        'asset' => $oir->getInstance()->getHierarchyString(),
-                        'risk' => $oir->getRiskCacheLabel($this->currentLangAnrIndex),
-                    ];
-                }
-            }
-        }
+        $supervisors = $this->anrSupervisorTable->findByAnrOrdered($this->anr);
 
         $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
         $table = $section->addTable($this->borderTable);
 
-        if (!empty($risksByOwner)) {
+        if (!empty($supervisors)) {
             $table->addRow(400, $this->tblHeader);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->grayCell)
-                ->addText($this->anrTranslate('Owner'), $this->boldFont, $this->centerParagraph);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
-                ->addText($this->anrTranslate('Asset'), $this->boldFont, $this->centerParagraph);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(3, 'DFDFDF'))
-                ->addText($this->anrTranslate('Risk'), $this->boldFont, $this->centerParagraph);
-            foreach ($risksByOwner as $owner => $risks) {
-                $isOwnerHeader = true;
-                foreach ($risks as $risk) {
-                    $table->addRow(400);
-                    if ($isOwnerHeader) {
-                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->restartAndCenterCell)
-                            ->addText(_WT($owner), $this->boldFont, $this->leftParagraph);
-                    } else {
-                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(2.00), $this->continueCell);
-                    }
-                    $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
-                        ->addText(_WT($risk['asset']), $this->normalFont, $this->leftParagraph);
-                    if (isset($risk['threat'])) {
-                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                            ->addText(_WT($risk['riskSource']), $this->normalFont, $this->leftParagraph);
-                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
-                            ->addText(_WT($risk['threat']), $this->normalFont, $this->leftParagraph);
-                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
-                            ->addText(_WT($risk['vulnerability']), $this->normalFont, $this->leftParagraph);
-                    } else {
-                        $table->addCell(PhpWord\Shared\Converter::cmToTwip(10.00), $this->setColSpanCell(3))
-                            ->addText(_WT($risk['risk']), $this->normalFont, $this->leftParagraph);
-                    }
-                    $isOwnerHeader = false;
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->grayCell)
+                ->addText($this->anrTranslate('Supervisor'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->grayCell)
+                ->addText($this->anrTranslate('Email'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->grayCell)
+                ->addText($this->anrTranslate('Roles'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
+                ->addText($this->anrTranslate('Linked user'), $this->boldFont, $this->centerParagraph);
+            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.50), $this->grayCell)
+                ->addText($this->anrTranslate('Assigned risks'), $this->boldFont, $this->centerParagraph);
+
+            foreach ($supervisors as $supervisor) {
+                $assignedRisks = [];
+                foreach ($supervisor->getInstanceRisks() as $instanceRisk) {
+                    $assignedRisks[] = ($instanceRisk->getInstance()->getObject()->isScopeGlobal()
+                            ? $instanceRisk->getInstance()->getName($this->currentLangAnrIndex) . ' ('
+                                . $this->anrTranslate('Global') . ')'
+                            : $instanceRisk->getInstance()->getHierarchyString())
+                        . ' - '
+                        . $instanceRisk->getThreat()->getLabel($this->currentLangAnrIndex)
+                        . ' / '
+                        . $instanceRisk->getVulnerability()->getLabel($this->currentLangAnrIndex);
                 }
+                foreach ($supervisor->getOperationalInstanceRisks() as $operationalInstanceRisk) {
+                    $assignedRisks[] = $operationalInstanceRisk->getInstance()->getHierarchyString()
+                        . ' - '
+                        . $operationalInstanceRisk->getRiskCacheLabel($this->currentLangAnrIndex);
+                }
+
+                $linkedUser = $supervisor->getLinkedUser();
+                $table->addRow(400);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->vAlignCenterCell)
+                    ->addText(_WT($supervisor->getName()), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->vAlignCenterCell)
+                    ->addText(_WT($supervisor->getEmail() ?? '-'), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->vAlignCenterCell)
+                    ->addText(_WT(implode(', ', $supervisor->getRolesArray())), $this->normalFont, $this->leftParagraph);
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
+                    ->addText(
+                        _WT($linkedUser === null ? '-' : trim($linkedUser->getFirstname() . ' ' . $linkedUser->getLastname())),
+                        $this->normalFont,
+                        $this->leftParagraph
+                    );
+                $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.50), $this->vAlignCenterCell)
+                    ->addText(_WT(empty($assignedRisks) ? '-' : implode("\n", $assignedRisks)), $this->normalFont, $this->leftParagraph);
             }
         }
 

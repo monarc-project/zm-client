@@ -32,6 +32,25 @@ class UpdateInstanceRiskDataInputValidator extends CoreUpdateInstanceRiskDataInp
                 'validators' => [],
             ],
             [
+                'name' => 'riskOwnerSupervisorId',
+                'required' => false,
+                'filters' => [
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value) {
+                                if ($value === null || $value === '') {
+                                    return null;
+                                }
+
+                                return (int)$value;
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [],
+            ],
+            [
                 'name' => 'context',
                 'required' => false,
                 'filters' => [
@@ -146,13 +165,73 @@ class UpdateInstanceRiskDataInputValidator extends CoreUpdateInstanceRiskDataInp
                     [
                         'name' => InArray::class,
                         'options' => [
-                            'haystack' => ['accepted', 'rejected'],
+                            'haystack' => ['accepted', 'rejected', 'not_accepted'],
                         ],
                     ],
                 ],
             ],
             [
-                'name' => 'residualRiskApprovedBy',
+                'name' => 'residualAcceptanceUseRiskOwner',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value): bool {
+                                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [],
+            ],
+            [
+                'name' => 'residualAcceptanceApproverSupervisorId',
+                'required' => false,
+                'filters' => [
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value) {
+                                if ($value === null || $value === '') {
+                                    return null;
+                                }
+
+                                return (int)$value;
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [],
+            ],
+            [
+                'name' => 'residualRiskDecidedAt',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value): ?string {
+                                $value = trim((string)$value);
+
+                                return $value === '' ? null : $value;
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [
+                    [
+                        'name' => Date::class,
+                        'options' => [
+                            'format' => 'Y-m-d',
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'residualAcceptancePerformedByName',
                 'required' => false,
                 'allow_empty' => true,
                 'filters' => [
@@ -180,10 +259,13 @@ class UpdateInstanceRiskDataInputValidator extends CoreUpdateInstanceRiskDataInp
                 ],
             ],
             [
-                'name' => 'residualRiskApprovedAt',
+                'name' => 'residualAcceptancePerformedByEmail',
                 'required' => false,
                 'allow_empty' => true,
                 'filters' => [
+                    [
+                        'name' => StringTrim::class,
+                    ],
                     [
                         'name' => Callback::class,
                         'options' => [
@@ -197,12 +279,28 @@ class UpdateInstanceRiskDataInputValidator extends CoreUpdateInstanceRiskDataInp
                 ],
                 'validators' => [
                     [
-                        'name' => Date::class,
+                        'name' => StringLength::class,
                         'options' => [
-                            'format' => 'Y-m-d',
+                            'max' => 255,
                         ],
                     ],
                 ],
+            ],
+            [
+                'name' => 'residualAcceptancePerformedOnBehalf',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [
+                    [
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value): bool {
+                                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                            },
+                        ],
+                    ],
+                ],
+                'validators' => [],
             ],
             [
                 'name' => 'residualRiskJustification',

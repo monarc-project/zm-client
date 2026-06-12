@@ -47,6 +47,7 @@ class InstanceImportService
         private Processor\SoaImportProcessor $soaImportProcessor,
         private ImportCacheHelper $importCacheHelper,
         private Service\AnrRecordService $anrRecordService,
+        private Service\AnrSupervisorService $anrSupervisorService,
         private Service\InterestedPartyService $interestedPartyService,
         private Service\ReassessmentTriggerService $reassessmentTriggerService,
         private Table\InstanceTable $instanceTable,
@@ -182,6 +183,7 @@ class InstanceImportService
             /* Process the Knowledge Base data. */
             $this->processKnowledgeBaseData($anr, $data['knowledgeBase']);
         }
+        $this->processSupervisorsImportData($anr, $data);
         if (!empty($data['library'])) {
             /* Process the Assets Library data. */
             $this->objectCategoryImportProcessor
@@ -216,6 +218,44 @@ class InstanceImportService
         // TODO: add recommendationHistory to the export and process them.
 
         return $result;
+    }
+
+    private function processSupervisorsImportData(Entity\Anr $anr, array $data): void
+    {
+        if (!empty($data['supervisors']) && is_array($data['supervisors'])) {
+            $this->anrSupervisorService->processForImport($anr, $data['supervisors']);
+        }
+
+        if (empty($data['risk_owners']) || !is_array($data['risk_owners'])) {
+            return;
+        }
+
+        $legacySupervisors = [];
+        foreach ($data['risk_owners'] as $riskOwner) {
+            if (is_string($riskOwner)) {
+                $riskOwner = ['name' => $riskOwner];
+            }
+            if (!is_array($riskOwner)) {
+                continue;
+            }
+
+            $name = trim((string)($riskOwner['name'] ?? $riskOwner['label'] ?? ''));
+            $email = trim((string)($riskOwner['email'] ?? ''));
+            if ($name === '' && $email === '') {
+                continue;
+            }
+
+            $legacySupervisors[] = [
+                'name' => $name !== '' ? $name : $email,
+                'email' => $email !== '' ? $email : null,
+                'roles' => [Entity\AnrSupervisorRole::ROLE_RISK_OWNER],
+                'isActive' => true,
+            ];
+        }
+
+        if (!empty($legacySupervisors)) {
+            $this->anrSupervisorService->processForImport($anr, $legacySupervisors);
+        }
     }
 
     private function processKnowledgeBaseData(Entity\Anr $anr, array $knowledgeBaseData): void

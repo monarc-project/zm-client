@@ -283,7 +283,8 @@ trait ImportDataStructureAdapterTrait
                 'riskIntegrity' => $instanceRiskDatum['riskI'],
                 'riskAvailability' => $instanceRiskDatum['riskD'],
                 'context' => $instanceRiskDatum['context'],
-                'riskOwner' => $instanceRiskDatum['riskOwner'],
+                'riskOwnerSupervisor' => $this->prepareLegacyRiskOwnerSupervisor($instanceRiskDatum['riskOwner'] ?? null),
+                'risk_owner_supervisor' => $this->prepareLegacyRiskOwnerSupervisor($instanceRiskDatum['riskOwner'] ?? null),
                 'lastReviewDate' => $instanceRiskDatum['lastReviewDate'] ?? null,
                 'reviewFrequency' => $instanceRiskDatum['reviewFrequency'] ?? null,
                 'residualRiskDecision' => $instanceRiskDatum['residualRiskDecision'] ?? null,
@@ -387,7 +388,12 @@ trait ImportDataStructureAdapterTrait
                 'mitigation' => $operationalInstanceRiskData['mitigation'],
                 'specific' => $operationalInstanceRiskData['specific'],
                 'context' => $operationalInstanceRiskData['context'],
-                'riskOwner' => $operationalInstanceRiskData['riskOwner'],
+                'riskOwnerSupervisor' => $this->prepareLegacyRiskOwnerSupervisor(
+                    $operationalInstanceRiskData['riskOwner'] ?? null
+                ),
+                'risk_owner_supervisor' => $this->prepareLegacyRiskOwnerSupervisor(
+                    $operationalInstanceRiskData['riskOwner'] ?? null
+                ),
                 'recommendations' => $recommendationsData,
                 'operationalInstanceRiskScales' => $operationalInstanceRiskData['scalesValues'],
             ];
@@ -434,5 +440,12 @@ trait ImportDataStructureAdapterTrait
         if (isset($threatData['a'])) {
             $threatData['availability'] = (int)$threatData['a'];
         }
+    }
+
+    private function prepareLegacyRiskOwnerSupervisor(mixed $riskOwner): ?array
+    {
+        $name = trim((string)$riskOwner);
+
+        return $name === '' ? null : ['name' => $name];
     }
 }

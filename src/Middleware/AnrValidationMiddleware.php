@@ -17,6 +17,7 @@ use Monarc\Core\Entity\AnrSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Service\AnrSupervisorService;
 use Monarc\FrontOffice\Table;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -25,12 +26,29 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class AnrValidationMiddleware implements MiddlewareInterface
 {
+    private const DELEGATED_RISK_MONITORING_FIELDS = [
+        'lastReviewDate',
+        'reviewFrequency',
+    ];
+
+    private const DELEGATED_RISK_RESIDUAL_ACCEPTANCE_FIELDS = [
+        'residualRiskDecision',
+        'residualRiskDecidedAt',
+        'residualRiskJustification',
+        'residualAcceptancePerformedByName',
+        'residualAcceptancePerformedByEmail',
+        'residualAcceptancePerformedOnBehalf',
+    ];
+
     private Entity\User $connectedUser;
 
     public function __construct(
         private Table\AnrTable $anrTable,
         private Table\UserAnrTable $userAnrTable,
         private Table\InstanceTable $instanceTable,
+        private Table\InstanceRiskTable $instanceRiskTable,
+        private Table\InstanceRiskOpTable $instanceRiskOpTable,
+        private AnrSupervisorService $anrSupervisorService,
         private CronTaskService $cronTaskService,
         private ResponseFactory $responseFactory,
         ConnectedUserService $connectedUserService
@@ -77,7 +95,16 @@ class AnrValidationMiddleware implements MiddlewareInterface
         /* Ensure the record of the anr is presented in the table, means at least read permissions are allowed.
          * It's necessary e.g. for the "monarc_api_duplicate_client_anr" route. */
         $userAnr = $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser);
-        if (($userAnr === null && !$anr->isAnrSnapshot())
+        /* Supervisor view access is also allowed even if there is no explicit permission for the anr. */ 
+        $hasSupervisorViewAccess = $this->anrSupervisorService
+            ->findLinkedSupervisor($anr, $this->connectedUser) !== null;
+        $hasSnapshotSupervisorViewAccess = $anr->isAnrSnapshot()
+            && $anr->getSnapshot() !== null
+            && $this->anrSupervisorService->findLinkedSupervisor(
+                $anr->getSnapshot()->getAnrReference(),
+                $this->connectedUser
+            ) !== null;
+        if (($userAnr === null && !$anr->isAnrSnapshot() && !$hasSupervisorViewAccess)
             /* There are no permissions set for snapshots,
             so it's necessary to validate the referenced analysis has the access for the user at least to read. */
             || ($anr->isAnrSnapshot()
@@ -87,6 +114,7 @@ class AnrValidationMiddleware implements MiddlewareInterface
                     )
                     || $this->userAnrTable
                         ->findByAnrAndUser($anr->getSnapshot()->getAnrReference(), $this->connectedUser) === null
+                        && !$hasSnapshotSupervisorViewAccess
                 )
             )
         ) {
@@ -97,8 +125,16 @@ class AnrValidationMiddleware implements MiddlewareInterface
         }
 
         /* A batch of routes has to be excluded from post (isPostAuthorizedForRoute) to bypass forbidden response. */
+        /* Supervisor is allowed to modify specific fields of risks, even if there is no explicit permission
+            for the anr. Depends on the relation to the risk (Risk Owner or Approver). */
         if ($request->getMethod() !== Request::METHOD_GET
-            && !$userAnr->hasWriteAccess()
+            && ($userAnr === null || !$userAnr->hasWriteAccess())
+            && !$this->isDelegatedRiskFieldUpdateAuthorized($routeMatch, $request, $anr)
+            && !$this->isResidualRiskApprovalAuthorized(
+                $routeMatch->getMatchedRouteName(),
+                $request->getMethod(),
+                $anr
+            )
             && !$this->isPostAuthorizedForRoute($routeMatch->getMatchedRouteName(), $request->getMethod())
         ) {
             return $this->responseFactory->createResponse(
@@ -132,6 +168,109 @@ class AnrValidationMiddleware implements MiddlewareInterface
                 || $routeName === 'monarc_api_global_client_anr/deliverable' // generate Report
                 || $routeName === 'monarc_api_duplicate_client_anr' // duplicate anr when read only access.
             );
+    }
+
+    private function isResidualRiskApprovalAuthorized(string $routeName, string $method, Entity\Anr $anr): bool
+    {
+        if ($method !== Request::METHOD_POST || $anr->isAnrSnapshot()) {
+            return false;
+        }
+
+        if (!in_array($routeName, [
+            'monarc_api_global_client_anr/instance_risk_residual_acceptance',
+            'monarc_api_global_client_anr/instance_risk_op_residual_acceptance',
+        ], true)) {
+            return false;
+        }
+
+        return $this->anrSupervisorService->userHasLinkedRole(
+            $anr,
+            $this->connectedUser,
+            Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER
+        );
+    }
+
+    private function isDelegatedRiskFieldUpdateAuthorized(
+        RouteMatch $routeMatch,
+        ServerRequestInterface $request,
+        Entity\Anr $anr
+    ): bool {
+        if ($request->getMethod() !== Request::METHOD_PUT || $anr->isAnrSnapshot()) {
+            return false;
+        }
+
+        $data = $request->getParsedBody();
+        if (empty($data)) {
+            $data = json_decode((string)$request->getBody(), true);
+        }
+        if (empty($data)) {
+            return false;
+        }
+
+        $routeName = $routeMatch->getMatchedRouteName();
+        $riskId = (int)$routeMatch->getParam('id');
+        if ($riskId <= 0) {
+            return false;
+        }
+
+        $risk = match ($routeName) {
+            'monarc_api_global_client_anr/instance_risk' => $this->instanceRiskTable->findByIdAndAnr($riskId, $anr),
+            'monarc_api_global_client_anr/instance_risk_op' => $this->instanceRiskOpTable
+                ->findByIdAndAnr($riskId, $anr),
+            default => null,
+        };
+        if ($risk === null) {
+            return false;
+        }
+
+        $riskOwnerSupervisor = $risk->getRiskOwnerSupervisor();
+        $residualApproverSupervisor = $this->getEffectiveResidualApproverSupervisor($risk);
+
+        $allowedFields = [];
+        if ($this->isCurrentUserLinkedToSupervisor($riskOwnerSupervisor)) {
+            $allowedFields = array_merge($allowedFields, self::DELEGATED_RISK_MONITORING_FIELDS);
+        }
+
+        if ($this->isCurrentUserLinkedToSupervisor($residualApproverSupervisor)) {
+            $allowedFields = array_merge($allowedFields, self::DELEGATED_RISK_RESIDUAL_ACCEPTANCE_FIELDS);
+        }
+
+        return $this->hasOnlyDelegatedEditableFields($data, array_values(array_unique($allowedFields)));
+    }
+
+    private function hasOnlyDelegatedEditableFields(array $data, array $allowedFields): bool
+    {
+        if ($allowedFields === []) {
+            return false;
+        }
+
+        foreach (array_keys($data) as $field) {
+            if (!in_array($field, $allowedFields, true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function getEffectiveResidualApproverSupervisor(
+        Entity\InstanceRisk|Entity\InstanceRiskOp $risk
+    ): ?Entity\AnrSupervisor {
+        if ($risk->isResidualAcceptanceUseRiskOwner()) {
+            return $risk->getRiskOwnerSupervisor();
+        }
+
+        return $risk->getResidualAcceptanceApproverSupervisor();
+    }
+
+    private function isCurrentUserLinkedToSupervisor(?Entity\AnrSupervisor $supervisor): bool
+    {
+        $linkedUser = $supervisor?->getLinkedUser();
+        if ($linkedUser !== null && $linkedUser->getId() === $this->connectedUser->getId()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

@@ -873,10 +873,10 @@ return [
                             ],
                         ],
                     ],
-                    'risk_owners' => [
+                    'supervisors' => [
                         'type' => 'segment',
                         'options' => [
-                            'route' => 'risk-owners[/:id]',
+                            'route' => 'supervisors[/:id]',
                             'constraints' => [
                                 'id' => '[0-9]+',
                             ],
@@ -884,7 +884,7 @@ return [
                                 'controller' => PipeSpec::class,
                                 'middleware' => new PipeSpec(
                                     AnrValidationMiddleware::class,
-                                    Controller\ApiAnrRiskOwnersController::class,
+                                    Controller\ApiAnrSupervisorsController::class,
                                 ),
                             ],
                         ],
@@ -1060,6 +1060,22 @@ return [
                             ],
                         ],
                     ],
+                    'instance_risk_residual_acceptance' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'instances-risks/:id/residual-acceptance',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => PipeSpec::class,
+                                'middleware' => new PipeSpec(
+                                    AnrValidationMiddleware::class,
+                                    Controller\ApiAnrRiskResidualAcceptanceController::class,
+                                ),
+                            ],
+                        ],
+                    ],
                     'instance_risk_op' => [
                         'type' => 'segment',
                         'options' => [
@@ -1072,6 +1088,22 @@ return [
                                 'middleware' => new PipeSpec(
                                     AnrValidationMiddleware::class,
                                     Controller\ApiAnrInstancesRisksOpController::class,
+                                ),
+                            ],
+                        ],
+                    ],
+                    'instance_risk_op_residual_acceptance' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'instances-oprisks/:id/residual-acceptance',
+                            'constraints' => [
+                                'id' => '[0-9]+',
+                            ],
+                            'defaults' => [
+                                'controller' => PipeSpec::class,
+                                'middleware' => new PipeSpec(
+                                    AnrValidationMiddleware::class,
+                                    Controller\ApiAnrOperationalRiskResidualAcceptanceController::class,
                                 ),
                             ],
                         ],
@@ -1473,13 +1505,15 @@ return [
             Controller\ApiAnrScalesTypesController::class => AutowireFactory::class,
             Controller\ApiAnrScalesCommentsController::class => AutowireFactory::class,
             Controller\ApiAnrRisksController::class => AutowireFactory::class,
-            Controller\ApiAnrRiskOwnersController::class => AutowireFactory::class,
+            Controller\ApiAnrSupervisorsController::class => AutowireFactory::class,
             Controller\ApiDashboardAnrRisksController::class => AutowireFactory::class,
             Controller\ApiAnrRisksOpController::class => AutowireFactory::class,
             Controller\ApiAnrLibraryController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesRisksController::class => AutowireFactory::class,
             Controller\ApiAnrInstancesRisksOpController::class => AutowireFactory::class,
+            Controller\ApiAnrRiskResidualAcceptanceController::class => AutowireFactory::class,
+            Controller\ApiAnrOperationalRiskResidualAcceptanceController::class => AutowireFactory::class,
             Controller\ApiSnapshotController::class => AutowireFactory::class,
             Controller\ApiAnrObjectsCategoriesController::class => AutowireFactory::class,
             Controller\ApiAnrDeliverableController::class => AutowireFactory::class,
@@ -1541,6 +1575,8 @@ return [
             DeprecatedTable\QuestionChoiceTable::class => AutowireFactory::class,
             Table\ActionHistoryTable::class => ClientEntityManagerFactory::class,
             Table\AnrTable::class => ClientEntityManagerFactory::class,
+            Table\AnrSupervisorTable::class => ClientEntityManagerFactory::class,
+            Table\AnrSupervisorRoleTable::class => ClientEntityManagerFactory::class,
             Table\AnrInstanceMetadataFieldTable::class => ClientEntityManagerFactory::class,
             Table\AmvTable::class => ClientEntityManagerFactory::class,
             Table\AssetTable::class => ClientEntityManagerFactory::class,
@@ -1549,7 +1585,6 @@ return [
             Table\InstanceRiskTable::class => ClientEntityManagerFactory::class,
             Table\InstanceRiskOpTable::class => ClientEntityManagerFactory::class,
             Table\InstanceMetadataTable::class => ClientEntityManagerFactory::class,
-            Table\InstanceRiskOwnerTable::class => ClientEntityManagerFactory::class,
             Table\InstanceConsequenceTable::class => ClientEntityManagerFactory::class,
             Table\ScaleTable::class => ClientEntityManagerFactory::class,
             Table\ScaleCommentTable::class => ClientEntityManagerFactory::class,
@@ -1642,8 +1677,9 @@ return [
             Service\AnrInstanceRiskOpService::class => AutowireFactory::class,
             Service\AnrInstanceRiskService::class => AutowireFactory::class,
             Service\AnrInstanceService::class => AutowireFactory::class,
+            Service\AnrSupervisorService::class => AutowireFactory::class,
             Service\OperationalRiskScaleService::class => AutowireFactory::class,
-            Service\InstanceRiskOwnerService::class => AutowireFactory::class,
+            Service\ResidualRiskAcceptanceService::class => AutowireFactory::class,
             Service\OperationalRiskScaleCommentService::class => AutowireFactory::class,
             Service\AnrInstanceMetadataFieldService::class => AutowireFactory::class,
             Service\InstanceMetadataService::class => AutowireFactory::class,
@@ -1704,6 +1740,32 @@ return [
             Stats\Validator\GetStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
             Stats\Validator\GetProcessedStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Anr\CreateAnrDataInputValidator::class => ReflectionBasedAbstractFactory::class,
+            InputValidator\AnrSupervisor\PostAnrSupervisorDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new InputValidator\AnrSupervisor\PostAnrSupervisorDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\UserTable::class)
+                );
+            },
+            InputValidator\AnrSupervisor\PatchAnrSupervisorStatusInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new InputValidator\AnrSupervisor\PatchAnrSupervisorStatusInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class)
+                );
+            },
+            InputValidator\AnrSupervisor\UpdateAnrSupervisorDataInputValidator::class => static function (
+                Containerinterface $container
+            ) {
+                return new InputValidator\AnrSupervisor\UpdateAnrSupervisorDataInputValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class),
+                    $container->get(Table\UserTable::class)
+                );
+            },
             InputValidator\Object\PostObjectDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Object\DuplicateObjectDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Recommendation\PostRecommendationDataInputValidator::class => static function (
@@ -1910,7 +1972,9 @@ return [
             'monarc_api_global_client_anr/reassessment_triggers',
             'monarc_api_client',
             'monarc_api_global_client_anr/carto_risks',
-            'monarc_api_global_client_anr/risk_owners',
+            'monarc_api_global_client_anr/supervisors',
+            'monarc_api_global_client_anr/instance_risk_residual_acceptance',
+            'monarc_api_global_client_anr/instance_risk_op_residual_acceptance',
             'monarc_api_stats',
             'monarc_api_stats_global/processed',
             'monarc_api_stats_global/general_settings',
@@ -1996,7 +2060,9 @@ return [
             'monarc_api_user_activate_2fa',
             'monarc_api_user_recovery_codes',
             'monarc_api_model_verify_language',
-            'monarc_api_global_client_anr/risk_owners',
+            'monarc_api_global_client_anr/supervisors',
+            'monarc_api_global_client_anr/instance_risk_residual_acceptance',
+            'monarc_api_global_client_anr/instance_risk_op_residual_acceptance',
             'monarc_api_global_client_anr/carto_risks',
             'monarc_api_global_client_anr/scales',
             'monarc_api_global_client_anr/scales_types',
