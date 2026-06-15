@@ -13,6 +13,7 @@ use Monarc\Core\Validator\InputValidator\InstanceRiskOp\PatchInstanceRiskOpDataI
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
 use Monarc\FrontOffice\Service\AnrSupervisorService;
+use Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp\PatchDelegatedInstanceRiskOpDataInputValidator;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp\PostSpecificInstanceRiskOpDataInputValidator;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp\UpdateInstanceRiskOpDataInputValidator;
 
@@ -25,7 +26,8 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
         private AnrSupervisorService $anrSupervisorService,
         private PostSpecificInstanceRiskOpDataInputValidator $postSpecificInstanceRiskOpDataInputValidator,
         private UpdateInstanceRiskOpDataInputValidator $updateInstanceRiskOpDataInputValidator,
-        private PatchInstanceRiskOpDataInputValidator $patchInstanceRiskOpDataInputValidator
+        private PatchInstanceRiskOpDataInputValidator $patchInstanceRiskOpDataInputValidator,
+        private PatchDelegatedInstanceRiskOpDataInputValidator $patchDelegatedInstanceRiskOpDataInputValidator
     ) {
     }
 
@@ -61,7 +63,47 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
             $validatedData
         );
 
-        return $this->getPreparedJsonResponse([
+        return $this->getPreparedJsonResponse($this->prepareInstanceRiskOpResponse($instanceRiskOp));
+    }
+
+    /**
+     * @param array $data
+     */
+    public function patch($id, $data)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+
+        if (array_key_exists('instanceRiskScaleId', $data)) {
+            $this->validatePostParams($this->patchInstanceRiskOpDataInputValidator, $data);
+            $instanceRiskOp = $this->anrInstanceRiskOpService->updateScaleValue(
+                $anr,
+                (int)$id,
+                $this->patchInstanceRiskOpDataInputValidator->getValidData()
+            );
+
+            return $this->getPreparedJsonResponse([
+                'cacheBrutRisk' => $instanceRiskOp->getCacheBrutRisk(),
+                'cacheNetRisk' => $instanceRiskOp->getCacheNetRisk(),
+                'cacheTargetedRisk' => $instanceRiskOp->getCacheTargetedRisk(),
+            ]);
+        }
+
+        $this->validatePostParams($this->patchDelegatedInstanceRiskOpDataInputValidator, $data);
+        $validatedData = $this->filterValidatedData($data, $this->patchDelegatedInstanceRiskOpDataInputValidator->getValidData());
+
+        $instanceRiskOp = $this->anrInstanceRiskOpService->update(
+            $anr,
+            (int)$id,
+            $validatedData
+        );
+
+        return $this->getPreparedJsonResponse($this->prepareInstanceRiskOpResponse($instanceRiskOp));
+    }
+
+    private function prepareInstanceRiskOpResponse($instanceRiskOp): array
+    {
+        return [
             'cacheBrutRisk' => $instanceRiskOp->getCacheBrutRisk(),
             'cacheNetRisk' => $instanceRiskOp->getCacheNetRisk(),
             'cacheTargetedRisk' => $instanceRiskOp->getCacheTargetedRisk(),
@@ -92,29 +134,7 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
             'residualRiskDecidedByName' => $instanceRiskOp->getResidualRiskDecidedBySupervisor()?->getName(),
             'residualRiskDecidedAt' => $instanceRiskOp->getResidualRiskDecidedAt()?->format('Y-m-d'),
             'residualRiskJustification' => $instanceRiskOp->getResidualRiskJustification(),
-        ]);
-    }
-
-    /**
-     * @param array $data
-     */
-    public function patch($id, $data)
-    {
-        $this->validatePostParams($this->patchInstanceRiskOpDataInputValidator, $data);
-        /** @var Anr $anr */
-        $anr = $this->getRequest()->getAttribute('anr');
-
-        $instanceRiskOp = $this->anrInstanceRiskOpService->updateScaleValue(
-            $anr,
-            (int)$id,
-            $this->patchInstanceRiskOpDataInputValidator->getValidData()
-        );
-
-        return $this->getPreparedJsonResponse([
-            'cacheBrutRisk' => $instanceRiskOp->getCacheBrutRisk(),
-            'cacheNetRisk' => $instanceRiskOp->getCacheNetRisk(),
-            'cacheTargetedRisk' => $instanceRiskOp->getCacheTargetedRisk(),
-        ]);
+        ];
     }
 
     public function delete($id)

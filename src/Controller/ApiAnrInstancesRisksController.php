@@ -12,6 +12,7 @@ use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskService;
 use Monarc\FrontOffice\Service\AnrSupervisorService;
+use Monarc\FrontOffice\Validator\InputValidator\InstanceRisk\PatchDelegatedInstanceRiskDataInputValidator;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRisk\PostSpecificInstanceRiskDataInputValidator;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRisk\UpdateInstanceRiskDataInputValidator;
 
@@ -23,7 +24,8 @@ class ApiAnrInstancesRisksController extends AbstractRestfulControllerRequestHan
         private AnrInstanceRiskService $anrInstanceRiskService,
         private AnrSupervisorService $anrSupervisorService,
         private PostSpecificInstanceRiskDataInputValidator $postSpecificInstanceRiskDataInputValidator,
-        private UpdateInstanceRiskDataInputValidator $updateInstanceRiskDataInputValidator
+        private UpdateInstanceRiskDataInputValidator $updateInstanceRiskDataInputValidator,
+        private PatchDelegatedInstanceRiskDataInputValidator $patchDelegatedInstanceRiskDataInputValidator
     ) {
     }
 
@@ -59,7 +61,25 @@ class ApiAnrInstancesRisksController extends AbstractRestfulControllerRequestHan
         $instanceRisk = $this->anrInstanceRiskService
             ->update($anr, (int)$id, $validatedData);
 
-        return $this->getPreparedJsonResponse([
+        return $this->getPreparedJsonResponse($this->prepareInstanceRiskResponse($instanceRisk));
+    }
+
+    public function patch($id, $data)
+    {
+        /** @var Anr $anr */
+        $anr = $this->getRequest()->getAttribute('anr');
+        /** @var array $data */
+        $this->validatePostParams($this->patchDelegatedInstanceRiskDataInputValidator, $data);
+        $validatedData = $this->filterValidatedData($data, $this->patchDelegatedInstanceRiskDataInputValidator->getValidData());
+
+        $instanceRisk = $this->anrInstanceRiskService->update($anr, (int)$id, $validatedData);
+
+        return $this->getPreparedJsonResponse($this->prepareInstanceRiskResponse($instanceRisk));
+    }
+
+    private function prepareInstanceRiskResponse($instanceRisk): array
+    {
+        return [
             'id' => $instanceRisk->getId(),
             'riskSourceId' => $instanceRisk->getRiskSource()?->getId(),
             'riskSourceLabel' => $instanceRisk->getRiskSource()?->getLabel() ?? '',
@@ -96,12 +116,7 @@ class ApiAnrInstancesRisksController extends AbstractRestfulControllerRequestHan
             'riskAvailability' => $instanceRisk->getRiskAvailability(),
             'cacheMaxRisk' => $instanceRisk->getCacheMaxRisk(),
             'cacheTargetedRisk' => $instanceRisk->getCacheTargetedRisk(),
-        ]);
-    }
-
-    private function filterValidatedData(array $sourceData, array $validatedData): array
-    {
-        return array_intersect_key($validatedData, $sourceData);
+        ];
     }
 
     public function delete($id)
@@ -111,5 +126,10 @@ class ApiAnrInstancesRisksController extends AbstractRestfulControllerRequestHan
         $this->anrInstanceRiskService->delete($anr, (int)$id);
 
         return $this->getSuccessfulJsonResponse();
+    }
+    
+    private function filterValidatedData(array $sourceData, array $validatedData): array
+    {
+        return array_intersect_key($validatedData, $sourceData);
     }
 }

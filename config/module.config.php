@@ -1798,9 +1798,13 @@ return [
                 ReflectionBasedAbstractFactory::class,
             InputValidator\InstanceRisk\UpdateInstanceRiskDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
+            InputValidator\InstanceRisk\PatchDelegatedInstanceRiskDataInputValidator::class =>
+                ReflectionBasedAbstractFactory::class,
             InputValidator\InstanceRiskOp\PostSpecificInstanceRiskOpDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
             InputValidator\InstanceRiskOp\UpdateInstanceRiskOpDataInputValidator::class =>
+                ReflectionBasedAbstractFactory::class,
+            InputValidator\InstanceRiskOp\PatchDelegatedInstanceRiskOpDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
             InputValidator\Threat\PostThreatDataInputValidator::class => static function (
                 Containerinterface $container

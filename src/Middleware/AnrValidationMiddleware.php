@@ -195,7 +195,7 @@ class AnrValidationMiddleware implements MiddlewareInterface
         ServerRequestInterface $request,
         Entity\Anr $anr
     ): bool {
-        if ($request->getMethod() !== Request::METHOD_PUT || $anr->isAnrSnapshot()) {
+        if ($request->getMethod() !== Request::METHOD_PATCH || $anr->isAnrSnapshot()) {
             return false;
         }
 
