@@ -645,6 +645,19 @@ return [
                             ],
                         ],
                     ],
+                    'history' => [
+                        'type' => 'literal',
+                        'options' => [
+                            'route' => 'history',
+                            'defaults' => [
+                                'controller' => PipeSpec::class,
+                                'middleware' => new PipeSpec(
+                                    AnrValidationMiddleware::class,
+                                    Controller\ApiAnrHistoryController::class,
+                                ),
+                            ],
+                        ],
+                    ],
                     'recommendations_risks' => [
                         'type' => 'segment',
                         'options' => [
@@ -1473,6 +1486,7 @@ return [
             Controller\ApiAnrTreatmentPlanController::class => AutowireFactory::class,
             Controller\ApiAnrRecommendationsController::class => AutowireFactory::class,
             Controller\ApiAnrRecommendationsHistoryController::class => AutowireFactory::class,
+            Controller\ApiAnrHistoryController::class => AutowireFactory::class,
             Controller\ApiAnrRecommendationsRisksController::class => AutowireFactory::class,
             Controller\ApiAnrRecommendationsRisksValidateController::class => AutowireFactory::class,
             Controller\ApiAnrRecommendationsSetsController::class => AutowireFactory::class,
@@ -1574,6 +1588,7 @@ return [
             DeprecatedTable\QuestionTable::class => AutowireFactory::class,
             DeprecatedTable\QuestionChoiceTable::class => AutowireFactory::class,
             Table\ActionHistoryTable::class => ClientEntityManagerFactory::class,
+            Table\AnrHistoryTable::class => ClientEntityManagerFactory::class,
             Table\AnrTable::class => ClientEntityManagerFactory::class,
             Table\AnrSupervisorTable::class => ClientEntityManagerFactory::class,
             Table\AnrSupervisorRoleTable::class => ClientEntityManagerFactory::class,
@@ -1653,6 +1668,7 @@ return [
             Service\AnrRolfTagService::class => AutowireFactory::class,
             Service\AnrRolfRiskService::class => AutowireFactory::class,
             Service\AnrRecommendationService::class => AutowireFactory::class,
+            Service\AnrHistoryService::class => AutowireFactory::class,
             Service\AnrRecommendationHistoryService::class => AutowireFactory::class,
             Service\AnrRecommendationRiskService::class => AutowireFactory::class,
             Service\AnrRecommendationSetService::class => AutowireFactory::class,
@@ -1979,6 +1995,7 @@ return [
             'monarc_api_global_client_anr/supervisors',
             'monarc_api_global_client_anr/instance_risk_residual_acceptance',
             'monarc_api_global_client_anr/instance_risk_op_residual_acceptance',
+            'monarc_api_global_client_anr/history',
             'monarc_api_stats',
             'monarc_api_stats_global/processed',
             'monarc_api_stats_global/general_settings',
@@ -2075,6 +2092,7 @@ return [
             'monarc_api_global_client_anr/operational_scales_comment',
             'monarc_api_global_client_anr/recommendations',
             'monarc_api_global_client_anr/recommendations_history',
+            'monarc_api_global_client_anr/history',
             'monarc_api_global_client_anr/recommendations_risks',
             'monarc_api_global_client_anr/recommendations_risks_validate',
             'monarc_api_global_client_anr/recommendations_measures',

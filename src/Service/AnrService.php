@@ -204,8 +204,6 @@ class AnrService
             $newAnr->setLabel('[SNAP] ' . $newAnr->getLabel());
         }
 
-        $this->anrTable->save($newAnr, false);
-
         /* Not needed for snapshots creation or restoring. */
         if (!$isSnapshotMode) {
             $userAnr = (new Entity\UserAnr())
@@ -273,7 +271,8 @@ class AnrService
         $anrInstanceMetadataFieldOldIdsToNewObjects = $this
             ->duplicateAnrMetadataInstanceFields($sourceAnr, $newAnr, $isSourceCommon);
 
-        $this->duplicateRiskSources($sourceAnr, $newAnr, $isSourceCommon);
+        $riskSourcesOldIdsToNewObjects = $this->duplicateRiskSources($sourceAnr, $newAnr, $isSourceCommon);
+        $supervisorsOldIdsToNewObjects = $this->duplicateSupervisors($sourceAnr, $newAnr);
         $this->duplicateInterestedParties($sourceAnr, $newAnr, $isSourceCommon);
         $this->duplicateReassessmentTriggers($sourceAnr, $newAnr, $isSourceCommon);
 
@@ -287,6 +286,8 @@ class AnrService
             $vulnerabilitiesOldIdsToNewObjects,
             $monarcObjectsOldIdsToNewObjects,
             $anrInstanceMetadataFieldOldIdsToNewObjects,
+            $riskSourcesOldIdsToNewObjects,
+            $supervisorsOldIdsToNewObjects,
             $rolfRisksOldIdsToNewObjects,
             $isSourceCommon
         );
@@ -402,10 +403,11 @@ class AnrService
         CoreEntity\AnrSuperClass $sourceAnr,
         Entity\Anr $newAnr,
         bool $isSourceCommon
-    ): void {
+    ): array {
         $sourceRiskSources = $isSourceCommon
             ? $this->coreRiskSourceTable->findByFilterParams(['isActive' => true])
             : $this->riskSourceTable->findByAnr($sourceAnr);
+        $riskSourcesOldIdsToNewObjects = [];
 
         foreach ($sourceRiskSources as $sourceRiskSource) {
             $label = $sourceRiskSource->getLabel();
@@ -417,16 +419,46 @@ class AnrService
                 );
             }
 
-            $this->riskSourceTable->save(
-                (new Entity\RiskSource())
-                    ->setAnr($newAnr)
-                    ->setLabel($label)
-                    ->setIsDefault($sourceRiskSource->isDefault())
-                    ->setIsActive($sourceRiskSource->isActive())
-                    ->setCreator($this->connectedUser->getEmail()),
+            $riskSource = (new Entity\RiskSource())
+                ->setAnr($newAnr)
+                ->setLabel($label)
+                ->setIsDefault($sourceRiskSource->isDefault())
+                ->setIsActive($sourceRiskSource->isActive())
+                ->setCreator($this->connectedUser->getEmail());
+            $this->riskSourceTable->save($riskSource, false);
+            $riskSourcesOldIdsToNewObjects[$sourceRiskSource->getId()] = $riskSource;
+        }
+
+        return $riskSourcesOldIdsToNewObjects;
+    }
+
+    private function duplicateSupervisors(
+        CoreEntity\AnrSuperClass $sourceAnr,
+        Entity\Anr $newAnr
+    ): array {
+        if (!$sourceAnr instanceof Entity\Anr) {
+            return [];
+        }
+
+        $supervisorsOldIdsToNewObjects = [];
+        foreach ($this->anrSupervisorService->getList($sourceAnr) as $sourceSupervisor) {
+            $newSupervisor = $this->anrSupervisorService->createSupervisorEntity(
+                $newAnr,
+                $sourceSupervisor->getName(),
+                $sourceSupervisor->getEmail(),
+                $sourceSupervisor->getRolesArray(),
+                $sourceSupervisor->getRolePosition(),
+                $sourceSupervisor->getLinkedUser(),
+                $sourceSupervisor->isActive(),
                 false
             );
+
+            if ($newSupervisor !== null) {
+                $supervisorsOldIdsToNewObjects[$sourceSupervisor->getId()] = $newSupervisor;
+            }
         }
+
+        return $supervisorsOldIdsToNewObjects;
     }
 
     /**
@@ -1340,6 +1372,8 @@ class AnrService
         array $vulnerabilitiesOldIdsToNewObjects,
         array $monarcObjectsOldIdsToNewObjects,
         array $anrInstanceMetadataFieldOldIdsToNewObjects,
+        array $riskSourcesOldIdsToNewObjects,
+        array $supervisorsOldIdsToNewObjects,
         array $rolfRisksOldIdsToNewObjects,
         bool $isSourceCommon
     ): void {
@@ -1386,13 +1420,16 @@ class AnrService
                 $amvsOldIdsToNewObjects,
                 $assetsOldIdsToNewObjects,
                 $threatsOldIdsToNewObjects,
-                $vulnerabilitiesOldIdsToNewObjects
+                $vulnerabilitiesOldIdsToNewObjects,
+                $supervisorsOldIdsToNewObjects
             );
 
             /* Recreate OperationalInstanceRisks. */
             $instanceRisksOpOldIdsToNewObjects += $this->duplicateOperationalInstanceRisks(
                 $sourceInstance,
                 $newInstance,
+                $riskSourcesOldIdsToNewObjects,
+                $supervisorsOldIdsToNewObjects,
                 $rolfRisksOldIdsToNewObjects,
                 $operationalScaleTypesOldIdsToNewObjects
             );
@@ -1524,7 +1561,8 @@ class AnrService
         array $amvsOldIdsToNewObjects,
         array $assetsOldIdsToNewObjects,
         array $threatsOldIdsToNewObjects,
-        array $vulnerabilitiesOldIdsToNewObjects
+        array $vulnerabilitiesOldIdsToNewObjects,
+        array $supervisorsOldIdsToNewObjects
     ): array {
         /** @var Entity\Anr $newAnr */
         $newAnr = $newInstance->getAnr();
@@ -1550,14 +1588,17 @@ class AnrService
                 );
             }
             if ($sourceInstanceRisk instanceof Entity\InstanceRisk) {
-                $newInstanceRisk->setRiskOwnerSupervisor($this->duplicateSupervisorReference(
-                    $newAnr,
+                $newInstanceRisk->setRiskOwnerSupervisor($this->getDuplicatedSupervisorReference(
                     $sourceInstanceRisk->getRiskOwnerSupervisor(),
-                    [Entity\AnrSupervisorRole::ROLE_RISK_OWNER]
+                    $supervisorsOldIdsToNewObjects
                 ));
-                $newInstanceRisk->setResidualRiskDecidedBySupervisor($this->duplicateSupervisorReference(
-                    $newAnr,
-                    $sourceInstanceRisk->getResidualRiskDecidedBySupervisor()
+                $newInstanceRisk->setResidualAcceptanceApproverSupervisor($this->getDuplicatedSupervisorReference(
+                    $sourceInstanceRisk->getResidualAcceptanceApproverSupervisor(),
+                    $supervisorsOldIdsToNewObjects
+                ));
+                $newInstanceRisk->setResidualRiskDecidedBySupervisor($this->getDuplicatedSupervisorReference(
+                    $sourceInstanceRisk->getResidualRiskDecidedBySupervisor(),
+                    $supervisorsOldIdsToNewObjects
                 ));
             }
 
@@ -1571,6 +1612,8 @@ class AnrService
     private function duplicateOperationalInstanceRisks(
         CoreEntity\InstanceSuperClass $sourceInstance,
         Entity\Instance $newInstance,
+        array $riskSourcesOldIdsToNewObjects,
+        array $supervisorsOldIdsToNewObjects,
         array $rolfRisksOldIdsToNewObjects,
         array $operationalScaleTypesOldIdsToNewObjects
     ): array {
@@ -1591,18 +1634,21 @@ class AnrService
             }
             if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp && $sourceInstanceRiskOp->getRiskSource() !== null) {
                 $newInstanceRiskOp->setRiskSource(
-                    $this->riskSourceTable->findOneByAnrAndLabel($newAnr, $sourceInstanceRiskOp->getRiskSource()->getLabel())
+                    $riskSourcesOldIdsToNewObjects[$sourceInstanceRiskOp->getRiskSource()->getId()] ?? null
                 );
             }
             if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp) {
-                $newInstanceRiskOp->setRiskOwnerSupervisor($this->duplicateSupervisorReference(
-                    $newAnr,
+                $newInstanceRiskOp->setRiskOwnerSupervisor($this->getDuplicatedSupervisorReference(
                     $sourceInstanceRiskOp->getRiskOwnerSupervisor(),
-                    [Entity\AnrSupervisorRole::ROLE_RISK_OWNER]
+                    $supervisorsOldIdsToNewObjects
                 ));
-                $newInstanceRiskOp->setResidualRiskDecidedBySupervisor($this->duplicateSupervisorReference(
-                    $newAnr,
-                    $sourceInstanceRiskOp->getResidualRiskDecidedBySupervisor()
+                $newInstanceRiskOp->setResidualAcceptanceApproverSupervisor($this->getDuplicatedSupervisorReference(
+                    $sourceInstanceRiskOp->getResidualAcceptanceApproverSupervisor(),
+                    $supervisorsOldIdsToNewObjects
+                ));
+                $newInstanceRiskOp->setResidualRiskDecidedBySupervisor($this->getDuplicatedSupervisorReference(
+                    $sourceInstanceRiskOp->getResidualRiskDecidedBySupervisor(),
+                    $supervisorsOldIdsToNewObjects
                 ));
             }
 
@@ -1644,21 +1690,15 @@ class AnrService
         }
     }
 
-    private function duplicateSupervisorReference(
-        Entity\Anr $anr,
+    private function getDuplicatedSupervisorReference(
         ?Entity\AnrSupervisor $sourceSupervisor,
-        array $requiredRoles = []
+        array $supervisorsOldIdsToNewObjects
     ): ?Entity\AnrSupervisor {
         if ($sourceSupervisor === null) {
             return null;
         }
 
-        return $this->anrSupervisorService->getOrCreateSupervisor(
-            $anr,
-            $sourceSupervisor->getName(),
-            $sourceSupervisor->getEmail(),
-            array_values(array_unique(array_merge($sourceSupervisor->getRolesArray(), $requiredRoles)))
-        );
+        return $supervisorsOldIdsToNewObjects[$sourceSupervisor->getId()] ?? null;
     }
 
     private function duplicateInstanceConsequences(

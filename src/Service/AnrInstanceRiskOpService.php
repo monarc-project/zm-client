@@ -14,6 +14,7 @@ use Monarc\Core\Entity\RiskSourceSuperClass;
 use Monarc\Core\Service as CoreService;
 use Monarc\Core\Service\Traits\OperationalRiskScaleVerificationTrait;
 use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Entity\AnrHistory;
 use Monarc\FrontOffice\Entity\AnrSupervisorRole;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 use Monarc\FrontOffice\Table;
@@ -41,6 +42,7 @@ class AnrInstanceRiskOpService
         private CoreService\TranslateService $translateService,
         private CoreService\Helper\ScalesCacheHelper $scalesCacheHelper,
         private AnrSupervisorService $anrSupervisorService,
+        private AnrHistoryService $anrHistoryService,
         CoreService\ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -201,6 +203,7 @@ class AnrInstanceRiskOpService
         }
 
         $this->instanceRiskOpTable->save($operationalInstanceRisk);
+        $this->recordCreatedHistory($operationalInstanceRisk);
 
         return $operationalInstanceRisk;
     }
@@ -279,6 +282,7 @@ class AnrInstanceRiskOpService
     {
         /** @var Entity\InstanceRiskOp $operationalInstanceRisk */
         $operationalInstanceRisk = $this->instanceRiskOpTable->findByIdAndAnr($id, $anr);
+        $historyBefore = $this->captureHistoryState($operationalInstanceRisk);
         /** @var Entity\OperationalInstanceRiskScale $operationInstanceRiskScale */
         $operationInstanceRiskScale = $this->operationalInstanceRiskScaleTable->findByIdAndAnr(
             (int)$data['instanceRiskScaleId'],
@@ -305,6 +309,7 @@ class AnrInstanceRiskOpService
         $this->updateRiskCacheValues($operationalInstanceRisk);
 
         $this->operationalInstanceRiskScaleTable->save($operationInstanceRiskScale);
+        $this->recordHistoryChanges($anr, $operationalInstanceRisk, $historyBefore);
 
         return $operationalInstanceRisk;
     }
@@ -313,6 +318,7 @@ class AnrInstanceRiskOpService
     {
         /** @var Entity\InstanceRiskOp $operationalInstanceRisk */
         $operationalInstanceRisk = $this->instanceRiskOpTable->findByIdAndAnr($id, $anr);
+        $historyBefore = $this->captureHistoryState($operationalInstanceRisk);
         $previousRiskOwnerSupervisorId = $operationalInstanceRisk->getRiskOwnerSupervisor()?->getId();
 
         $likelihoodScale = $this->scalesCacheHelper->getCachedLikelihoodScale($anr);
@@ -380,6 +386,7 @@ class AnrInstanceRiskOpService
         $this->instanceRiskOpTable->save($operationalInstanceRisk);
 
         $this->updateInstanceRiskRecommendationsPositions($operationalInstanceRisk);
+        $this->recordHistoryChanges($anr, $operationalInstanceRisk, $historyBefore);
 
         return $operationalInstanceRisk;
     }
@@ -862,5 +869,103 @@ class AnrInstanceRiskOpService
     private function getRiskOwnerName(Entity\InstanceRiskOp $operationalInstanceRisk): string
     {
         return $operationalInstanceRisk->getRiskOwnerSupervisor()?->getName() ?? '';
+    }
+
+    private function captureHistoryState(Entity\InstanceRiskOp $operationalInstanceRisk): array
+    {
+        return [
+            'riskOwner' => $this->getRiskOwnerName($operationalInstanceRisk),
+            'riskSource' => $operationalInstanceRisk->getRiskSource()?->getLabel(),
+            'context' => $operationalInstanceRisk->getContext(),
+            'lastReviewDate' => $operationalInstanceRisk->getLastReviewDate()?->format('Y-m-d'),
+            'reviewFrequency' => $operationalInstanceRisk->getReviewFrequency(),
+            'netProb' => $operationalInstanceRisk->getNetProb(),
+            'currentRisk' => $operationalInstanceRisk->getCacheNetRisk(),
+            'residualRisk' => $operationalInstanceRisk->getCacheTargetedRisk(),
+            'kindOfMeasure' => $operationalInstanceRisk->getKindOfMeasure(),
+            'residualAcceptanceApprover' => $operationalInstanceRisk->getResidualAcceptanceApproverSupervisor()?->getName(),
+            'residualAcceptanceDecision' => $operationalInstanceRisk->getResidualRiskDecision(),
+            'residualAcceptanceDate' => $operationalInstanceRisk->getResidualRiskDecidedAt()?->format('Y-m-d'),
+            'residualAcceptanceJustification' => $operationalInstanceRisk->getResidualRiskJustification(),
+        ];
+    }
+
+    private function recordCreatedHistory(Entity\InstanceRiskOp $operationalInstanceRisk): void
+    {
+        $state = $this->captureHistoryState($operationalInstanceRisk);
+        $entries = [[
+            'targetType' => AnrHistory::OPERATIONAL_RISK,
+            'targetId' => $operationalInstanceRisk->getId(),
+            'changeType' => AnrHistory::CREATED,
+            'fieldCode' => null,
+            'oldValue' => null,
+            'newValue' => null,
+        ]];
+
+        foreach ([
+            AnrHistory::THREAT_PROBABILITY => $state['netProb'],
+            AnrHistory::CURRENT_RISK => $state['currentRisk'],
+            AnrHistory::RESIDUAL_RISK => $state['residualRisk'],
+        ] as $fieldCode => $value) {
+            $entries[] = [
+                'targetType' => AnrHistory::OPERATIONAL_RISK,
+                'targetId' => $operationalInstanceRisk->getId(),
+                'changeType' => AnrHistory::FIELD_UPDATED,
+                'fieldCode' => $fieldCode,
+                'oldValue' => null,
+                'newValue' => $value,
+            ];
+        }
+
+        $this->anrHistoryService->createEntries($operationalInstanceRisk->getAnr(), $entries);
+    }
+
+    private function recordHistoryChanges(Entity\Anr $anr, Entity\InstanceRiskOp $operationalInstanceRisk, array $before): void
+    {
+        $after = $this->captureHistoryState($operationalInstanceRisk);
+        $entries = [];
+
+        $fieldMap = [
+            AnrHistory::RISK_OWNER => ['riskOwner', AnrHistory::FIELD_UPDATED],
+            AnrHistory::RISK_SOURCE => ['riskSource', AnrHistory::FIELD_UPDATED],
+            AnrHistory::RISK_CONTEXT => ['context', AnrHistory::FIELD_UPDATED],
+            AnrHistory::LAST_REVIEW_DATE => ['lastReviewDate', AnrHistory::FIELD_UPDATED],
+            AnrHistory::REVIEW_FREQUENCY => ['reviewFrequency', AnrHistory::FIELD_UPDATED],
+            AnrHistory::THREAT_PROBABILITY => ['netProb', AnrHistory::FIELD_UPDATED],
+            AnrHistory::CURRENT_RISK => ['currentRisk', AnrHistory::FIELD_UPDATED],
+            AnrHistory::RESIDUAL_RISK => ['residualRisk', AnrHistory::FIELD_UPDATED],
+            AnrHistory::TREATMENT_TYPE => ['kindOfMeasure', AnrHistory::FIELD_UPDATED],
+            AnrHistory::RESIDUAL_ACCEPTANCE_APPROVER => [
+                'residualAcceptanceApprover',
+                AnrHistory::RESIDUAL_ACCEPTANCE_UPDATED,
+            ],
+            AnrHistory::RESIDUAL_ACCEPTANCE_DECISION => [
+                'residualAcceptanceDecision',
+                AnrHistory::RESIDUAL_ACCEPTANCE_UPDATED,
+            ],
+            AnrHistory::RESIDUAL_ACCEPTANCE_DATE => [
+                'residualAcceptanceDate',
+                AnrHistory::RESIDUAL_ACCEPTANCE_UPDATED,
+            ],
+            AnrHistory::RESIDUAL_ACCEPTANCE_JUSTIFICATION => [
+                'residualAcceptanceJustification',
+                AnrHistory::RESIDUAL_ACCEPTANCE_UPDATED,
+            ],
+        ];
+
+        foreach ($fieldMap as $fieldCode => [$stateKey, $changeType]) {
+            if ($before[$stateKey] !== $after[$stateKey]) {
+                $entries[] = [
+                    'targetType' => AnrHistory::OPERATIONAL_RISK,
+                    'targetId' => $operationalInstanceRisk->getId(),
+                    'changeType' => $changeType,
+                    'fieldCode' => $fieldCode,
+                    'oldValue' => $before[$stateKey],
+                    'newValue' => $after[$stateKey],
+                ];
+            }
+        }
+
+        $this->anrHistoryService->createEntries($anr, $entries);
     }
 }

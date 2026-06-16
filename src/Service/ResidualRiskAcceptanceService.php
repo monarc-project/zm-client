@@ -11,6 +11,7 @@ use DateTime;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity\Anr;
+use Monarc\FrontOffice\Entity\AnrHistory;
 use Monarc\FrontOffice\Entity\AnrSupervisorRole;
 use Monarc\FrontOffice\Entity\InstanceRisk;
 use Monarc\FrontOffice\Entity\InstanceRiskOp;
@@ -26,6 +27,7 @@ class ResidualRiskAcceptanceService
         private InstanceRiskTable $instanceRiskTable,
         private InstanceRiskOpTable $instanceRiskOpTable,
         private AnrSupervisorService $anrSupervisorService,
+        private AnrHistoryService $anrHistoryService,
         ConnectedUserService $connectedUserService
     ) {
         /** @var User $connectedUser */
@@ -37,6 +39,7 @@ class ResidualRiskAcceptanceService
     {
         /** @var InstanceRisk $instanceRisk */
         $instanceRisk = $this->instanceRiskTable->findByIdAndAnr($riskId, $anr);
+        $before = $this->captureHistoryState($instanceRisk);
         $supervisor = $this->requireApproverSupervisorForRisk($anr, $instanceRisk);
 
         $instanceRisk
@@ -52,6 +55,7 @@ class ResidualRiskAcceptanceService
             ->setUpdater($this->connectedUser->getEmail());
 
         $this->instanceRiskTable->save($instanceRisk);
+        $this->recordHistoryChanges($anr, AnrHistory::INFORMATION_RISK, $instanceRisk->getId(), $before, $this->captureHistoryState($instanceRisk));
 
         return $instanceRisk;
     }
@@ -60,6 +64,7 @@ class ResidualRiskAcceptanceService
     {
         /** @var InstanceRiskOp $instanceRiskOp */
         $instanceRiskOp = $this->instanceRiskOpTable->findByIdAndAnr($riskId, $anr);
+        $before = $this->captureHistoryState($instanceRiskOp);
         $supervisor = $this->requireApproverSupervisorForRisk($anr, $instanceRiskOp);
 
         $instanceRiskOp
@@ -75,6 +80,7 @@ class ResidualRiskAcceptanceService
             ->setUpdater($this->connectedUser->getEmail());
 
         $this->instanceRiskOpTable->save($instanceRiskOp);
+        $this->recordHistoryChanges($anr, AnrHistory::OPERATIONAL_RISK, $instanceRiskOp->getId(), $before, $this->captureHistoryState($instanceRiskOp));
 
         return $instanceRiskOp;
     }
@@ -125,5 +131,41 @@ class ResidualRiskAcceptanceService
         ));
 
         return $fullName !== '' ? $fullName : (string)$this->connectedUser->getEmail();
+    }
+
+    private function captureHistoryState(InstanceRisk|InstanceRiskOp $risk): array
+    {
+        return [
+            'approver' => $risk->getResidualAcceptanceApproverSupervisor()?->getName(),
+            'decision' => $risk->getResidualRiskDecision(),
+            'date' => $risk->getResidualRiskDecidedAt()?->format('Y-m-d'),
+            'justification' => $risk->getResidualRiskJustification(),
+        ];
+    }
+
+    private function recordHistoryChanges(Anr $anr, int $targetType, int $targetId, array $before, array $after): void
+    {
+        $fieldMap = [
+            AnrHistory::RESIDUAL_ACCEPTANCE_APPROVER => 'approver',
+            AnrHistory::RESIDUAL_ACCEPTANCE_DECISION => 'decision',
+            AnrHistory::RESIDUAL_ACCEPTANCE_DATE => 'date',
+            AnrHistory::RESIDUAL_ACCEPTANCE_JUSTIFICATION => 'justification',
+        ];
+        $entries = [];
+
+        foreach ($fieldMap as $fieldCode => $stateKey) {
+            if ($before[$stateKey] !== $after[$stateKey]) {
+                $entries[] = [
+                    'targetType' => $targetType,
+                    'targetId' => $targetId,
+                    'changeType' => AnrHistory::RESIDUAL_ACCEPTANCE_UPDATED,
+                    'fieldCode' => $fieldCode,
+                    'oldValue' => $before[$stateKey],
+                    'newValue' => $after[$stateKey],
+                ];
+            }
+        }
+
+        $this->anrHistoryService->createEntries($anr, $entries);
     }
 }

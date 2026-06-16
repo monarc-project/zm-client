@@ -15,6 +15,7 @@ use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Traits\RiskCalculationTrait;
 use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Entity\AnrHistory;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
 
@@ -33,6 +34,7 @@ class AnrRecommendationRiskService
         private Table\InstanceRiskOpTable $instanceRiskOpTable,
         private Table\InstanceTable $instanceTable,
         private AnrRecommendationHistoryService $recommendationHistoryService,
+        private AnrHistoryService $anrHistoryService,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -93,6 +95,7 @@ class AnrRecommendationRiskService
         }
 
         $recommendationRisk = $this->createRecommendationRisk($recommendation, $instanceRisk, '', $saveInDb);
+        $linkedRisks = [$instanceRisk];
 
         if ($instanceRisk instanceof Entity\InstanceRisk
             && $instanceRisk->getAmv()
@@ -109,12 +112,21 @@ class AnrRecommendationRiskService
                         && $siblingInstanceRisk->getAmv()->getUuid() === $instanceRisk->getAmv()->getUuid()
                     ) {
                         $this->createRecommendationRisk($recommendation, $siblingInstanceRisk, '', $saveInDb);
+                        $linkedRisks[] = $siblingInstanceRisk;
                     }
                 }
             }
         }
 
         $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
+        if ($saveInDb) {
+            $this->recordRecommendationHistory(
+                $anr,
+                $linkedRisks,
+                AnrHistory::RECOMMENDATION_LINKED,
+                $this->getRecommendationHistoryLabel($recommendation)
+            );
+        }
 
         return $recommendationRisk;
     }
@@ -138,6 +150,7 @@ class AnrRecommendationRiskService
     {
         /** @var Entity\RecommendationRisk $recommendationRisk */
         $recommendationRisk = $this->recommendationRiskTable->findByIdAndAnr($id, $anr);
+        $unlinkedRisks = [];
 
         $recommendation = $recommendationRisk->getRecommendation();
         $instanceRisk = $recommendationRisk->getInstanceRisk();
@@ -163,12 +176,20 @@ class AnrRecommendationRiskService
                     && $otherRecommendationRisk->getId() !== $recommendationRisk->getId()
                     && \in_array($otherRecommendationRisk->getInstanceRisk()->getId(), $siblingInstanceRisksIds, true)
                 ) {
+                    $unlinkedRisks[] = $otherRecommendationRisk->getInstanceRisk();
                     $this->recommendationRiskTable->remove($otherRecommendationRisk);
                 }
             }
         }
 
+        $unlinkedRisks[] = $recommendationRisk->getInstanceRisk() ?? $recommendationRisk->getInstanceRiskOp();
         $this->recommendationRiskTable->remove($recommendationRisk);
+        $this->recordRecommendationHistory(
+            $anr,
+            array_filter($unlinkedRisks),
+            AnrHistory::RECOMMENDATION_UNLINKED,
+            $this->getRecommendationHistoryLabel($recommendation)
+        );
 
         // Reset the recommendation's position if it's not linked to other risks anymore.
         if (!$recommendation->hasLinkedRecommendationRisks()) {
@@ -267,6 +288,40 @@ class AnrRecommendationRiskService
         }
 
         return $treatmentPlan;
+    }
+
+    /**
+     * @param array<int, Entity\InstanceRisk|Entity\InstanceRiskOp> $instanceRisks
+     */
+    private function recordRecommendationHistory(
+        Entity\Anr $anr,
+        array $instanceRisks,
+        int $changeType,
+        string $recommendationLabel
+    ): void {
+        $entries = [];
+        foreach ($instanceRisks as $instanceRisk) {
+            if ($instanceRisk === null) {
+                continue;
+            }
+            $entries[] = [
+                'targetType' => $instanceRisk instanceof Entity\InstanceRisk
+                    ? AnrHistory::INFORMATION_RISK
+                    : AnrHistory::OPERATIONAL_RISK,
+                'targetId' => $instanceRisk->getId(),
+                'changeType' => $changeType,
+                'fieldCode' => null,
+                'oldValue' => $changeType === AnrHistory::RECOMMENDATION_UNLINKED ? $recommendationLabel : null,
+                'newValue' => $changeType === AnrHistory::RECOMMENDATION_LINKED ? $recommendationLabel : null,
+            ];
+        }
+
+        $this->anrHistoryService->createEntries($anr, $entries);
+    }
+
+    private function getRecommendationHistoryLabel(Entity\Recommendation $recommendation): string
+    {
+        return trim($recommendation->getCode() . ' - ' . $recommendation->getDescription());
     }
 
     public function createRecommendationRisk(

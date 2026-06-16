@@ -212,16 +212,12 @@ class AnrSupervisorService
             $normalizedName
         );
         if ($supervisor === null) {
-            $supervisor = (new AnrSupervisor())
-                ->setAnr($anr)
-                ->setName($normalizedName !== '' ? $normalizedName : (string)$normalizedEmail)
-                ->setEmail($normalizedEmail)
-                ->setRolePosition(null)
-                ->setCreator($this->connectedUser->getEmail());
-            $this->syncRoles($supervisor, $roles);
-            $this->anrSupervisorTable->save($supervisor);
-
-            return $supervisor;
+            return $this->createSupervisorEntity(
+                $anr,
+                $normalizedName,
+                $normalizedEmail,
+                $roles
+            );
         }
 
         foreach ($roles as $role) {
@@ -234,6 +230,36 @@ class AnrSupervisorService
             $supervisor->setIsActive(true)->setUpdater($this->connectedUser->getEmail());
             $this->anrSupervisorTable->save($supervisor);
         }
+
+        return $supervisor;
+    }
+
+    public function createSupervisorEntity(
+        Anr $anr,
+        ?string $name,
+        ?string $email = null,
+        array $roles = [AnrSupervisorRole::ROLE_RISK_OWNER],
+        ?string $rolePosition = null,
+        ?User $linkedUser = null,
+        bool $isActive = true,
+        bool $saveInDb = true
+    ): ?AnrSupervisor {
+        $normalizedName = trim((string)$name);
+        $normalizedEmail = $this->normalizeEmail($email);
+        if ($normalizedName === '' && $normalizedEmail === null) {
+            return null;
+        }
+
+        $supervisor = (new AnrSupervisor())
+            ->setAnr($anr)
+            ->setName($normalizedName !== '' ? $normalizedName : (string)$normalizedEmail)
+            ->setEmail($normalizedEmail)
+            ->setLinkedUser($linkedUser)
+            ->setRolePosition($this->normalizeRolePosition($rolePosition))
+            ->setIsActive($isActive)
+            ->setCreator($this->connectedUser->getEmail());
+        $this->syncRoles($supervisor, $roles);
+        $this->anrSupervisorTable->save($supervisor, $saveInDb);
 
         return $supervisor;
     }
@@ -322,14 +348,14 @@ class AnrSupervisorService
                     ->setAnr($anr)
                     ->setName($name !== '' ? $name : (string)$email)
                     ->setEmail($email)
-                    ->setRolePosition($this->normalizeRolePosition($supervisorData['rolePosition'] ?? $supervisorData['role_position'] ?? null))
-                    ->setIsActive((bool)($supervisorData['isActive'] ?? $supervisorData['is_active'] ?? true))
+                    ->setRolePosition($this->normalizeRolePosition($supervisorData['rolePosition'] ?? null))
+                    ->setIsActive((bool)($supervisorData['isActive'] ?? true))
                     ->setCreator($this->connectedUser->getEmail());
             } else {
                 $supervisor->setName($name !== '' ? $name : $supervisor->getName())
                     ->setEmail($email ?? $supervisor->getEmail())
-                    ->setRolePosition($this->normalizeRolePosition($supervisorData['rolePosition'] ?? $supervisorData['role_position'] ?? $supervisor->getRolePosition()))
-                    ->setIsActive((bool)($supervisorData['isActive'] ?? $supervisorData['is_active'] ?? true))
+                    ->setRolePosition($this->normalizeRolePosition($supervisorData['rolePosition'] ?? null))
+                    ->setIsActive((bool)($supervisorData['isActive'] ?? true))
                     ->setUpdater($this->connectedUser->getEmail());
             }
 

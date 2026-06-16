@@ -251,8 +251,8 @@ class AnrExportService
                 'name' => $supervisor->getName(),
                 'email' => $supervisor->getEmail(),
                 'roles' => $supervisor->getRolesArray(),
+                'rolePosition' => $supervisor->getRolePosition(),
                 'isActive' => $supervisor->isActive(),
-                'is_active' => $supervisor->isActive(),
             ];
         }
 

@@ -15,6 +15,7 @@ use Monarc\Core\Service\Traits\ImpactVerificationTrait;
 use Monarc\Core\Service\Traits\RiskCalculationTrait;
 use Monarc\Core\Service\TranslateService;
 use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Entity\AnrHistory;
 use Monarc\FrontOffice\Entity\AnrSupervisorRole;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Service\Traits\RecommendationsPositionsUpdateTrait;
@@ -38,6 +39,7 @@ class AnrInstanceRiskService
         private Table\RecommendationTable $recommendationTable,
         private TranslateService $translateService,
         private AnrSupervisorService $anrSupervisorService,
+        private AnrHistoryService $anrHistoryService,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -201,6 +203,10 @@ class AnrInstanceRiskService
 
         $this->instanceRiskTable->save($instanceRisk, $saveInDb);
 
+        if ($saveInDb && $fromInstanceRisk === null) {
+            $this->recordCreatedHistory($instanceRisk);
+        }
+
         return $instanceRisk;
     }
 
@@ -322,6 +328,7 @@ class AnrInstanceRiskService
         }
 
         $this->instanceRiskTable->save($instanceRisk);
+        $this->recordCreatedHistory($instanceRisk);
 
         return $instanceRisk;
     }
@@ -334,6 +341,7 @@ class AnrInstanceRiskService
     ): Entity\InstanceRisk {
         /** @var Entity\InstanceRisk $instanceRisk */
         $instanceRisk = $this->instanceRiskTable->findByIdAndAnr($id, $anr);
+        $historyBeforeByRiskId = [$instanceRisk->getId() => $this->captureHistoryState($instanceRisk)];
 
         $this->verifyInstanceRiskRates($instanceRisk, $this->scaleTable, $data);
 
@@ -356,6 +364,9 @@ class AnrInstanceRiskService
                     );
 
                     foreach ($siblingInstancesRisks as $siblingInstanceRisk) {
+                        $historyBeforeByRiskId[$siblingInstanceRisk->getId()] = $this->captureHistoryState(
+                            $siblingInstanceRisk
+                        );
                         $this->updateInstanceRiskData($siblingInstanceRisk, $data);
                     }
                 }
@@ -363,6 +374,35 @@ class AnrInstanceRiskService
         }
 
         $this->instanceRiskTable->save($instanceRisk);
+        $this->recordHistoryChanges($anr, $instanceRisk, $historyBeforeByRiskId[$instanceRisk->getId()]);
+
+        if ($manageGlobal) {
+            $object = $instanceRisk->getInstance()->getObject();
+            if ($object->isScopeGlobal()) {
+                $instances = $this->instanceTable->findByAnrAndObject($instanceRisk->getAnr(), $object);
+
+                foreach ($instances as $instance) {
+                    if ($instanceRisk->getInstance()->getId() === $instance->getId()) {
+                        continue;
+                    }
+
+                    $siblingInstancesRisks = $this->instanceRiskTable->findByInstanceAndInstanceRiskRelations(
+                        $instance,
+                        $instanceRisk
+                    );
+
+                    foreach ($siblingInstancesRisks as $siblingInstanceRisk) {
+                        if (isset($historyBeforeByRiskId[$siblingInstanceRisk->getId()])) {
+                            $this->recordHistoryChanges(
+                                $anr,
+                                $siblingInstanceRisk,
+                                $historyBeforeByRiskId[$siblingInstanceRisk->getId()]
+                            );
+                        }
+                    }
+                }
+            }
+        }
 
         return $instanceRisk;
     }
@@ -907,6 +947,154 @@ class AnrInstanceRiskService
         }
 
         return $reviewFrequency;
+    }
+
+    private function captureHistoryState(Entity\InstanceRisk $instanceRisk): array
+    {
+        return [
+            'riskOwner' => $this->getRiskOwnerName($instanceRisk),
+            'riskSource' => $instanceRisk->getRiskSource()?->getLabel(),
+            'context' => $instanceRisk->getContext(),
+            'lastReviewDate' => $instanceRisk->getLastReviewDate()?->format('Y-m-d'),
+            'reviewFrequency' => $instanceRisk->getReviewFrequency(),
+            'threatRate' => $instanceRisk->getThreatRate(),
+            'vulnerabilityRate' => $instanceRisk->getVulnerabilityRate(),
+            'currentRisk' => [
+                'c' => $instanceRisk->getRiskConfidentiality(),
+                'i' => $instanceRisk->getRiskIntegrity(),
+                'a' => $instanceRisk->getRiskAvailability(),
+                'max' => $instanceRisk->getCacheMaxRisk(),
+            ],
+            'residualRisk' => $instanceRisk->getCacheTargetedRisk(),
+            'kindOfMeasure' => $instanceRisk->getKindOfMeasure(),
+            'reductionAmount' => $instanceRisk->getReductionAmount(),
+            'residualAcceptanceApprover' => $instanceRisk->getResidualAcceptanceApproverSupervisor()?->getName(),
+            'residualAcceptanceDecision' => $instanceRisk->getResidualRiskDecision(),
+            'residualAcceptanceDate' => $instanceRisk->getResidualRiskDecidedAt()?->format('Y-m-d'),
+            'residualAcceptanceJustification' => $instanceRisk->getResidualRiskJustification(),
+        ];
+    }
+
+    private function recordCreatedHistory(Entity\InstanceRisk $instanceRisk): void
+    {
+        $entries = [[
+            'targetType' => AnrHistory::INFORMATION_RISK,
+            'targetId' => $instanceRisk->getId(),
+            'changeType' => AnrHistory::CREATED,
+            'fieldCode' => null,
+            'oldValue' => null,
+            'newValue' => null,
+        ]];
+
+        $state = $this->captureHistoryState($instanceRisk);
+        foreach ([
+            AnrHistory::THREAT_PROBABILITY => $state['threatRate'],
+            AnrHistory::VULNERABILITY_QUALIFICATION => $state['vulnerabilityRate'],
+            AnrHistory::CURRENT_RISK => $state['currentRisk'],
+            AnrHistory::RESIDUAL_RISK => $state['residualRisk'],
+        ] as $fieldCode => $value) {
+            $entries[] = [
+                'targetType' => AnrHistory::INFORMATION_RISK,
+                'targetId' => $instanceRisk->getId(),
+                'changeType' => AnrHistory::FIELD_UPDATED,
+                'fieldCode' => $fieldCode,
+                'oldValue' => null,
+                'newValue' => $value,
+            ];
+        }
+
+        foreach ($instanceRisk->getInstance()->getInstanceConsequences() as $instanceConsequence) {
+            $entries[] = [
+                'targetType' => AnrHistory::INFORMATION_RISK,
+                'targetId' => $instanceRisk->getId(),
+                'changeType' => AnrHistory::CONSEQUENCE_CREATED,
+                'fieldCode' => $this->getConsequenceFieldCode($instanceConsequence->getScaleImpactType()->getType()),
+                'oldValue' => null,
+                'newValue' => $this->prepareConsequenceHistoryValue($instanceConsequence),
+            ];
+        }
+
+        $this->anrHistoryService->createEntries($instanceRisk->getAnr(), $entries);
+    }
+
+    private function recordHistoryChanges(Entity\Anr $anr, Entity\InstanceRisk $instanceRisk, array $before): void
+    {
+        $after = $this->captureHistoryState($instanceRisk);
+        $entries = [];
+
+        $fieldMap = [
+            AnrHistory::RISK_OWNER => ['riskOwner', AnrHistory::FIELD_UPDATED],
+            AnrHistory::RISK_SOURCE => ['riskSource', AnrHistory::FIELD_UPDATED],
+            AnrHistory::RISK_CONTEXT => ['context', AnrHistory::FIELD_UPDATED],
+            AnrHistory::LAST_REVIEW_DATE => ['lastReviewDate', AnrHistory::FIELD_UPDATED],
+            AnrHistory::REVIEW_FREQUENCY => ['reviewFrequency', AnrHistory::FIELD_UPDATED],
+            AnrHistory::THREAT_PROBABILITY => ['threatRate', AnrHistory::FIELD_UPDATED],
+            AnrHistory::VULNERABILITY_QUALIFICATION => [
+                'vulnerabilityRate',
+                AnrHistory::FIELD_UPDATED,
+            ],
+            AnrHistory::CURRENT_RISK => ['currentRisk', AnrHistory::FIELD_UPDATED],
+            AnrHistory::RESIDUAL_RISK => ['residualRisk', AnrHistory::FIELD_UPDATED],
+            AnrHistory::TREATMENT_TYPE => ['kindOfMeasure', AnrHistory::FIELD_UPDATED],
+            AnrHistory::VULNERABILITY_REDUCTION => [
+                'reductionAmount',
+                AnrHistory::FIELD_UPDATED,
+            ],
+            AnrHistory::RESIDUAL_ACCEPTANCE_APPROVER => [
+                'residualAcceptanceApprover',
+                AnrHistory::RESIDUAL_ACCEPTANCE_UPDATED,
+            ],
+            AnrHistory::RESIDUAL_ACCEPTANCE_DECISION => [
+                'residualAcceptanceDecision',
+                AnrHistory::RESIDUAL_ACCEPTANCE_UPDATED,
+            ],
+            AnrHistory::RESIDUAL_ACCEPTANCE_DATE => [
+                'residualAcceptanceDate',
+                AnrHistory::RESIDUAL_ACCEPTANCE_UPDATED,
+            ],
+            AnrHistory::RESIDUAL_ACCEPTANCE_JUSTIFICATION => [
+                'residualAcceptanceJustification',
+                AnrHistory::RESIDUAL_ACCEPTANCE_UPDATED,
+            ],
+        ];
+
+        foreach ($fieldMap as $fieldCode => [$stateKey, $changeType]) {
+            if ($before[$stateKey] !== $after[$stateKey]) {
+                $entries[] = [
+                    'targetType' => AnrHistory::INFORMATION_RISK,
+                    'targetId' => $instanceRisk->getId(),
+                    'changeType' => $changeType,
+                    'fieldCode' => $fieldCode,
+                    'oldValue' => $before[$stateKey],
+                    'newValue' => $after[$stateKey],
+                ];
+            }
+        }
+
+        $this->anrHistoryService->createEntries($anr, $entries);
+    }
+
+    private function getConsequenceFieldCode(int $scaleImpactType): string
+    {
+        return match ($scaleImpactType) {
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_C => AnrHistory::CONSEQUENCE_CONFIDENTIALITY,
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_I => AnrHistory::CONSEQUENCE_INTEGRITY,
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_D => AnrHistory::CONSEQUENCE_AVAILABILITY,
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_R => AnrHistory::CONSEQUENCE_REPUTATION,
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_L => AnrHistory::CONSEQUENCE_LEGAL,
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_F => AnrHistory::CONSEQUENCE_FINANCIAL,
+            default => AnrHistory::CONSEQUENCE_AVAILABILITY,
+        };
+    }
+
+    private function prepareConsequenceHistoryValue(CoreEntity\InstanceConsequenceSuperClass $instanceConsequence): array
+    {
+        return [
+            'c' => $instanceConsequence->getConfidentiality(),
+            'i' => $instanceConsequence->getIntegrity(),
+            'a' => $instanceConsequence->getAvailability(),
+            'hidden' => $instanceConsequence->isHidden(),
+        ];
     }
 
     private function duplicateRecommendationRisks(
