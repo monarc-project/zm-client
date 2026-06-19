@@ -71,10 +71,8 @@ trait OperationalInstanceRiskExportTrait
             'mitigation' => $withEval ? $operationalInstanceRisk->getMitigation() : '',
             'specific' => $operationalInstanceRisk->getSpecific(),
             'context' => $withEval ? $operationalInstanceRisk->getContext() : '',
+            'riskOwner' => $this->prepareLegacyRiskOwnerName($operationalInstanceRisk->getRiskOwnerSupervisor()),
             'riskOwnerSupervisor' => $withEval
-                ? $this->prepareSupervisorIdentity($operationalInstanceRisk->getRiskOwnerSupervisor())
-                : null,
-            'risk_owner_supervisor' => $withEval
                 ? $this->prepareSupervisorIdentity($operationalInstanceRisk->getRiskOwnerSupervisor())
                 : null,
             'lastReviewDate' => $withEval ? $operationalInstanceRisk->getLastReviewDate()?->format('Y-m-d') : null,
@@ -98,17 +96,6 @@ trait OperationalInstanceRiskExportTrait
                 : false,
             'residualRiskJustification' => $withEval ? $operationalInstanceRisk->getResidualRiskJustification() : null,
             'residualRiskAcceptance' => $withEval
-                ? $this->prepareResidualRiskAcceptanceData(
-                    $operationalInstanceRisk->getResidualRiskDecision(),
-                    $operationalInstanceRisk->getResidualAcceptanceApproverSupervisor(),
-                    $operationalInstanceRisk->getResidualRiskDecidedAt(),
-                    $operationalInstanceRisk->getResidualAcceptancePerformedByName(),
-                    $operationalInstanceRisk->getResidualAcceptancePerformedByEmail(),
-                    $operationalInstanceRisk->isResidualAcceptancePerformedOnBehalf(),
-                    $operationalInstanceRisk->getResidualRiskJustification()
-                )
-                : null,
-            'residual_risk_acceptance' => $withEval
                 ? $this->prepareResidualRiskAcceptanceData(
                     $operationalInstanceRisk->getResidualRiskDecision(),
                     $operationalInstanceRisk->getResidualAcceptanceApproverSupervisor(),

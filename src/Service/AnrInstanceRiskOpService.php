@@ -48,7 +48,7 @@ class AnrInstanceRiskOpService
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function getOperationalRisks(Entity\Anr $anr, int $instanceId = null, array $params = []): array
+    public function getOperationalRisks(Entity\Anr $anr, ?int $instanceId = null, array $params = []): array
     {
         $instancesIds = [];
         if ($instanceId !== null) {
@@ -348,8 +348,10 @@ class AnrInstanceRiskOpService
             );
         }
         if ($previousRiskOwnerSupervisorId !== $operationalInstanceRisk->getRiskOwnerSupervisor()?->getId()
-            && ($operationalInstanceRisk->getRiskOwnerSupervisor() === null
-                || $operationalInstanceRisk->isResidualAcceptanceUseRiskOwner())
+            && (
+                $operationalInstanceRisk->getRiskOwnerSupervisor() === null
+                || $operationalInstanceRisk->isResidualAcceptanceUseRiskOwner()
+            )
         ) {
             $this->resetResidualRiskAcceptanceData($operationalInstanceRisk);
         }
@@ -656,16 +658,17 @@ class AnrInstanceRiskOpService
             return;
         }
 
+        $previousUseRiskOwner = $operationalInstanceRisk->isResidualAcceptanceUseRiskOwner();
+        $previousApproverSupervisorId = $operationalInstanceRisk->getResidualAcceptanceApproverSupervisor()?->getId();
+        $useRiskOwner = array_key_exists('residualAcceptanceUseRiskOwner', $data)
+            ? (bool)$data['residualAcceptanceUseRiskOwner']
+            : $operationalInstanceRisk->isResidualAcceptanceUseRiskOwner();
         $riskOwnerSupervisor = $operationalInstanceRisk->getRiskOwnerSupervisor();
         if ($riskOwnerSupervisor === null) {
             $this->resetResidualRiskAcceptanceData($operationalInstanceRisk);
 
             return;
         }
-
-        $useRiskOwner = array_key_exists('residualAcceptanceUseRiskOwner', $data)
-            ? (bool)$data['residualAcceptanceUseRiskOwner']
-            : $operationalInstanceRisk->isResidualAcceptanceUseRiskOwner();
 
         if ($useRiskOwner) {
             if (!$riskOwnerSupervisor->isActive()
@@ -692,6 +695,9 @@ class AnrInstanceRiskOpService
             return;
         }
 
+        $shouldResetDecisionOnApproverContextChange = (!$previousUseRiskOwner && $useRiskOwner)
+            || $previousApproverSupervisorId !== $approverSupervisor->getId();
+
         $operationalInstanceRisk->setResidualAcceptanceUseRiskOwner($useRiskOwner)
             ->setResidualAcceptanceApproverSupervisor($approverSupervisor);
 
@@ -715,6 +721,12 @@ class AnrInstanceRiskOpService
         }
 
         if (!$canCurrentUserDecide) {
+            if ($shouldResetDecisionOnApproverContextChange && $this->isResidualRiskDecisionResetPayload($data)) {
+                $this->clearResidualRiskDecisionData($operationalInstanceRisk);
+
+                return;
+            }
+
             if (!$this->hasResidualRiskDecisionChanges($operationalInstanceRisk, $data)) {
                 return;
             }
@@ -747,7 +759,14 @@ class AnrInstanceRiskOpService
     {
         $operationalInstanceRisk
             ->setResidualAcceptanceUseRiskOwner(false)
-            ->setResidualAcceptanceApproverSupervisor(null)
+            ->setResidualAcceptanceApproverSupervisor(null);
+
+        $this->clearResidualRiskDecisionData($operationalInstanceRisk);
+    }
+
+    private function clearResidualRiskDecisionData(Entity\InstanceRiskOp $operationalInstanceRisk): void
+    {
+        $operationalInstanceRisk
             ->setResidualRiskDecision(null)
             ->setResidualRiskDecidedAt(null)
             ->setResidualRiskJustification(null)
@@ -820,6 +839,22 @@ class AnrInstanceRiskOpService
                 !== $operationalInstanceRisk->isResidualAcceptancePerformedOnBehalf();
     }
 
+    private function isResidualRiskDecisionResetPayload(array $data): bool
+    {
+        return (!array_key_exists('residualRiskDecision', $data)
+                || $this->normalizeNullableLowercaseText($data['residualRiskDecision']) === null)
+            && (!array_key_exists('residualRiskDecidedAt', $data)
+                || $this->normalizeNullableDateValue($data['residualRiskDecidedAt']) === null)
+            && (!array_key_exists('residualRiskJustification', $data)
+                || $this->normalizeNullableText($data['residualRiskJustification']) === null)
+            && (!array_key_exists('residualAcceptancePerformedByName', $data)
+                || $this->normalizeNullableText($data['residualAcceptancePerformedByName']) === null)
+            && (!array_key_exists('residualAcceptancePerformedByEmail', $data)
+                || $this->normalizeNullableText($data['residualAcceptancePerformedByEmail']) === null)
+            && (!array_key_exists('residualAcceptancePerformedOnBehalf', $data)
+                || (bool)$data['residualAcceptancePerformedOnBehalf'] === false);
+    }
+
     private function normalizeNullableText(mixed $value): ?string
     {
         $value = trim((string)$value);
@@ -879,9 +914,9 @@ class AnrInstanceRiskOpService
             'context' => $operationalInstanceRisk->getContext(),
             'lastReviewDate' => $operationalInstanceRisk->getLastReviewDate()?->format('Y-m-d'),
             'reviewFrequency' => $operationalInstanceRisk->getReviewFrequency(),
-            'netProb' => $operationalInstanceRisk->getNetProb(),
-            'currentRisk' => $operationalInstanceRisk->getCacheNetRisk(),
-            'residualRisk' => $operationalInstanceRisk->getCacheTargetedRisk(),
+            'netProb' => $this->normalizeHistoryScaleValue($operationalInstanceRisk->getNetProb()),
+            'currentRisk' => $this->normalizeHistoryScaleValue($operationalInstanceRisk->getCacheNetRisk()),
+            'residualRisk' => $this->normalizeHistoryScaleValue($operationalInstanceRisk->getCacheTargetedRisk()),
             'kindOfMeasure' => $operationalInstanceRisk->getKindOfMeasure(),
             'residualAcceptanceApprover' => $operationalInstanceRisk->getResidualAcceptanceApproverSupervisor()?->getName(),
             'residualAcceptanceDecision' => $operationalInstanceRisk->getResidualRiskDecision(),
@@ -920,8 +955,11 @@ class AnrInstanceRiskOpService
         $this->anrHistoryService->createEntries($operationalInstanceRisk->getAnr(), $entries);
     }
 
-    private function recordHistoryChanges(Entity\Anr $anr, Entity\InstanceRiskOp $operationalInstanceRisk, array $before): void
-    {
+    private function recordHistoryChanges(
+        Entity\Anr $anr,
+        Entity\InstanceRiskOp $operationalInstanceRisk,
+        array $before
+    ): void {
         $after = $this->captureHistoryState($operationalInstanceRisk);
         $entries = [];
 
@@ -954,18 +992,30 @@ class AnrInstanceRiskOpService
         ];
 
         foreach ($fieldMap as $fieldCode => [$stateKey, $changeType]) {
-            if ($before[$stateKey] !== $after[$stateKey]) {
+            $oldValue = $before[$stateKey];
+            $newValue = $after[$stateKey];
+            if ($oldValue !== $newValue) {
+                if ($fieldCode === AnrHistory::TREATMENT_TYPE) {
+                    $typesCodes = CoreEntity\InstanceRiskOpSuperClass::getAvailableMeasureTypes();
+                    $oldValue = $typesCodes[$oldValue] ?? $oldValue;
+                    $newValue = $typesCodes[$newValue] ?? $newValue;
+                }
                 $entries[] = [
                     'targetType' => AnrHistory::OPERATIONAL_RISK,
                     'targetId' => $operationalInstanceRisk->getId(),
                     'changeType' => $changeType,
                     'fieldCode' => $fieldCode,
-                    'oldValue' => $before[$stateKey],
-                    'newValue' => $after[$stateKey],
+                    'oldValue' => $oldValue,
+                    'newValue' => $newValue,
                 ];
             }
         }
 
         $this->anrHistoryService->createEntries($anr, $entries);
+    }
+
+    private function normalizeHistoryScaleValue(int $value): int|string
+    {
+        return $value === -1 ? '-' : $value;
     }
 }

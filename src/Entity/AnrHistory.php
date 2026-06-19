@@ -44,6 +44,7 @@ class AnrHistory
     public const CONSEQUENCE_REPUTATION = 'consequence_reputation';
     public const CONSEQUENCE_LEGAL = 'consequence_legal';
     public const CONSEQUENCE_FINANCIAL = 'consequence_financial';
+    public const IMPACT_SCALE_UPDATE = 'impact_scale_update';
 
     public const CREATED = 1;
     public const FIELD_UPDATED = 10;
@@ -54,6 +55,7 @@ class AnrHistory
     public const CONSEQUENCE_CREATED = 30;
     public const CONSEQUENCE_UPDATED = 31;
     public const CONSEQUENCE_DELETED = 32;
+    public const IMPACT_SCALE_UPDATED = 33;
 
     public const RESIDUAL_ACCEPTANCE_UPDATED = 40;
 

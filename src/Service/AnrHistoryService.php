@@ -98,7 +98,7 @@ class AnrHistoryService
     }
 
     /**
-     * @param array<int, array{targetType:int,targetId:int,changeType:int,fieldCode:?string,oldValue:mixed,newValue:mixed}> $entries
+     * @param array $entries
      */
     public function createEntries(Anr $anr, array $entries): void
     {
@@ -193,7 +193,7 @@ class AnrHistoryService
         }
 
         if (is_bool($value)) {
-            return $value ? '1' : '0';
+            return $value ? 'true' : 'false';
         }
 
         if (is_scalar($value)) {

@@ -17,6 +17,7 @@ use Monarc\FrontOffice\Entity\InstanceRisk;
 use Monarc\FrontOffice\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Entity\User;
 use Monarc\FrontOffice\Entity\UserRole;
+use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Table\AnrSupervisorTable;
 use Monarc\FrontOffice\Table\UserTable;
 
@@ -27,6 +28,7 @@ class AnrSupervisorService
     public function __construct(
         private AnrSupervisorTable $anrSupervisorTable,
         private UserTable $userTable,
+        private ImportCacheHelper $importCacheHelper,
         ConnectedUserService $connectedUserService
     ) {
         /** @var User $connectedUser */
@@ -198,7 +200,8 @@ class AnrSupervisorService
         Anr $anr,
         ?string $name,
         ?string $email = null,
-        array $roles = [AnrSupervisorRole::ROLE_RISK_OWNER]
+        array $roles = [AnrSupervisorRole::ROLE_RISK_OWNER],
+        bool $saveInDb = true
     ): ?AnrSupervisor {
         $normalizedName = trim((string)$name);
         $normalizedEmail = $this->normalizeEmail($email);
@@ -206,30 +209,36 @@ class AnrSupervisorService
             return null;
         }
 
-        $supervisor = $this->anrSupervisorTable->findOneByAnrAndNormalizedIdentity(
-            $anr,
-            $normalizedEmail,
-            $normalizedName
-        );
+        $supervisor = $this->findSupervisorByIdentity($anr, $normalizedEmail, $normalizedName);
         if ($supervisor === null) {
             return $this->createSupervisorEntity(
                 $anr,
                 $normalizedName,
                 $normalizedEmail,
-                $roles
+                $roles,
+                saveInDb: $saveInDb
             );
         }
 
+        $isUpdated = false;
         foreach ($roles as $role) {
             if (!in_array($role, AnrSupervisorRole::getAvailableRoles(), true)) {
                 throw new Exception(sprintf('Unsupported supervisor role "%s".', $role), 412);
             }
-            $this->syncRoles($supervisor, array_merge($supervisor->getRolesArray(), [$role]));
+            if (!$supervisor->hasRole($role)) {
+                $this->syncRoles($supervisor, array_merge($supervisor->getRolesArray(), [$role]));
+                $isUpdated = true;
+            }
         }
         if (!$supervisor->isActive()) {
-            $supervisor->setIsActive(true)->setUpdater($this->connectedUser->getEmail());
-            $this->anrSupervisorTable->save($supervisor);
+            $supervisor->setIsActive(true);
+            $isUpdated = true;
         }
+        if ($isUpdated) {
+            $supervisor->setUpdater($this->connectedUser->getEmail());
+            $this->anrSupervisorTable->save($supervisor, $saveInDb);
+        }
+        $this->cacheSupervisor($anr, $supervisor);
 
         return $supervisor;
     }
@@ -260,6 +269,7 @@ class AnrSupervisorService
             ->setCreator($this->connectedUser->getEmail());
         $this->syncRoles($supervisor, $roles);
         $this->anrSupervisorTable->save($supervisor, $saveInDb);
+        $this->cacheSupervisor($anr, $supervisor);
 
         return $supervisor;
     }
@@ -307,7 +317,8 @@ class AnrSupervisorService
     public function assignRiskOwnerSupervisorData(
         Anr $anr,
         array $supervisorData,
-        InstanceRisk|InstanceRiskOp $instanceRisk
+        InstanceRisk|InstanceRiskOp $instanceRisk,
+        bool $saveInDb = true
     ): void {
         $name = trim((string)($supervisorData['name'] ?? ''));
         $email = trim((string)($supervisorData['email'] ?? ''));
@@ -315,21 +326,24 @@ class AnrSupervisorService
             $anr,
             $name !== '' ? $name : null,
             $email !== '' ? $email : null,
-            [AnrSupervisorRole::ROLE_RISK_OWNER]
+            [AnrSupervisorRole::ROLE_RISK_OWNER],
+            $saveInDb
         ));
     }
 
     public function assignRiskOwnerSupervisorName(
         Anr $anr,
         ?string $ownerName,
-        InstanceRisk|InstanceRiskOp $instanceRisk
+        InstanceRisk|InstanceRiskOp $instanceRisk,
+        bool $saveInDb = true
     ): void {
         $normalizedOwnerName = trim((string)$ownerName);
         $instanceRisk->setRiskOwnerSupervisor($this->getOrCreateSupervisor(
             $anr,
             $normalizedOwnerName !== '' ? $normalizedOwnerName : null,
             null,
-            [AnrSupervisorRole::ROLE_RISK_OWNER]
+            [AnrSupervisorRole::ROLE_RISK_OWNER],
+            $saveInDb
         ));
     }
 
@@ -342,7 +356,7 @@ class AnrSupervisorService
                 continue;
             }
 
-            $supervisor = $this->anrSupervisorTable->findOneByAnrAndNormalizedIdentity($anr, $email, $name);
+            $supervisor = $this->findSupervisorByIdentity($anr, $email, $name);
             if ($supervisor === null) {
                 $supervisor = (new AnrSupervisor())
                     ->setAnr($anr)
@@ -363,7 +377,8 @@ class AnrSupervisorService
                 $supervisor->getRolesArray(),
                 $this->filterRoles((array)($supervisorData['roles'] ?? []))
             ));
-            $this->anrSupervisorTable->save($supervisor);
+            $this->anrSupervisorTable->save($supervisor, false);
+            $this->cacheSupervisor($anr, $supervisor);
         }
     }
 
@@ -470,6 +485,53 @@ class AnrSupervisorService
         return $normalizedRoles;
     }
 
+    private function findSupervisorByIdentity(Anr $anr, ?string $email, ?string $name): ?AnrSupervisor
+    {
+        $cacheKey = $this->getSupervisorCacheKey($anr, $email, $name);
+        if ($cacheKey !== null) {
+            /** @var ?AnrSupervisor $cachedSupervisor */
+            $cachedSupervisor = $this->importCacheHelper->getItemFromArrayCache('supervisors_by_identity', $cacheKey);
+            if ($cachedSupervisor !== null) {
+                return $cachedSupervisor;
+            }
+        }
+
+        $supervisor = $this->anrSupervisorTable->findOneByAnrAndNormalizedIdentity($anr, $email, $name);
+        if ($supervisor !== null) {
+            $this->cacheSupervisor($anr, $supervisor);
+        }
+
+        return $supervisor;
+    }
+
+    private function cacheSupervisor(Anr $anr, AnrSupervisor $supervisor): void
+    {
+        $emailCacheKey = $this->getSupervisorCacheKey($anr, $supervisor->getEmail(), null);
+        if ($emailCacheKey !== null) {
+            $this->importCacheHelper->addItemToArrayCache('supervisors_by_identity', $supervisor, $emailCacheKey);
+        }
+
+        $nameCacheKey = $this->getSupervisorCacheKey($anr, null, $supervisor->getName());
+        if ($nameCacheKey !== null) {
+            $this->importCacheHelper->addItemToArrayCache('supervisors_by_identity', $supervisor, $nameCacheKey);
+        }
+    }
+
+    private function getSupervisorCacheKey(Anr $anr, ?string $email, ?string $name): ?string
+    {
+        $normalizedEmail = trim((string)$email);
+        if ($normalizedEmail !== '') {
+            return $anr->getId() . '|email|' . mb_strtolower($normalizedEmail);
+        }
+
+        $normalizedName = trim((string)$name);
+        if ($normalizedName === '') {
+            return null;
+        }
+
+        return $anr->getId() . '|name|' . mb_strtolower($normalizedName);
+    }
+
     private function normalizeRolePosition(mixed $rolePosition): ?string
     {
         $rolePosition = trim((string)$rolePosition);
@@ -499,5 +561,4 @@ class AnrSupervisorService
             throw new Exception('Only an administrator can link a supervisor to a system user.', 412);
         }
     }
-
 }

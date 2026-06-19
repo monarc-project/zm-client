@@ -151,6 +151,7 @@ class AnrInstanceConsequenceService
     {
         /** @var Entity\InstanceConsequence $instanceConsequence */
         $instanceConsequence = $this->instanceConsequenceTable->findByIdAndAnr($id, $anr);
+        $beforeState = $this->prepareConsequenceHistoryState($instanceConsequence);
         $beforeValue = $this->prepareConsequenceHistoryValue($instanceConsequence);
         $affectedInstances = [$instanceConsequence->getInstance()->getId() => $instanceConsequence->getInstance()];
         if ($instanceConsequence->getInstance()->getObject()->isScopeGlobal()) {
@@ -196,6 +197,8 @@ class AnrInstanceConsequenceService
             $anr,
             $affectedInstances,
             $instanceConsequence,
+            $beforeState,
+            $this->prepareConsequenceHistoryState($instanceConsequence),
             $beforeValue,
             $this->prepareConsequenceHistoryValue($instanceConsequence)
         );
@@ -257,34 +260,53 @@ class AnrInstanceConsequenceService
         Entity\Anr $anr,
         array $affectedInstances,
         Entity\InstanceConsequence $instanceConsequence,
+        array $beforeState,
+        array $afterState,
         array $beforeValue,
         array $afterValue
     ): void {
-        if ($beforeValue === $afterValue) {
+        if ($beforeState === $afterState) {
             return;
         }
-
-        $changeType = match (true) {
-            $beforeValue['hidden'] && !$afterValue['hidden'] => AnrHistory::CONSEQUENCE_CREATED,
-            !$beforeValue['hidden'] && $afterValue['hidden'] => AnrHistory::CONSEQUENCE_DELETED,
-            default => AnrHistory::CONSEQUENCE_UPDATED,
-        };
 
         $entries = [];
         foreach ($affectedInstances as $instance) {
             foreach ($instance->getInstanceRisks() as $instanceRisk) {
-                $entries[] = [
-                    'targetType' => AnrHistory::INFORMATION_RISK,
-                    'targetId' => $instanceRisk->getId(),
-                    'changeType' => $changeType,
-                    'fieldCode' => $this->getConsequenceFieldCode($instanceConsequence->getScaleImpactType()->getType()),
-                    'oldValue' => $beforeValue,
-                    'newValue' => $afterValue,
-                ];
+                if ($beforeValue !== $afterValue) {
+                    $entries[] = [
+                        'targetType' => AnrHistory::INFORMATION_RISK,
+                        'targetId' => $instanceRisk->getId(),
+                        'changeType' => AnrHistory::CONSEQUENCE_UPDATED,
+                        'fieldCode' => $this->getConsequenceFieldCode($instanceConsequence->getScaleImpactType()->getType()),
+                        'oldValue' => $beforeValue,
+                        'newValue' => $afterValue,
+                    ];
+                }
+
+                if ($beforeState['hidden'] !== $afterState['hidden']) {
+                    $entries[] = [
+                        'targetType' => AnrHistory::INFORMATION_RISK,
+                        'targetId' => $instanceRisk->getId(),
+                        'changeType' => AnrHistory::IMPACT_SCALE_UPDATED,
+                        'fieldCode' => AnrHistory::IMPACT_SCALE_UPDATE,
+                        'oldValue' => null,
+                        'newValue' => $afterState['hidden'] ? 'hidden' : 'visible',
+                    ];
+                }
             }
         }
 
         $this->anrHistoryService->createEntries($anr, $entries);
+    }
+
+    private function prepareConsequenceHistoryState(Entity\InstanceConsequence $instanceConsequence): array
+    {
+        return [
+            'c' => $instanceConsequence->getConfidentiality(),
+            'i' => $instanceConsequence->getIntegrity(),
+            'a' => $instanceConsequence->getAvailability(),
+            'hidden' => $instanceConsequence->isHidden(),
+        ];
     }
 
     private function getConsequenceFieldCode(int $scaleImpactType): string
@@ -303,10 +325,14 @@ class AnrInstanceConsequenceService
     private function prepareConsequenceHistoryValue(Entity\InstanceConsequence $instanceConsequence): array
     {
         return [
-            'c' => $instanceConsequence->getConfidentiality(),
-            'i' => $instanceConsequence->getIntegrity(),
-            'a' => $instanceConsequence->getAvailability(),
-            'hidden' => $instanceConsequence->isHidden(),
+            'c' => $this->normalizeConsequenceHistoryValue($instanceConsequence->getConfidentiality()),
+            'i' => $this->normalizeConsequenceHistoryValue($instanceConsequence->getIntegrity()),
+            'a' => $this->normalizeConsequenceHistoryValue($instanceConsequence->getAvailability()),
         ];
+    }
+
+    private function normalizeConsequenceHistoryValue(int $value): int|string
+    {
+        return $value === -1 ? '-' : $value;
     }
 }

@@ -4060,7 +4060,7 @@ class DeliverableGenerationService
             $instanceRisk->getResidualAcceptanceApproverSupervisor()?->getName(),
             $instanceRisk->getResidualRiskDecidedAt()?->format('Y-m-d'),
             $instanceRisk->getResidualAcceptancePerformedByName(),
-            $instanceRisk->getResidualAcceptancePerformedOnBehalf(),
+            $instanceRisk->isResidualAcceptancePerformedOnBehalf(),
             $instanceRisk->getResidualRiskJustification()
         );
     }

@@ -225,37 +225,6 @@ class InstanceImportService
         if (!empty($data['supervisors']) && is_array($data['supervisors'])) {
             $this->anrSupervisorService->processForImport($anr, $data['supervisors']);
         }
-
-        if (empty($data['risk_owners']) || !is_array($data['risk_owners'])) {
-            return;
-        }
-
-        $legacySupervisors = [];
-        foreach ($data['risk_owners'] as $riskOwner) {
-            if (is_string($riskOwner)) {
-                $riskOwner = ['name' => $riskOwner];
-            }
-            if (!is_array($riskOwner)) {
-                continue;
-            }
-
-            $name = trim((string)($riskOwner['name'] ?? $riskOwner['label'] ?? ''));
-            $email = trim((string)($riskOwner['email'] ?? ''));
-            if ($name === '' && $email === '') {
-                continue;
-            }
-
-            $legacySupervisors[] = [
-                'name' => $name !== '' ? $name : $email,
-                'email' => $email !== '' ? $email : null,
-                'roles' => [Entity\AnrSupervisorRole::ROLE_RISK_OWNER],
-                'isActive' => true,
-            ];
-        }
-
-        if (!empty($legacySupervisors)) {
-            $this->anrSupervisorService->processForImport($anr, $legacySupervisors);
-        }
     }
 
     private function processKnowledgeBaseData(Entity\Anr $anr, array $knowledgeBaseData): void

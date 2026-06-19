@@ -120,6 +120,7 @@ class AnrExportService
             ) : [],
             'library' => $withLibrary ? $this->prepareLibraryData($anr, !$withKnowledgeBase) : [],
             'supervisors' => $this->prepareSupervisorsData($anr),
+            'risk_owners' => $this->prepareLegacyRiskOwnersData($anr),
             'instances' => $this->prepareInstancesData(
                 $anr,
                 !$withLibrary,
@@ -269,6 +270,32 @@ class AnrExportService
             'name' => $supervisor->getName(),
             'email' => $supervisor->getEmail(),
         ];
+    }
+
+    private function prepareLegacyRiskOwnersData(Entity\Anr $anr): array
+    {
+        $result = [];
+        /** @var Entity\AnrSupervisor $supervisor */
+        foreach ($this->anrSupervisorTable->findByAnrOrdered($anr) as $supervisor) {
+            if (!$supervisor->hasRole(Entity\AnrSupervisorRole::ROLE_RISK_OWNER)) {
+                continue;
+            }
+
+            $result[] = [
+                'name' => $supervisor->getName(),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function prepareLegacyRiskOwnerName(?Entity\AnrSupervisor $supervisor): ?string
+    {
+        if ($supervisor === null) {
+            return null;
+        }
+
+        return $supervisor->hasRole(Entity\AnrSupervisorRole::ROLE_RISK_OWNER) ? $supervisor->getName() : null;
     }
 
     private function prepareResidualRiskAcceptanceData(

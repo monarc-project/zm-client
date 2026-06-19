@@ -97,7 +97,10 @@ class OperationalInstanceRiskImportProcessor
                 ->setSpecific($operationalInstanceRiskData['specific'] ?? 0);
             if (!empty($operationalInstanceRiskData['riskSource'])) {
                 $operationalInstanceRisk->setRiskSource(
-                    $this->riskSourceImportProcessor->processRiskSourceData($anr, $operationalInstanceRiskData['riskSource'])
+                    $this->riskSourceImportProcessor->processRiskSourceData(
+                        $anr,
+                        $operationalInstanceRiskData['riskSource']
+                    )
                 );
             }
             if ($this->importCacheHelper->getValueFromArrayCache('with_eval')) {
@@ -112,17 +115,26 @@ class OperationalInstanceRiskImportProcessor
                     ->setComment($operationalInstanceRiskData['comment'] ?? '')
                     ->setMitigation($operationalInstanceRiskData['mitigation'] ?? '')
                     ->setContext($operationalInstanceRiskData['context'] ?? '');
-                $riskOwnerSupervisor = $operationalInstanceRiskData['riskOwnerSupervisor']
-                    ?? $operationalInstanceRiskData['risk_owner_supervisor']
-                    ?? null;
+                $riskOwnerSupervisor = $operationalInstanceRiskData['riskOwnerSupervisor'] ?? null;
                 if (!empty($riskOwnerSupervisor)
                     && is_array($riskOwnerSupervisor)
                 ) {
                     $this->anrSupervisorService->assignRiskOwnerSupervisorData(
                         $anr,
                         $riskOwnerSupervisor,
-                        $operationalInstanceRisk
+                        $operationalInstanceRisk,
+                        false
                     );
+                } else {
+                    $legacyRiskOwnerName = trim((string)($operationalInstanceRiskData['riskOwner'] ?? ''));
+                    if ($legacyRiskOwnerName !== '') {
+                        $this->anrSupervisorService->assignRiskOwnerSupervisorName(
+                            $anr,
+                            $legacyRiskOwnerName,
+                            $operationalInstanceRisk,
+                            false
+                        );
+                    }
                 }
                 if (array_key_exists('lastReviewDate', $operationalInstanceRiskData)) {
                     $operationalInstanceRisk->setLastReviewDate(
@@ -152,7 +164,8 @@ class OperationalInstanceRiskImportProcessor
                             $anr,
                             $residualAcceptanceApproverSupervisor['name'] ?? null,
                             $residualAcceptanceApproverSupervisor['email'] ?? null,
-                            [Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER]
+                            [Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER],
+                            false
                         )
                     );
                 }
@@ -184,9 +197,7 @@ class OperationalInstanceRiskImportProcessor
                     $justification = trim((string)$operationalInstanceRiskData['residualRiskJustification']);
                     $operationalInstanceRisk->setResidualRiskJustification($justification === '' ? null : $justification);
                 }
-                $residualRiskAcceptance = $operationalInstanceRiskData['residualRiskAcceptance']
-                    ?? $operationalInstanceRiskData['residual_risk_acceptance']
-                    ?? null;
+                $residualRiskAcceptance = $operationalInstanceRiskData['residualRiskAcceptance'] ?? null;
                 if (!empty($residualRiskAcceptance)
                     && is_array($residualRiskAcceptance)
                 ) {
@@ -229,7 +240,8 @@ class OperationalInstanceRiskImportProcessor
                                 $anr,
                                 $approverData['name'] ?? null,
                                 $approverData['email'] ?? null,
-                                [Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER]
+                                [Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER],
+                                false
                             );
                         $operationalInstanceRisk->setResidualAcceptanceApproverSupervisor($approverSupervisor)
                             ->setResidualRiskDecidedBySupervisor($approverSupervisor);

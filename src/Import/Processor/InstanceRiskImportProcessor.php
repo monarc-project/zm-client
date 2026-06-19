@@ -126,13 +126,24 @@ class InstanceRiskImportProcessor
                 $reviewFrequency = trim((string)$instanceRiskData['reviewFrequency']);
                 $instanceRisk->setReviewFrequency($reviewFrequency === '' ? null : $reviewFrequency);
             }
-            $riskOwnerSupervisor = $instanceRiskData['riskOwnerSupervisor'] ?? $instanceRiskData['risk_owner_supervisor'] ?? null;
+            $riskOwnerSupervisor = $instanceRiskData['riskOwnerSupervisor'] ?? null;
             if (!empty($riskOwnerSupervisor) && is_array($riskOwnerSupervisor)) {
                 $this->anrSupervisorService->assignRiskOwnerSupervisorData(
                     $anr,
                     $riskOwnerSupervisor,
-                    $instanceRisk
+                    $instanceRisk,
+                    false
                 );
+            } else {
+                $legacyRiskOwnerName = trim((string)($instanceRiskData['riskOwner'] ?? ''));
+                if ($legacyRiskOwnerName !== '') {
+                    $this->anrSupervisorService->assignRiskOwnerSupervisorName(
+                        $anr,
+                        $legacyRiskOwnerName,
+                        $instanceRisk,
+                        false
+                    );
+                }
             }
             if (array_key_exists('residualRiskDecision', $instanceRiskData)) {
                 $residualRiskDecision = mb_strtolower(trim((string)$instanceRiskData['residualRiskDecision']));
@@ -148,7 +159,8 @@ class InstanceRiskImportProcessor
                         $anr,
                         $residualAcceptanceApproverSupervisor['name'] ?? null,
                         $residualAcceptanceApproverSupervisor['email'] ?? null,
-                        [Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER]
+                        [Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER],
+                        false
                     )
                 );
             }
@@ -178,9 +190,7 @@ class InstanceRiskImportProcessor
                     $residualRiskJustification === '' ? null : $residualRiskJustification
                 );
             }
-            $residualRiskAcceptance = $instanceRiskData['residualRiskAcceptance']
-                ?? $instanceRiskData['residual_risk_acceptance']
-                ?? null;
+            $residualRiskAcceptance = $instanceRiskData['residualRiskAcceptance'] ?? null;
             if (!empty($residualRiskAcceptance) && is_array($residualRiskAcceptance)) {
                 $instanceRisk->setResidualRiskDecision(
                     $this->normalizeResidualRiskDecision($residualRiskAcceptance['decision'] ?? null)
@@ -217,7 +227,8 @@ class InstanceRiskImportProcessor
                             $anr,
                             $approverData['name'] ?? null,
                             $approverData['email'] ?? null,
-                            [Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER]
+                            [Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER],
+                            false
                         );
                     $instanceRisk->setResidualAcceptanceApproverSupervisor($approverSupervisor)
                         ->setResidualRiskDecidedBySupervisor($approverSupervisor);

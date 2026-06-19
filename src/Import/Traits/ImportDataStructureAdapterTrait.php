@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Import\Traits;
 use Monarc\Core\Entity\AmvSuperClass;
 use Monarc\Core\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Entity\ScaleSuperClass;
+use Monarc\FrontOffice\Entity\AnrSupervisorRole;
 
 trait ImportDataStructureAdapterTrait
 {
@@ -284,7 +285,6 @@ trait ImportDataStructureAdapterTrait
                 'riskAvailability' => $instanceRiskDatum['riskD'],
                 'context' => $instanceRiskDatum['context'],
                 'riskOwnerSupervisor' => $this->prepareLegacyRiskOwnerSupervisor($instanceRiskDatum['riskOwner'] ?? null),
-                'risk_owner_supervisor' => $this->prepareLegacyRiskOwnerSupervisor($instanceRiskDatum['riskOwner'] ?? null),
                 'lastReviewDate' => $instanceRiskDatum['lastReviewDate'] ?? null,
                 'reviewFrequency' => $instanceRiskDatum['reviewFrequency'] ?? null,
                 'residualRiskDecision' => $instanceRiskDatum['residualRiskDecision'] ?? null,
@@ -391,9 +391,6 @@ trait ImportDataStructureAdapterTrait
                 'riskOwnerSupervisor' => $this->prepareLegacyRiskOwnerSupervisor(
                     $operationalInstanceRiskData['riskOwner'] ?? null
                 ),
-                'risk_owner_supervisor' => $this->prepareLegacyRiskOwnerSupervisor(
-                    $operationalInstanceRiskData['riskOwner'] ?? null
-                ),
                 'recommendations' => $recommendationsData,
                 'operationalInstanceRiskScales' => $operationalInstanceRiskData['scalesValues'],
             ];
@@ -446,6 +443,6 @@ trait ImportDataStructureAdapterTrait
     {
         $name = trim((string)$riskOwner);
 
-        return $name === '' ? null : ['name' => $name];
+        return $name === '' ? null : ['name' => $name, 'roles' => [AnrSupervisorRole::ROLE_RISK_OWNER]];
     }
 }
