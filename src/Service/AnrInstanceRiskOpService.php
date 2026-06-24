@@ -112,6 +112,10 @@ class AnrInstanceRiskOpService
                 'specific' => $operationalInstanceRisk->getSpecific(),
                 'lastReviewDate' => $operationalInstanceRisk->getLastReviewDate()?->format('Y-m-d'),
                 'reviewFrequency' => $operationalInstanceRisk->getReviewFrequency(),
+                'reviewFrequencyLabel' => $this->getReviewFrequencyLabel(
+                    $operationalInstanceRisk->getReviewFrequency(),
+                    $anrLanguage
+                ),
                 'residualRiskDecision' => $operationalInstanceRisk->getResidualRiskDecision(),
                 'residualRiskDecidedAt' => $operationalInstanceRisk->getResidualRiskDecidedAt()?->format('Y-m-d'),
                 'residualAcceptanceUseRiskOwner' => $operationalInstanceRisk->isResidualAcceptanceUseRiskOwner(),

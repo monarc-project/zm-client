@@ -135,6 +135,11 @@ class AnrValidationMiddleware implements MiddlewareInterface
                 $request->getMethod(),
                 $anr
             )
+            && !$this->isRisksManagementBatchUpdateAuthorized(
+                $routeMatch->getMatchedRouteName(),
+                $request->getMethod(),
+                $anr
+            )
             && !$this->isPostAuthorizedForRoute($routeMatch->getMatchedRouteName(), $request->getMethod())
         ) {
             return $this->responseFactory->createResponse(
@@ -184,6 +189,27 @@ class AnrValidationMiddleware implements MiddlewareInterface
         }
 
         return $this->anrSupervisorService->userHasLinkedRole(
+            $anr,
+            $this->connectedUser,
+            Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER
+        );
+    }
+
+    private function isRisksManagementBatchUpdateAuthorized(string $routeName, string $method, Entity\Anr $anr): bool
+    {
+        if ($method !== Request::METHOD_POST || $anr->isAnrSnapshot()) {
+            return false;
+        }
+
+        if ($routeName !== 'monarc_api_global_client_anr/risks_management/batch_update') {
+            return false;
+        }
+
+        return $this->anrSupervisorService->userHasLinkedRole(
+            $anr,
+            $this->connectedUser,
+            Entity\AnrSupervisorRole::ROLE_RISK_OWNER
+        ) || $this->anrSupervisorService->userHasLinkedRole(
             $anr,
             $this->connectedUser,
             Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER

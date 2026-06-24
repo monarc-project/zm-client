@@ -902,6 +902,35 @@ return [
                             ],
                         ],
                     ],
+                    'risks_management' => [
+                        'type' => 'segment',
+                        'options' => [
+                            'route' => 'risks-management',
+                            'defaults' => [
+                                'controller' => PipeSpec::class,
+                                'middleware' => new PipeSpec(
+                                    AnrValidationMiddleware::class,
+                                    Controller\ApiAnrRisksManagementController::class,
+                                ),
+                            ],
+                        ],
+                        'may_terminate' => true,
+                        'child_routes' => [
+                            'batch_update' => [
+                                'type' => 'segment',
+                                'options' => [
+                                    'route' => '/batch-update',
+                                    'defaults' => [
+                                        'controller' => PipeSpec::class,
+                                        'middleware' => new PipeSpec(
+                                            AnrValidationMiddleware::class,
+                                            Controller\ApiAnrRisksManagementController::class,
+                                        ),
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
                     'risks' => [
                         'type' => 'segment',
                         'options' => [
@@ -1520,6 +1549,8 @@ return [
             Controller\ApiAnrScalesCommentsController::class => AutowireFactory::class,
             Controller\ApiAnrRisksController::class => AutowireFactory::class,
             Controller\ApiAnrSupervisorsController::class => AutowireFactory::class,
+            Controller\ApiAnrRisksManagementController::class => AutowireFactory::class,
+            Controller\ApiAnrRisksManagementBatchUpdateController::class => AutowireFactory::class,
             Controller\ApiDashboardAnrRisksController::class => AutowireFactory::class,
             Controller\ApiAnrRisksOpController::class => AutowireFactory::class,
             Controller\ApiAnrLibraryController::class => AutowireFactory::class,
@@ -1993,6 +2024,8 @@ return [
             'monarc_api_client',
             'monarc_api_global_client_anr/carto_risks',
             'monarc_api_global_client_anr/supervisors',
+            'monarc_api_global_client_anr/risks_management',
+            'monarc_api_global_client_anr/risks_management/batch_update',
             'monarc_api_global_client_anr/instance_risk_residual_acceptance',
             'monarc_api_global_client_anr/instance_risk_op_residual_acceptance',
             'monarc_api_global_client_anr/history',
@@ -2082,6 +2115,8 @@ return [
             'monarc_api_user_recovery_codes',
             'monarc_api_model_verify_language',
             'monarc_api_global_client_anr/supervisors',
+            'monarc_api_global_client_anr/risks_management',
+            'monarc_api_global_client_anr/risks_management/batch_update',
             'monarc_api_global_client_anr/instance_risk_residual_acceptance',
             'monarc_api_global_client_anr/instance_risk_op_residual_acceptance',
             'monarc_api_global_client_anr/carto_risks',
