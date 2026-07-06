@@ -189,6 +189,26 @@ class InstanceRiskTable extends CoreInstanceRiskTable
     }
 
     /**
+     * @param int[] $supervisorIds
+     *
+     * @return array<int, int>
+     */
+    public function getCountsByRiskOwnerSupervisorIds(array $supervisorIds): array
+    {
+        return $this->getCountsBySupervisorIds($supervisorIds, 'riskOwnerSupervisor');
+    }
+
+    /**
+     * @param int[] $supervisorIds
+     *
+     * @return array<int, int>
+     */
+    public function getCountsByResidualAcceptanceApproverSupervisorIds(array $supervisorIds): array
+    {
+        return $this->getCountsBySupervisorIds($supervisorIds, 'residualAcceptanceApproverSupervisor');
+    }
+
+    /**
      * @return InstanceRisk[]
      */
     public function findByAnrAndOrderByParams(Anr $anr, array $orderBy = []): array
@@ -297,5 +317,33 @@ class InstanceRiskTable extends CoreInstanceRiskTable
             }
             $queryBuilder->addOrderBy('rs.label', $direction);
         }
+    }
+
+    /**
+     * @param int[] $supervisorIds
+     *
+     * @return array<int, int>
+     */
+    private function getCountsBySupervisorIds(array $supervisorIds, string $fieldName): array
+    {
+        $normalizedSupervisorIds = array_values(array_unique(array_map('intval', $supervisorIds)));
+        if ($normalizedSupervisorIds === []) {
+            return [];
+        }
+
+        $rows = $this->getRepository()->createQueryBuilder('ir')
+            ->select('IDENTITY(ir.' . $fieldName . ') AS supervisorId, COUNT(ir.id) AS risksCount')
+            ->where('ir.' . $fieldName . ' IN (:supervisorIds)')
+            ->setParameter('supervisorIds', $normalizedSupervisorIds)
+            ->groupBy('ir.' . $fieldName)
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int)$row['supervisorId']] = (int)$row['risksCount'];
+        }
+
+        return $counts;
     }
 }
