@@ -681,19 +681,16 @@ class AnrService
         foreach ($informationRiskOwnerCounts as $supervisorId => $count) {
             $countsBySupervisorId[$supervisorId]['owned'] += $count;
         }
-
         $informationApproverCounts = $this->instanceRiskTable
             ->getCountsByResidualAcceptanceApproverSupervisorIds($normalizedSupervisorIds);
         foreach ($informationApproverCounts as $supervisorId => $count) {
             $countsBySupervisorId[$supervisorId]['approval'] += $count;
         }
-
         $operationalRiskOwnerCounts = $this->instanceRiskOpTable
             ->getCountsByRiskOwnerSupervisorIds($normalizedSupervisorIds);
         foreach ($operationalRiskOwnerCounts as $supervisorId => $count) {
             $countsBySupervisorId[$supervisorId]['owned'] += $count;
         }
-
         $operationalApproverCounts = $this->instanceRiskOpTable
             ->getCountsByResidualAcceptanceApproverSupervisorIds($normalizedSupervisorIds);
         foreach ($operationalApproverCounts as $supervisorId => $count) {

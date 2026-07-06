@@ -21,6 +21,7 @@ class InstanceExportService
     use ExportTrait\InstanceExportTrait;
     use ExportTrait\ScaleExportTrait;
     use ExportTrait\OperationalRiskScaleExportTrait;
+    use ExportTrait\SupervisorExportTrait;
 
     public function __construct(
         private Table\InstanceTable $instanceTable,
