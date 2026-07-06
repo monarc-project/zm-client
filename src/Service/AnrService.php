@@ -112,6 +112,13 @@ class AnrService
     {
         /* For SUPER_ADMIN_FO all the analysis are fetched to be able to update the permissions. */
         $isSuperAdmin = $this->connectedUser->hasRole(Entity\UserRole::SUPER_ADMIN_FO);
+        $linkedSupervisorsByAnrId = $this->getLinkedSupervisorsByAnrId();
+        $assignedRiskCountsBySupervisorId = $this->getAssignedRiskCountsBySupervisorId(
+            array_map(
+                static fn (Entity\AnrSupervisor $supervisor): int => $supervisor->getId(),
+                array_values($linkedSupervisorsByAnrId)
+            )
+        );
 
         $anrData = [];
         if ($isSuperAdmin) {
@@ -119,20 +126,35 @@ class AnrService
                 if (!$anr->isAnrSnapshot()) {
                     $anrData[] = $this->getPreparedAnrData(
                         $anr,
-                        $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser)
+                        $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser),
+                        false,
+                        $linkedSupervisorsByAnrId[$anr->getId()] ?? null,
+                        $assignedRiskCountsBySupervisorId
                     );
                 }
             }
         } else {
             $preparedAnrs = [];
             foreach ($this->connectedUser->getUserAnrs() as $userAnr) {
-                $preparedData = $this->getPreparedAnrData($userAnr->getAnr(), $userAnr);
+                $preparedData = $this->getPreparedAnrData(
+                    $userAnr->getAnr(),
+                    $userAnr,
+                    false,
+                    $linkedSupervisorsByAnrId[$userAnr->getAnr()->getId()] ?? null,
+                    $assignedRiskCountsBySupervisorId
+                );
                 $preparedAnrs[$preparedData['id']] = $preparedData;
             }
-            foreach ($this->anrSupervisorService->getLinkedSupervisorsByUser($this->connectedUser) as $supervisor) {
+            foreach ($linkedSupervisorsByAnrId as $supervisor) {
                 $anr = $supervisor->getAnr();
                 if (!$anr->isAnrSnapshot() && !isset($preparedAnrs[$anr->getId()])) {
-                    $preparedAnrs[$anr->getId()] = $this->getPreparedAnrData($anr, null);
+                    $preparedAnrs[$anr->getId()] = $this->getPreparedAnrData(
+                        $anr,
+                        null,
+                        false,
+                        $supervisor,
+                        $assignedRiskCountsBySupervisorId
+                    );
                 }
             }
             $anrData = array_values($preparedAnrs);
@@ -507,12 +529,21 @@ class AnrService
     private function getPreparedAnrData(
         Entity\Anr $anr,
         ?Entity\UserAnr $userAnr,
-        bool $includeSnapshotDetails = false
+        bool $includeSnapshotDetails = false,
+        ?Entity\AnrSupervisor $linkedSupervisor = null,
+        array $assignedRiskCountsBySupervisorId = []
     ): array {
         $supervisorAccessAnr = $anr->isAnrSnapshot() ? $anr->getSnapshot()?->getAnrReference() : $anr;
-        $linkedSupervisor = $supervisorAccessAnr === null
-            ? null
-            : $this->anrSupervisorService->findLinkedSupervisor($supervisorAccessAnr, $this->connectedUser);
+        if ($linkedSupervisor === null && $supervisorAccessAnr !== null) {
+            $linkedSupervisor = $this->anrSupervisorService->findLinkedSupervisor(
+                $supervisorAccessAnr,
+                $this->connectedUser
+            );
+        }
+        $assignedRiskCounts = $this->getAssignedRiskCountsForSupervisor(
+            $linkedSupervisor,
+            $assignedRiskCountsBySupervisorId
+        );
         $referentialData = [];
         foreach ($anr->getReferentials() as $referential) {
             $referentialData[] = [
@@ -535,6 +566,8 @@ class AnrService
             'linkedSupervisorRoles' => $linkedSupervisor?->getRolesArray() ?? [],
             'canApproveResidualRisk' => (int)($linkedSupervisor !== null
                 && $linkedSupervisor->hasRole(Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER)),
+            'ownedRisksCount' => $assignedRiskCounts['owned'],
+            'approvalRisksCount' => $assignedRiskCounts['approval'],
             'isCurrentAnr' => (int)($this->connectedUser->getCurrentAnr() !== null
                 && $this->connectedUser->getCurrentAnr()->getId() === $anr->getId()),
             'status' => $anr->getStatus(),
@@ -605,6 +638,93 @@ class AnrService
         }
 
         return $anrData;
+    }
+
+    /**
+     * @return array<int, Entity\AnrSupervisor>
+     */
+    private function getLinkedSupervisorsByAnrId(): array
+    {
+        $linkedSupervisorsByAnrId = [];
+        foreach ($this->anrSupervisorService->getLinkedSupervisorsByUser($this->connectedUser) as $supervisor) {
+            $anrId = $supervisor->getAnr()->getId();
+            if (!isset($linkedSupervisorsByAnrId[$anrId])) {
+                $linkedSupervisorsByAnrId[$anrId] = $supervisor;
+            }
+        }
+
+        return $linkedSupervisorsByAnrId;
+    }
+
+    /**
+     * @param int[] $supervisorIds
+     *
+     * @return array<int, array{owned:int, approval:int}>
+     */
+    private function getAssignedRiskCountsBySupervisorId(array $supervisorIds): array
+    {
+        $normalizedSupervisorIds = array_values(array_unique(array_map('intval', $supervisorIds)));
+        if ($normalizedSupervisorIds === []) {
+            return [];
+        }
+
+        $countsBySupervisorId = [];
+        foreach ($normalizedSupervisorIds as $supervisorId) {
+            $countsBySupervisorId[$supervisorId] = [
+                'owned' => 0,
+                'approval' => 0,
+            ];
+        }
+
+        $informationRiskOwnerCounts = $this->instanceRiskTable
+            ->getCountsByRiskOwnerSupervisorIds($normalizedSupervisorIds);
+        foreach ($informationRiskOwnerCounts as $supervisorId => $count) {
+            $countsBySupervisorId[$supervisorId]['owned'] += $count;
+        }
+        $informationApproverCounts = $this->instanceRiskTable
+            ->getCountsByResidualAcceptanceApproverSupervisorIds($normalizedSupervisorIds);
+        foreach ($informationApproverCounts as $supervisorId => $count) {
+            $countsBySupervisorId[$supervisorId]['approval'] += $count;
+        }
+        $operationalRiskOwnerCounts = $this->instanceRiskOpTable
+            ->getCountsByRiskOwnerSupervisorIds($normalizedSupervisorIds);
+        foreach ($operationalRiskOwnerCounts as $supervisorId => $count) {
+            $countsBySupervisorId[$supervisorId]['owned'] += $count;
+        }
+        $operationalApproverCounts = $this->instanceRiskOpTable
+            ->getCountsByResidualAcceptanceApproverSupervisorIds($normalizedSupervisorIds);
+        foreach ($operationalApproverCounts as $supervisorId => $count) {
+            $countsBySupervisorId[$supervisorId]['approval'] += $count;
+        }
+
+        return $countsBySupervisorId;
+    }
+
+    /**
+     * @param array<int, array{owned:int, approval:int}> $assignedRiskCountsBySupervisorId
+     *
+     * @return array{owned:int, approval:int}
+     */
+    private function getAssignedRiskCountsForSupervisor(
+        ?Entity\AnrSupervisor $linkedSupervisor,
+        array $assignedRiskCountsBySupervisorId
+    ): array {
+        if ($linkedSupervisor === null) {
+            return [
+                'owned' => 0,
+                'approval' => 0,
+            ];
+        }
+
+        $supervisorId = $linkedSupervisor->getId();
+        if (isset($assignedRiskCountsBySupervisorId[$supervisorId])) {
+            return $assignedRiskCountsBySupervisorId[$supervisorId];
+        }
+
+        return $this->getAssignedRiskCountsBySupervisorId([$supervisorId])[$supervisorId] ?? [
+            'owned' => 0,
+            'approval' => 0,
+        ];
     }
 
     /**
