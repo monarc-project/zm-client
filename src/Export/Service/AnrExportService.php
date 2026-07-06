@@ -28,6 +28,7 @@ class AnrExportService
     use ExportTrait\ScaleExportTrait;
     use ExportTrait\OperationalRiskScaleExportTrait;
     use ExportTrait\RecommendationExportTrait;
+    use ExportTrait\SupervisorExportTrait;
 
     public function __construct(
         private Table\AnrTable $anrTable,
@@ -260,18 +261,6 @@ class AnrExportService
         return $result;
     }
 
-    private function prepareSupervisorIdentity(?Entity\AnrSupervisor $supervisor): ?array
-    {
-        if ($supervisor === null) {
-            return null;
-        }
-
-        return [
-            'name' => $supervisor->getName(),
-            'email' => $supervisor->getEmail(),
-        ];
-    }
-
     private function prepareLegacyRiskOwnersData(Entity\Anr $anr): array
     {
         $result = [];
@@ -287,45 +276,6 @@ class AnrExportService
         }
 
         return $result;
-    }
-
-    private function prepareLegacyRiskOwnerName(?Entity\AnrSupervisor $supervisor): ?string
-    {
-        if ($supervisor === null) {
-            return null;
-        }
-
-        return $supervisor->hasRole(Entity\AnrSupervisorRole::ROLE_RISK_OWNER) ? $supervisor->getName() : null;
-    }
-
-    private function prepareResidualRiskAcceptanceData(
-        ?string $decision,
-        ?Entity\AnrSupervisor $approverSupervisor,
-        ?\DateTimeInterface $decidedAt,
-        ?string $performedByName,
-        ?string $performedByEmail,
-        bool $performedOnBehalf,
-        ?string $justification
-    ): ?array {
-        if ($decision === null
-            && $approverSupervisor === null
-            && $decidedAt === null
-            && $performedByName === null
-            && $performedByEmail === null
-            && $justification === null
-        ) {
-            return null;
-        }
-
-        return [
-            'decision' => $decision,
-            'approver' => $this->prepareSupervisorIdentity($approverSupervisor),
-            'date' => $decidedAt?->format('Y-m-d'),
-            'performedByName' => $performedByName,
-            'performedByEmail' => $performedByEmail,
-            'performedOnBehalf' => $performedOnBehalf,
-            'justification' => $justification,
-        ];
     }
 
     private function prepareInformationRisksData(Entity\Anr $anr, bool $withEval, bool $withControls): array
