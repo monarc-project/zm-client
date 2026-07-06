@@ -481,7 +481,7 @@ class AnrInstanceRiskOpService
             $anrLanguage
         );
         $tableHeaders['residualRiskDecidedAt'] = $this->translateService->translate(
-            'Residual risk acceptance date',
+            'Residual risk decision date',
             $anrLanguage
         );
         $tableHeaders['residualAcceptancePerformedByName'] = $this->translateService->translate(

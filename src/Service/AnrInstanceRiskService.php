@@ -465,7 +465,7 @@ class AnrInstanceRiskService
             $this->translateService->translate('Review frequency', $languageIndex),
             $this->translateService->translate('Residual risk acceptance decision', $languageIndex),
             $this->translateService->translate('Residual risk acceptance approver', $languageIndex),
-            $this->translateService->translate('Residual risk acceptance date', $languageIndex),
+            $this->translateService->translate('Residual risk decision date', $languageIndex),
             $this->translateService->translate('Performed by', $languageIndex),
             $this->translateService->translate('Performed on behalf', $languageIndex),
             $this->translateService->translate('Residual risk acceptance justification', $languageIndex),
