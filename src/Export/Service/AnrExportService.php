@@ -96,8 +96,6 @@ class AnrExportService
         return [
             'type' => 'anr',
             'monarc_version' => $this->configService->getAppVersion()['appVersion'],
-            'exportFormatVersion' => 'supervisors_v1',
-            'export_format_version' => 'supervisors_v1',
             'exportDatetime' => (new \DateTime())->format('Y-m-d H:i:s'),
             'withEval' => $withEval,
             'withControls' => $withControls,
