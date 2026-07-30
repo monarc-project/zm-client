@@ -92,17 +92,13 @@ class UserService extends CoreUserService
     public function patch(int $userId, array $data): UserSuperClass
     {
         if (isset($data['password'])) {
-            $this->passwordService->changePasswordWithoutOldPassword($data['id'], $data['password']);
+            $this->passwordService->changePasswordWithoutOldPassword($userId, $data['password']);
         }
 
         /** @var User $user */
         $user = $this->getUpdatedUser($userId, $data);
 
         $this->verifySystemUserUpdate($user, $data);
-
-        if (isset($data['password'])) {
-            $user->setPassword($data['password']);
-        }
 
         $this->updateUserAnr($user, $data);
 

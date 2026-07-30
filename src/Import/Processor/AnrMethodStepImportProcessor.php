@@ -41,12 +41,14 @@ class AnrMethodStepImportProcessor
             $anr->setInitAnrContext((int)$methodStepsData['steps']['initAnrContext'])
                 ->setInitEvalContext((int)$methodStepsData['steps']['initEvalContext'])
                 ->setInitRiskContext((int)$methodStepsData['steps']['initRiskContext'])
+                ->setInitReassessmentStrategy((int)($methodStepsData['steps']['initReassessmentStrategy'] ?? 0))
                 ->setInitDefContext((int)$methodStepsData['steps']['initDefContext'])
                 ->setModelImpacts((int)$methodStepsData['steps']['modelImpacts'])
                 ->setModelSummary((int)$methodStepsData['steps']['modelSummary'])
                 ->setEvalRisks((int)$methodStepsData['steps']['evalRisks'])
                 ->setEvalPlanRisks((int)$methodStepsData['steps']['evalPlanRisks'])
                 ->setManageRisks((int)$methodStepsData['steps']['manageRisks'])
+                ->setManageReassessmentTriggers((int)($methodStepsData['steps']['manageReassessmentTriggers'] ?? 0))
                 ->setUpdater($this->connectedUser->getEmail());
             $this->anrTable->save($anr, false);
         }

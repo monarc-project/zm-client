@@ -46,20 +46,11 @@ class ScaleImportProcessor
         $scalesDiff = [];
         /** @var Entity\Scale $scale */
         foreach ($this->scaleTable->findByAnr($anr) as $scale) {
-            /* Update the scales impact types and comments. It's only applied for the new structure since v2.13.1. */
-            if (!empty($newScalesData[ScaleSuperClass::TYPE_IMPACT]['scaleImpactTypes'])) {
-                $this->applyNewScaleImpactTypesAndComments(
-                    $anr,
-                    $scale,
-                    $newScalesData[ScaleSuperClass::TYPE_IMPACT]['scaleImpactTypes']
-                );
-            }
-
             if ($scale->isScaleRangeDifferentFromData($newScalesData)) {
                 if ($scale->getType() === ScaleSuperClass::TYPE_IMPACT) {
                     /* All the instance's risks and consequences values have to be updated. */
                     $scalesDiff[ScaleSuperClass::TYPE_IMPACT] = [
-                        'currentRange' => ['min' => $scale->getMin(), 'max', $scale->getMax()],
+                        'currentRange' => ['min' => $scale->getMin(), 'max' => $scale->getMax()],
                         'newRange' => [
                             'min' => $newScalesData[ScaleSuperClass::TYPE_IMPACT]['min'],
                             'max' => $newScalesData[ScaleSuperClass::TYPE_IMPACT]['max'],
@@ -70,7 +61,7 @@ class ScaleImportProcessor
                     $this->updateThreatsQualification($anr, $scale, $newScalesData[ScaleSuperClass::TYPE_THREAT]);
 
                     $scalesDiff[ScaleSuperClass::TYPE_THREAT] = [
-                        'currentRange' => ['min' => $scale->getMin(), 'max', $scale->getMax()],
+                        'currentRange' => ['min' => $scale->getMin(), 'max' => $scale->getMax()],
                         'newRange' => [
                             'min' => $newScalesData[ScaleSuperClass::TYPE_THREAT]['min'],
                             'max' => $newScalesData[ScaleSuperClass::TYPE_THREAT]['max'],
@@ -79,7 +70,7 @@ class ScaleImportProcessor
                 } elseif ($scale->getType() === ScaleSuperClass::TYPE_VULNERABILITY) {
                     /* All the vulnerabilities' risks values have to be updated. */
                     $scalesDiff[ScaleSuperClass::TYPE_VULNERABILITY] = [
-                        'currentRange' => ['min' => $scale->getMin(), 'max', $scale->getMax()],
+                        'currentRange' => ['min' => $scale->getMin(), 'max' => $scale->getMax()],
                         'newRange' => [
                             'min' => $newScalesData[ScaleSuperClass::TYPE_VULNERABILITY]['min'],
                             'max' => $newScalesData[ScaleSuperClass::TYPE_VULNERABILITY]['max'],
@@ -91,6 +82,18 @@ class ScaleImportProcessor
                     ->setMax($newScalesData[$scale->getType()]['max'])
                     ->setUpdater($this->connectedUser->getEmail());
                 $this->scaleTable->save($scale, false);
+            }
+
+            /* Update the scales impact types and comments after the imported range is applied.
+               Imported comments can legitimately use indexes outside the previous local range. */
+            if ($scale->getType() === ScaleSuperClass::TYPE_IMPACT
+                && !empty($newScalesData[ScaleSuperClass::TYPE_IMPACT]['scaleImpactTypes'])
+            ) {
+                $this->applyNewScaleImpactTypesAndComments(
+                    $anr,
+                    $scale,
+                    $newScalesData[ScaleSuperClass::TYPE_IMPACT]['scaleImpactTypes']
+                );
             }
         }
 
@@ -385,7 +388,7 @@ class ScaleImportProcessor
                     ->getScaleImpactTypeFromCacheByLabel($anr, $newScaleImpactTypeData['label']);
                 if ($existingCustomImpactType !== null) {
                     if ($existingCustomImpactType->isHidden() !== $newScaleImpactTypeData['isHidden']) {
-                        if ($newScaleImpactTypesData['isHidden'] && !$existingCustomImpactType->isHidden()) {
+                        if ($newScaleImpactTypeData['isHidden'] && !$existingCustomImpactType->isHidden()) {
                             $this->validateConsequencesAndRisksForHidingImpactType($existingCustomImpactType);
                         }
                         $existingCustomImpactType->setIsHidden($newScaleImpactTypeData['isHidden'])

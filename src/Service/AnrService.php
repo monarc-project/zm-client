@@ -346,6 +346,9 @@ class AnrService
         if (isset($data['initRiskContext'])) {
             $anr->setInitRiskContext($data['initRiskContext']);
         }
+        if (isset($data['initReassessmentStrategy'])) {
+            $anr->setInitReassessmentStrategy($data['initReassessmentStrategy']);
+        }
         if (isset($data['initDefContext'])) {
             $anr->setInitDefContext($data['initDefContext']);
         }
@@ -363,6 +366,9 @@ class AnrService
         }
         if (isset($data['manageRisks'])) {
             $anr->setManageRisks($data['manageRisks']);
+        }
+        if (isset($data['manageReassessmentTriggers'])) {
+            $anr->setManageReassessmentTriggers($data['manageReassessmentTriggers']);
         }
         /* Context establishment texts. */
         if (isset($data['contextAnaRisk'])) {
@@ -586,11 +592,13 @@ class AnrService
             'initDefContext' => $anr->getInitDefContext(),
             'initEvalContext' => $anr->getInitEvalContext(),
             'initLivrableDone' => $anr->getInitLivrableDone(),
+            'initReassessmentStrategy' => $anr->getInitReassessmentStrategy(),
             'initRiskContext' => $anr->getInitRiskContext(),
             'isSnapshot' => (int)$anr->isAnrSnapshot(),
             'isStatsCollected' => (int)$anr->isStatsCollected(),
             'isVisibleOnDashboard' => $anr->isVisibleOnDashboard(),
             'manageRisks' => $anr->getManageRisks(),
+            'manageReassessmentTriggers' => $anr->getManageReassessmentTriggers(),
             'model' => $anr->getModelId(),
             'modelImpacts' => $anr->getModelImpacts(),
             'modelLivrableDone' => $anr->getModelLivrableDone(),
