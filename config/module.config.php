@@ -1704,7 +1704,7 @@ return [
             Service\AnrRecommendationRiskService::class => AutowireFactory::class,
             Service\AnrRecommendationSetService::class => AutowireFactory::class,
             Service\AnrCartoRiskService::class => AutowireFactory::class,
-            Service\DeliverableGenerationService::class => AutowireFactory::class,
+            Service\DeliverableGenerationService::class => ReflectionBasedAbstractFactory::class,
             Service\SnapshotService::class => AutowireFactory::class,
             Service\AnrService::class => AutowireFactory::class,
             Service\UserService::class => ReflectionBasedAbstractFactory::class,

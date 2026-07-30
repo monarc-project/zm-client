@@ -33,7 +33,8 @@ class ApiAnrDeliverableController extends AbstractRestfulControllerRequestHandle
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $filePath = $this->deliverableGenerationService->generateDeliverableWithValues($anr, $typeDoc, $data);
+        $generatedDeliverable = $this->deliverableGenerationService->generateDeliverableWithValues($anr, $typeDoc, $data);
+        $filePath = $generatedDeliverable['path'];
         if (!file_exists($filePath)) {
             throw new Exception('Generated file is not found: ' . $filePath);
         }
@@ -45,9 +46,9 @@ class ApiAnrDeliverableController extends AbstractRestfulControllerRequestHandle
         unlink($filePath);
 
         return new Response($stream, 200, [
-            'Content-Type' => 'text/plain; charset=utf-8',
+            'Content-Type' => $generatedDeliverable['contentType'],
             'Content-Length' => strlen($reportContent),
-            'Content-Disposition' => 'attachment; filename="deliverable.docx"',
+            'Content-Disposition' => 'attachment; filename="deliverable.' . $generatedDeliverable['extension'] . '"',
         ]);
     }
 
