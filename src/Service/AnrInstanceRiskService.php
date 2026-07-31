@@ -37,6 +37,7 @@ class AnrInstanceRiskService
         private Table\VulnerabilityTable $vulnerabilityTable,
         private Table\ScaleTable $scaleTable,
         private Table\RiskSourceTable $riskSourceTable,
+        private Table\ReassessmentTriggerTable $reassessmentTriggerTable,
         private Table\RecommendationTable $recommendationTable,
         private TranslateService $translateService,
         private AnrSupervisorService $anrSupervisorService,
@@ -129,6 +130,8 @@ class AnrInstanceRiskService
                     'scope' => $object->getScope(),
                     'kindOfMeasure' => $instanceRisk->getKindOfMeasure(),
                     'lastReviewDate' => $instanceRisk->getLastReviewDate()?->format('Y-m-d'),
+                    'nextReassessmentDate' => $instanceRisk->getNextReassessmentDate()?->format('Y-m-d'),
+                    'reassessmentTriggers' => $this->prepareReassessmentTriggers($instanceRisk->getReassessmentTriggers()),
                     'reviewFrequency' => $instanceRisk->getReviewFrequency(),
                     'reviewFrequencyLabel' => $this->getReviewFrequencyLabel(
                         $instanceRisk->getReviewFrequency(),
@@ -582,6 +585,26 @@ class AnrInstanceRiskService
         if (array_key_exists('lastReviewDate', $data)) {
             $instanceRisk->setLastReviewDate($this->prepareLastReviewDate($instanceRisk, $data['lastReviewDate']));
         }
+        if (array_key_exists('nextReassessmentDate', $data)) {
+            $instanceRisk->setNextReassessmentDate($this->createDateFromString(
+                $data['nextReassessmentDate'],
+                'Invalid next reassessment date format.'
+            ));
+        }
+        if (array_key_exists('lastReviewDate', $data) && $instanceRisk->getNextReassessmentDate() === null) {
+            $instanceRisk->setNextReassessmentDate(
+                $this->getDefaultNextReassessmentDate($instanceRisk->getLastReviewDate())
+            );
+        }
+        if (array_key_exists('reassessmentTriggerIds', $data)) {
+            if ($data['reassessmentTriggerIds'] !== [] && $instanceRisk->getNextReassessmentDate() === null) {
+                throw new Exception('A next reassessment date is required when selecting trigger criteria.', 412);
+            }
+            $instanceRisk->setReassessmentTriggers($this->reassessmentTriggerTable->findByIdsAndAnr(
+                $data['reassessmentTriggerIds'],
+                $instanceRisk->getAnr()
+            ));
+        }
         if (array_key_exists('reviewFrequency', $data)) {
             $reviewFrequency = trim((string)$data['reviewFrequency']);
             $instanceRisk->setReviewFrequency($reviewFrequency === '' ? null : $reviewFrequency);
@@ -1018,6 +1041,26 @@ class AnrInstanceRiskService
         }
 
         return $reviewFrequency;
+    }
+
+    private function getDefaultNextReassessmentDate(?DateTime $lastReviewDate): ?DateTime
+    {
+        return $lastReviewDate === null ? null : (clone $lastReviewDate)->modify('+1 year');
+    }
+
+    /** @param Entity\ReassessmentTrigger[] $reassessmentTriggers */
+    private function prepareReassessmentTriggers(iterable $reassessmentTriggers): array
+    {
+        $result = [];
+        foreach ($reassessmentTriggers as $reassessmentTrigger) {
+            $result[] = [
+                'id' => $reassessmentTrigger->getId(),
+                'triggerType' => $reassessmentTrigger->getTriggerType(),
+                'description' => $reassessmentTrigger->getDescription(),
+            ];
+        }
+
+        return $result;
     }
 
     private function captureHistoryState(Entity\InstanceRisk $instanceRisk): array

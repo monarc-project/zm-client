@@ -39,6 +39,12 @@ class ReassessmentTriggerService
         return $this->reassessmentTriggerTable->countByParams($params, 'id');
     }
 
+    /** @return ReassessmentTrigger[] */
+    public function getListForAnr(Anr $anr): array
+    {
+        return $this->reassessmentTriggerTable->findByAnrOrderedByPosition($anr);
+    }
+
     public function get(Anr $anr, int $id): ReassessmentTrigger
     {
         /** @var ReassessmentTrigger $reassessmentTrigger */

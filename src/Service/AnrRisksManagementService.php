@@ -22,6 +22,7 @@ class AnrRisksManagementService
         private AnrSupervisorService $anrSupervisorService,
         private AnrInstanceRiskService $anrInstanceRiskService,
         private AnrInstanceRiskOpService $anrInstanceRiskOpService,
+        private ReassessmentTriggerService $reassessmentTriggerService,
         ConnectedUserService $connectedUserService
     ) {
         /** @var User $connectedUser */
@@ -33,6 +34,45 @@ class AnrRisksManagementService
     {
         $supervisor = $this->requireEligibleSupervisor($anr);
         $roles = $this->buildRoles($supervisor);
+        $risks = $this->getRiskRows($anr, $supervisor, $roles);
+
+        return [
+            'supervisor' => $this->anrSupervisorService->prepareSupervisorReference($supervisor),
+            'roles' => $roles,
+            'count' => count($risks),
+            'risks' => $risks,
+            'reassessmentTriggers' => array_values(array_filter(
+                array_map(static fn ($trigger): array => [
+                    'id' => $trigger->getId(),
+                    'triggerType' => $trigger->getTriggerType(),
+                    'description' => $trigger->getDescription(),
+                    'isActive' => $trigger->isActive(),
+                ], $this->reassessmentTriggerService->getListForAnr($anr)),
+                static fn (array $trigger): bool => $trigger['isActive']
+            )),
+        ];
+    }
+
+    /** @return array{owned:int, approval:int} */
+    public function getAssignmentCounts(Anr $anr, AnrSupervisor $supervisor): array
+    {
+        $roles = $this->buildRoles($supervisor);
+        $counts = ['owned' => 0, 'approval' => 0];
+
+        foreach ($this->getRiskRows($anr, $supervisor, $roles) as $risk) {
+            if ($risk['canUpdateReview']) {
+                ++$counts['owned'];
+            }
+            if ($risk['canUpdateResidual']) {
+                ++$counts['approval'];
+            }
+        }
+
+        return $counts;
+    }
+
+    private function getRiskRows(Anr $anr, AnrSupervisor $supervisor, array $roles): array
+    {
         $language = $anr->getLanguage();
         $risks = [];
 
@@ -68,12 +108,7 @@ class AnrRisksManagementService
             }
         );
 
-        return [
-            'supervisor' => $this->anrSupervisorService->prepareSupervisorReference($supervisor),
-            'roles' => $roles,
-            'count' => count($risks),
-            'risks' => $risks,
-        ];
+        return $risks;
     }
 
     public function batchUpdate(Anr $anr, array $payload): array
@@ -197,6 +232,8 @@ class AnrRisksManagementService
             'residualRiskDecidedAt' => $risk['residualRiskDecidedAt'] ?? null,
             'residualRiskJustification' => $risk['residualRiskJustification'] ?? null,
             'lastReviewDate' => $risk['lastReviewDate'] ?? null,
+            'nextReassessmentDate' => $risk['nextReassessmentDate'] ?? null,
+            'reassessmentTriggers' => $risk['reassessmentTriggers'] ?? [],
             'reviewFrequency' => $risk['reviewFrequencyLabel'] ?? $risk['reviewFrequency'] ?? null,
             'canUpdateReview' => $canUpdateReview,
             'canUpdateResidual' => $canUpdateResidual,
@@ -237,6 +274,8 @@ class AnrRisksManagementService
             'residualRiskDecidedAt' => $risk['residualRiskDecidedAt'] ?? null,
             'residualRiskJustification' => $risk['residualRiskJustification'] ?? null,
             'lastReviewDate' => $risk['lastReviewDate'] ?? null,
+            'nextReassessmentDate' => $risk['nextReassessmentDate'] ?? null,
+            'reassessmentTriggers' => $risk['reassessmentTriggers'] ?? [],
             'reviewFrequency' => $risk['reviewFrequencyLabel'] ?? $risk['reviewFrequency'] ?? null,
             'canUpdateReview' => $canUpdateReview,
             'canUpdateResidual' => $canUpdateResidual,
@@ -304,6 +343,12 @@ class AnrRisksManagementService
 
         if (array_key_exists('last_review_date', $updates)) {
             $reviewUpdates['lastReviewDate'] = $this->normalizeNullableDate($updates['last_review_date']);
+        }
+        if (array_key_exists('next_reassessment_date', $updates)) {
+            $reviewUpdates['nextReassessmentDate'] = $this->normalizeNullableDate($updates['next_reassessment_date']);
+        }
+        if (array_key_exists('reassessment_trigger_ids', $updates)) {
+            $reviewUpdates['reassessmentTriggerIds'] = $updates['reassessment_trigger_ids'];
         }
         if (array_key_exists('review_frequency', $updates)) {
             $reviewUpdates['reviewFrequency'] = $this->normalizeNullableText($updates['review_frequency']);

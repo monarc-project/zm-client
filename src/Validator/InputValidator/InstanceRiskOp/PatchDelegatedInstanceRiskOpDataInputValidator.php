@@ -11,6 +11,8 @@ class PatchDelegatedInstanceRiskOpDataInputValidator extends UpdateInstanceRiskO
 {
     private const ALLOWED_FIELDS = [
         'lastReviewDate',
+        'nextReassessmentDate',
+        'reassessmentTriggerIds',
         'reviewFrequency',
         'residualRiskDecision',
         'residualRiskDecidedAt',

@@ -38,6 +38,7 @@ class AnrInstanceRiskOpService
         private Table\RolfRiskTable $rolfRiskTable,
         private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         private Table\RiskSourceTable $riskSourceTable,
+        private Table\ReassessmentTriggerTable $reassessmentTriggerTable,
         private Table\RecommendationTable $recommendationTable,
         private CoreService\TranslateService $translateService,
         private CoreService\Helper\ScalesCacheHelper $scalesCacheHelper,
@@ -75,6 +76,7 @@ class AnrInstanceRiskOpService
 
             $scalesData = [];
             foreach ($operationalInstanceRisk->getOperationalInstanceRiskScales() as $operationalInstanceRiskScale) {
+                /** @var Entity\OperationalRiskScaleType $operationalRiskScaleType */
                 $operationalRiskScaleType = $operationalInstanceRiskScale->getOperationalRiskScaleType();
                 $scalesData[$operationalRiskScaleType->getId()] = [
                     'instanceRiskScaleId' => $operationalInstanceRiskScale->getId(),
@@ -111,6 +113,8 @@ class AnrInstanceRiskOpService
                 'comment' => $operationalInstanceRisk->getComment(),
                 'specific' => $operationalInstanceRisk->getSpecific(),
                 'lastReviewDate' => $operationalInstanceRisk->getLastReviewDate()?->format('Y-m-d'),
+                'nextReassessmentDate' => $operationalInstanceRisk->getNextReassessmentDate()?->format('Y-m-d'),
+                'reassessmentTriggers' => $this->prepareReassessmentTriggers($operationalInstanceRisk->getReassessmentTriggers()),
                 'reviewFrequency' => $operationalInstanceRisk->getReviewFrequency(),
                 'reviewFrequencyLabel' => $this->getReviewFrequencyLabel(
                     $operationalInstanceRisk->getReviewFrequency(),
@@ -273,7 +277,8 @@ class AnrInstanceRiskOpService
                 'riskCacheDescription2' => $rolfRisk->getDescription(2),
                 'riskCacheDescription3' => $rolfRisk->getDescription(3),
                 'riskCacheDescription4' => $rolfRisk->getDescription(4),
-            ] : ['riskCacheDescription' . $anr->getLanguage() => $data['riskCacheDescription']])
+            ] : ['riskCacheDescription' . $anr->getLanguage() => $data['riskCacheDescription']]);
+        $instanceRiskOp
             ->setRiskSource($this->getRiskSourceFromData($data))
             ->setCreator($this->connectedUser->getEmail());
 
@@ -378,6 +383,29 @@ class AnrInstanceRiskOpService
                 $data['lastReviewDate'],
                 'Invalid last review date format.'
             ));
+        }
+        if (array_key_exists('nextReassessmentDate', $data)) {
+            $operationalInstanceRisk->setNextReassessmentDate($this->createDateFromString(
+                $data['nextReassessmentDate'],
+                'Invalid next reassessment date format.'
+            ));
+        }
+        if (array_key_exists('lastReviewDate', $data)
+            && $operationalInstanceRisk->getNextReassessmentDate() === null
+        ) {
+            $operationalInstanceRisk->setNextReassessmentDate(
+                $this->getDefaultNextReassessmentDate($operationalInstanceRisk->getLastReviewDate())
+            );
+        }
+        if (array_key_exists('reassessmentTriggerIds', $data)) {
+            if ($data['reassessmentTriggerIds'] !== []
+                && $operationalInstanceRisk->getNextReassessmentDate() === null
+            ) {
+                throw new Exception('A next reassessment date is required when selecting trigger criteria.', 412);
+            }
+            $operationalInstanceRisk->setReassessmentTriggers(
+                $this->reassessmentTriggerTable->findByIdsAndAnr($data['reassessmentTriggerIds'], $anr)
+            );
         }
         if (array_key_exists('reviewFrequency', $data)) {
             $reviewFrequency = trim((string)($data['reviewFrequency'] ?? ''));
@@ -903,6 +931,26 @@ class AnrInstanceRiskOpService
             'On trigger' => $this->translateService->translate($reviewFrequency, $languageIndex),
             default => $reviewFrequency,
         };
+    }
+
+    private function getDefaultNextReassessmentDate(?DateTime $lastReviewDate): ?DateTime
+    {
+        return $lastReviewDate === null ? null : (clone $lastReviewDate)->modify('+1 year');
+    }
+
+    /** @param Entity\ReassessmentTrigger[] $reassessmentTriggers */
+    private function prepareReassessmentTriggers(iterable $reassessmentTriggers): array
+    {
+        $result = [];
+        foreach ($reassessmentTriggers as $reassessmentTrigger) {
+            $result[] = [
+                'id' => $reassessmentTrigger->getId(),
+                'triggerType' => $reassessmentTrigger->getTriggerType(),
+                'description' => $reassessmentTrigger->getDescription(),
+            ];
+        }
+
+        return $result;
     }
 
     private function getRiskOwnerName(Entity\InstanceRiskOp $operationalInstanceRisk): string

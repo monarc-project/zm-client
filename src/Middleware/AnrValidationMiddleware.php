@@ -28,6 +28,8 @@ class AnrValidationMiddleware implements MiddlewareInterface
 {
     private const DELEGATED_RISK_MONITORING_FIELDS = [
         'lastReviewDate',
+        'nextReassessmentDate',
+        'reassessmentTriggerIds',
         'reviewFrequency',
     ];
 

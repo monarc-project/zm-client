@@ -101,6 +101,24 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     protected $lastReviewDate;
 
     /**
+     * @var DateTime|null
+     *
+     * @ORM\Column(name="next_reassessment_date", type="date", nullable=true)
+     */
+    protected $nextReassessmentDate;
+
+    /**
+     * @var ArrayCollection|ReassessmentTrigger[]
+     *
+     * @ORM\ManyToMany(targetEntity="ReassessmentTrigger")
+     * @ORM\JoinTable(name="instances_risks_op_reassessment_triggers",
+     *     joinColumns={@ORM\JoinColumn(name="instance_risk_op_id", referencedColumnName="id", onDelete="CASCADE")},
+     *     inverseJoinColumns={@ORM\JoinColumn(name="reassessment_trigger_id", referencedColumnName="id", onDelete="CASCADE")}
+     * )
+     */
+    protected $reassessmentTriggers;
+
+    /**
      * @var string|null
      *
      * @ORM\Column(name="review_frequency", type="string", length=50, nullable=true)
@@ -192,6 +210,7 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
         parent::__construct();
 
         $this->recommendationRisks = new ArrayCollection();
+        $this->reassessmentTriggers = new ArrayCollection();
     }
 
     public static function constructFromObject(
@@ -206,6 +225,8 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
                 ->setRiskSource($sourceOperationalInstanceRisk->getRiskSource())
                 ->setRiskOwnerSupervisor($sourceOperationalInstanceRisk->getRiskOwnerSupervisor())
                 ->setLastReviewDate($sourceOperationalInstanceRisk->getLastReviewDate())
+                ->setNextReassessmentDate($sourceOperationalInstanceRisk->getNextReassessmentDate())
+                ->setReassessmentTriggers($sourceOperationalInstanceRisk->getReassessmentTriggers()->toArray())
                 ->setReviewFrequency($sourceOperationalInstanceRisk->getReviewFrequency())
                 ->setResidualRiskDecision($sourceOperationalInstanceRisk->getResidualRiskDecision())
                 ->setResidualAcceptanceUseRiskOwner($sourceOperationalInstanceRisk->isResidualAcceptanceUseRiskOwner())
@@ -318,6 +339,32 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     public function setLastReviewDate(?DateTime $lastReviewDate): self
     {
         $this->lastReviewDate = $lastReviewDate;
+
+        return $this;
+    }
+
+    public function getNextReassessmentDate(): ?DateTime
+    {
+        return $this->nextReassessmentDate;
+    }
+
+    public function setNextReassessmentDate(?DateTime $nextReassessmentDate): self
+    {
+        $this->nextReassessmentDate = $nextReassessmentDate;
+
+        return $this;
+    }
+
+    /** @return ArrayCollection|ReassessmentTrigger[] */
+    public function getReassessmentTriggers()
+    {
+        return $this->reassessmentTriggers;
+    }
+
+    /** @param ReassessmentTrigger[] $reassessmentTriggers */
+    public function setReassessmentTriggers(array $reassessmentTriggers): self
+    {
+        $this->reassessmentTriggers = new ArrayCollection($reassessmentTriggers);
 
         return $this;
     }

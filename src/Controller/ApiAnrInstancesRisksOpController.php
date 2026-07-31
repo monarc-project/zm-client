@@ -116,6 +116,12 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
             'riskOwnerSupervisorId' => $instanceRiskOp->getRiskOwnerSupervisor()?->getId(),
             'riskOwnerSupervisorName' => $instanceRiskOp->getRiskOwnerSupervisor()?->getName(),
             'lastReviewDate' => $instanceRiskOp->getLastReviewDate()?->format('Y-m-d'),
+            'nextReassessmentDate' => $instanceRiskOp->getNextReassessmentDate()?->format('Y-m-d'),
+            'reassessmentTriggers' => array_map(static fn ($trigger): array => [
+                'id' => $trigger->getId(),
+                'triggerType' => $trigger->getTriggerType(),
+                'description' => $trigger->getDescription(),
+            ], $instanceRiskOp->getReassessmentTriggers()->toArray()),
             'reviewFrequency' => $instanceRiskOp->getReviewFrequency(),
             'residualRiskDecision' => $instanceRiskOp->getResidualRiskDecision(),
             'residualAcceptanceUseRiskOwner' => $instanceRiskOp->isResidualAcceptanceUseRiskOwner(),

@@ -10,6 +10,7 @@ namespace Monarc\FrontOffice\Validator\InputValidator\InstanceRisk;
 use Laminas\Filter\Callback;
 use Laminas\Filter\StringTrim;
 use Laminas\Filter\ToInt;
+use Laminas\InputFilter\ArrayInput;
 use Laminas\Validator\Date;
 use Laminas\Validator\InArray;
 use Laminas\Validator\StringLength;
@@ -113,6 +114,24 @@ class UpdateInstanceRiskDataInputValidator extends CoreUpdateInstanceRiskDataInp
                         ],
                     ],
                 ],
+            ],
+            [
+                'name' => 'nextReassessmentDate',
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [['name' => StringTrim::class]],
+                'validators' => [[
+                    'name' => Date::class,
+                    'options' => ['format' => 'Y-m-d'],
+                ]],
+            ],
+            [
+                'name' => 'reassessmentTriggerIds',
+                'required' => false,
+                'allow_empty' => true,
+                'type' => ArrayInput::class,
+                'filters' => [],
+                'validators' => [],
             ],
             [
                 'name' => 'reviewFrequency',
