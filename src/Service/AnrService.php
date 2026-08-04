@@ -334,6 +334,18 @@ class AnrService
 
     public function patch(Entity\Anr $anr, array $data): Entity\Anr
     {
+        if (array_key_exists('reassessmentLastReviewDate', $data)) {
+            $anr->setReassessmentLastReviewDate($this->normalizeReassessmentLastReviewDate(
+                $data['reassessmentLastReviewDate']
+            ));
+        }
+        if (array_key_exists('reassessmentReviewFrequency', $data)) {
+            $reviewFrequency = (string)$data['reassessmentReviewFrequency'];
+            if (!in_array($reviewFrequency, Entity\Anr::getAvailableReviewFrequencies(), true)) {
+                throw new Exception('Invalid reassessment review frequency', 412);
+            }
+            $anr->setReassessmentReviewFrequency($reviewFrequency);
+        }
         /* Steps checkboxes setup. */
         if (isset($data['initAnrContext'])) {
             $anr->setInitAnrContext($data['initAnrContext']);
@@ -597,6 +609,8 @@ class AnrService
             'isVisibleOnDashboard' => $anr->isVisibleOnDashboard(),
             'manageRisks' => $anr->getManageRisks(),
             'manageReassessmentTriggers' => $anr->getManageReassessmentTriggers(),
+            'reassessmentLastReviewDate' => $anr->getReassessmentLastReviewDate()?->format('Y-m-d'),
+            'reassessmentReviewFrequency' => $anr->getReassessmentReviewFrequency(),
             'model' => $anr->getModelId(),
             'modelImpacts' => $anr->getModelImpacts(),
             'modelLivrableDone' => $anr->getModelLivrableDone(),
@@ -644,6 +658,24 @@ class AnrService
         }
 
         return $anrData;
+    }
+
+    private function normalizeReassessmentLastReviewDate(mixed $value): ?DateTime
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (!is_string($value)) {
+            throw new Exception('Invalid reassessment last review date', 412);
+        }
+
+        $date = DateTime::createFromFormat('!Y-m-d', $value);
+        if ($date === false || $date->format('Y-m-d') !== $value) {
+            throw new Exception('Invalid reassessment last review date', 412);
+        }
+
+        return $date;
     }
 
     /**

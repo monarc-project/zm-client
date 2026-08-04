@@ -28,6 +28,16 @@ use Monarc\Core\Entity\InstanceRiskOpSuperClass;
  */
 class InstanceRiskOp extends InstanceRiskOpSuperClass
 {
+    public const REVIEW_FREQUENCY_MONTHLY = 'Monthly';
+    public const REVIEW_FREQUENCY_QUARTERLY = 'Quarterly';
+    public const REVIEW_FREQUENCY_SEMI_ANNUALLY = 'Semi-annually';
+    public const REVIEW_FREQUENCY_ANNUALLY = 'Annually';
+    public const REVIEW_FREQUENCY_ON_TRIGGER = 'On trigger';
+
+    public const RESIDUAL_RISK_DECISION_ACCEPTED = 'accepted';
+    public const RESIDUAL_RISK_DECISION_REJECTED = 'rejected';
+    public const RESIDUAL_RISK_DECISION_NOT_ACCEPTED = 'not_accepted';
+
     /**
      * @var Object
      *
@@ -372,6 +382,27 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     public function getReviewFrequency(): ?string
     {
         return $this->reviewFrequency;
+    }
+
+    /** @return string[] */
+    public static function getAvailableReviewFrequencies(): array
+    {
+        return [
+            self::REVIEW_FREQUENCY_MONTHLY,
+            self::REVIEW_FREQUENCY_QUARTERLY,
+            self::REVIEW_FREQUENCY_SEMI_ANNUALLY,
+            self::REVIEW_FREQUENCY_ANNUALLY,
+            self::REVIEW_FREQUENCY_ON_TRIGGER,
+        ];
+    }
+
+    /** @return string[] */
+    public static function getAvailableResidualRiskDecisions(): array
+    {
+        return [
+            self::RESIDUAL_RISK_DECISION_ACCEPTED,
+            self::RESIDUAL_RISK_DECISION_NOT_ACCEPTED,
+        ];
     }
 
     public function setReviewFrequency(?string $reviewFrequency): self

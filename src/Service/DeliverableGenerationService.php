@@ -1317,22 +1317,52 @@ class DeliverableGenerationService
     {
         $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
-        $table = $section->addTable($this->borderTable);
+        $containerTable = $section->addTable($this->noBorderTable);
         $reassessmentTriggers = $this->reassessmentTriggerTable->findByAnrOrderedByPosition($this->anr);
 
-        $table->addRow(400, $this->tblHeader);
-        $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->grayCell)
+        $containerTable->addRow();
+        $reviewTable = $containerTable->addCell(PhpWord\Shared\Converter::cmToTwip(18.00))
+            ->addTable($this->noBorderTable);
+        $reviewTable->addRow(400);
+        $reviewTable->addCell(PhpWord\Shared\Converter::cmToTwip(18.00), $this->grayCell)->addText(
+            $this->anrTranslate('Monitoring and review'),
+            $this->boldFont,
+            $this->leftParagraph
+        );
+        $reviewTable->addRow(400);
+        $reviewTable->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->grayCell)
+            ->addText($this->anrTranslate('Last review date'), $this->boldFont, $this->leftParagraph);
+        $reviewTable->addCell(PhpWord\Shared\Converter::cmToTwip(5.50), $this->vAlignCenterCell)
+            ->addText(
+                $this->anr->getReassessmentLastReviewDate()?->format('Y-m-d') ?? '-',
+                $this->normalFont,
+                $this->leftParagraph
+            );
+        $reviewTable->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->grayCell)
+            ->addText($this->anrTranslate('Review frequency'), $this->boldFont, $this->leftParagraph);
+        $reviewTable->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+            ->addText(
+                $this->anrTranslate($this->anr->getReassessmentReviewFrequency()),
+                $this->normalFont,
+                $this->leftParagraph
+            );
+
+        $containerTable->addRow(200);
+        $criteriaTable = $containerTable->addCell(PhpWord\Shared\Converter::cmToTwip(18.00))
+            ->addTable($this->borderTable);
+        $criteriaTable->addRow(400, $this->tblHeader);
+        $criteriaTable->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->grayCell)
             ->addText($this->anrTranslate('Trigger type'), $this->boldFont, $this->centerParagraph);
-        $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.50), $this->grayCell)
+        $criteriaTable->addCell(PhpWord\Shared\Converter::cmToTwip(5.50), $this->grayCell)
             ->addText($this->anrTranslate('Description'), $this->boldFont, $this->centerParagraph);
-        $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
+        $criteriaTable->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->grayCell)
             ->addText($this->anrTranslate('Monitoring approach'), $this->boldFont, $this->centerParagraph);
-        $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->grayCell)
+        $criteriaTable->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->grayCell)
             ->addText($this->anrTranslate('Status'), $this->boldFont, $this->centerParagraph);
 
         if (!count($reassessmentTriggers)) {
-            $table->addRow(400);
-            $table->addCell(
+            $criteriaTable->addRow(400);
+            $criteriaTable->addCell(
                 PhpWord\Shared\Converter::cmToTwip(18.00),
                 $this->setColSpanCell(4)
             )->addText(
@@ -1341,26 +1371,26 @@ class DeliverableGenerationService
                 $this->leftParagraph
             );
 
-            return $table;
+            return $containerTable;
         }
 
         foreach ($reassessmentTriggers as $reassessmentTrigger) {
-            $table->addRow(400);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->vAlignCenterCell)
+            $criteriaTable->addRow(400);
+            $criteriaTable->addCell(PhpWord\Shared\Converter::cmToTwip(3.50), $this->vAlignCenterCell)
                 ->addText(
                     _WT((string)$reassessmentTrigger->getTriggerType()),
                     $this->normalFont,
                     $this->leftParagraph
                 );
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(5.50), $this->vAlignCenterCell)
+            $criteriaTable->addCell(PhpWord\Shared\Converter::cmToTwip(5.50), $this->vAlignCenterCell)
                 ->addText(_WT($reassessmentTrigger->getDescription()), $this->normalFont, $this->leftParagraph);
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
+            $criteriaTable->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
                 ->addText(
                     _WT((string)$reassessmentTrigger->getMonitoringApproach()),
                     $this->normalFont,
                     $this->leftParagraph
                 );
-            $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
+            $criteriaTable->addCell(PhpWord\Shared\Converter::cmToTwip(3.00), $this->vAlignCenterCell)
                 ->addText(
                     $reassessmentTrigger->isActive()
                         ? $this->anrTranslate('Active')
@@ -1370,7 +1400,7 @@ class DeliverableGenerationService
                 );
         }
 
-        return $table;
+        return $containerTable;
     }
 
     private function generateInterestedPartiesTable(): PhpWord\Element\Table

@@ -179,6 +179,9 @@ class InstanceImportService
             $this->reassessmentTriggerService
                 ->processForImport($anr, $data['reassessmentTriggers'], $importMode === 'merge');
         }
+        if (!empty($data['reassessmentReview'])) {
+            $this->anrMethodStepImportProcessor->processReassessmentReviewData($anr, $data['reassessmentReview']);
+        }
         if (!empty($data['knowledgeBase'])) {
             /* Process the Knowledge Base data. */
             $this->processKnowledgeBaseData($anr, $data['knowledgeBase']);

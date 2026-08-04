@@ -232,7 +232,8 @@ class AnrInstanceRiskService
             foreach ($siblingInstance->getInstanceRisks() as $siblingInstanceRisk) {
                 /** @var Entity\Amv $amv */
                 $amv = $siblingInstanceRisk->getAmv();
-                $instanceRisk = $this->createInstanceRisk($instance, $amv, $siblingInstanceRisk, null, null, $saveInDb);
+                $instanceRisk = $this
+                    ->createInstanceRisk($instance, $amv, $siblingInstanceRisk, null, null, $saveInDb);
 
                 $this->duplicateRecommendationRisks($siblingInstanceRisk, $instanceRisk);
                 $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
@@ -573,7 +574,8 @@ class AnrInstanceRiskService
     {
         $previousRiskOwnerSupervisorId = $instanceRisk->getRiskOwnerSupervisor()?->getId();
 
-        // If the request is from the Supervisor who is just approving the risk (fills 3 fields) or Risk Owner (2 fields) then we allow it without changing the risk owner of approver.
+        /* If the request is from the Supervisor who is just approving the risk (fills 3 fields)
+            or Risk Owner (2 fields) then we allow it without changing the risk owner of approver. */
         if (array_key_exists('riskSourceId', $data)) {
             $riskSourceId = $data['riskSourceId'];
             $instanceRisk->setRiskSource(
@@ -600,10 +602,12 @@ class AnrInstanceRiskService
             if ($data['reassessmentTriggerIds'] !== [] && $instanceRisk->getNextReassessmentDate() === null) {
                 throw new Exception('A next reassessment date is required when selecting trigger criteria.', 412);
             }
-            $instanceRisk->setReassessmentTriggers($this->reassessmentTriggerTable->findByIdsAndAnr(
-                $data['reassessmentTriggerIds'],
-                $instanceRisk->getAnr()
-            ));
+            $instanceRisk->setReassessmentTriggers($data['reassessmentTriggerIds'] === []
+                ? []
+                : $this->reassessmentTriggerTable->findByIdsAndAnr(
+                    $data['reassessmentTriggerIds'],
+                    $instanceRisk->getAnr()
+                ));
         }
         if (array_key_exists('reviewFrequency', $data)) {
             $reviewFrequency = trim((string)$data['reviewFrequency']);
@@ -738,7 +742,8 @@ class AnrInstanceRiskService
             'residualAcceptanceApproverSupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
                 $instanceRisk->getResidualAcceptanceApproverSupervisor()
             ),
-            'residualAcceptanceApproverSupervisorId' => $instanceRisk->getResidualAcceptanceApproverSupervisor()?->getId(),
+            'residualAcceptanceApproverSupervisorId' => $instanceRisk
+                ->getResidualAcceptanceApproverSupervisor()?->getId(),
             'residualAcceptancePerformedByName' => $instanceRisk->getResidualAcceptancePerformedByName(),
             'residualAcceptancePerformedByEmail' => $instanceRisk->getResidualAcceptancePerformedByEmail(),
             'residualAcceptancePerformedOnBehalf' => $instanceRisk->isResidualAcceptancePerformedOnBehalf(),
@@ -1011,8 +1016,15 @@ class AnrInstanceRiskService
     private function translateResidualRiskDecision(?string $decision, int $languageIndex): ?string
     {
         return match ($decision) {
-            'accepted' => $this->translateService->translate('Accepted', $languageIndex),
-            'rejected', 'not_accepted' => $this->translateService->translate('Not accepted', $languageIndex),
+            Entity\InstanceRisk::RESIDUAL_RISK_DECISION_ACCEPTED => $this->translateService->translate(
+                'Accepted',
+                $languageIndex
+            ),
+            Entity\InstanceRisk::RESIDUAL_RISK_DECISION_REJECTED,
+            Entity\InstanceRisk::RESIDUAL_RISK_DECISION_NOT_ACCEPTED => $this->translateService->translate(
+                'Not accepted',
+                $languageIndex
+            ),
             default => $decision,
         };
     }
@@ -1028,15 +1040,7 @@ class AnrInstanceRiskService
             return '';
         }
 
-        $suggestedReviewFrequencies = [
-            'Monthly',
-            'Quarterly',
-            'Semi-annually',
-            'Annually',
-            'On trigger',
-        ];
-
-        if (\in_array($reviewFrequency, $suggestedReviewFrequencies, true)) {
+        if (\in_array($reviewFrequency, Entity\InstanceRisk::getAvailableReviewFrequencies(), true)) {
             return $this->translateService->translate($reviewFrequency, $languageIndex);
         }
 
@@ -1164,15 +1168,6 @@ class AnrInstanceRiskService
             CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_F => AnrHistory::CONSEQUENCE_FINANCIAL,
             default => AnrHistory::CONSEQUENCE_AVAILABILITY,
         };
-    }
-
-    private function prepareConsequenceHistoryValue(CoreEntity\InstanceConsequenceSuperClass $instanceConsequence): array
-    {
-        return [
-            'c' => $this->normalizeHistoryScaleValue($instanceConsequence->getConfidentiality()),
-            'i' => $this->normalizeHistoryScaleValue($instanceConsequence->getIntegrity()),
-            'a' => $this->normalizeHistoryScaleValue($instanceConsequence->getAvailability()),
-        ];
     }
 
     private function normalizeHistoryScaleValue(int $value): int|string

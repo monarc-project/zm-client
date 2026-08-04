@@ -12,6 +12,7 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\AnrSupervisor;
 use Monarc\FrontOffice\Entity\AnrSupervisorRole;
+use Monarc\FrontOffice\Entity\InstanceRisk;
 use Monarc\FrontOffice\Entity\User;
 
 class AnrRisksManagementService
@@ -387,7 +388,7 @@ class AnrRisksManagementService
         }
 
         $normalizedValue = mb_strtolower($normalizedValue);
-        if (!in_array($normalizedValue, ['accepted', 'not_accepted'], true)) {
+        if (!in_array($normalizedValue, InstanceRisk::getAvailableResidualRiskDecisions(), true)) {
             throw new Exception('Residual risk decision must be "accepted" or "not_accepted".', 412);
         }
 

@@ -403,9 +403,9 @@ class AnrInstanceRiskOpService
             ) {
                 throw new Exception('A next reassessment date is required when selecting trigger criteria.', 412);
             }
-            $operationalInstanceRisk->setReassessmentTriggers(
-                $this->reassessmentTriggerTable->findByIdsAndAnr($data['reassessmentTriggerIds'], $anr)
-            );
+            $operationalInstanceRisk->setReassessmentTriggers($data['reassessmentTriggerIds'] === []
+                ? []
+                : $this->reassessmentTriggerTable->findByIdsAndAnr($data['reassessmentTriggerIds'], $anr));
         }
         if (array_key_exists('reviewFrequency', $data)) {
             $reviewFrequency = trim((string)($data['reviewFrequency'] ?? ''));
@@ -911,8 +911,9 @@ class AnrInstanceRiskOpService
     private function translateResidualRiskDecision(?string $decision, int $languageIndex): ?string
     {
         return match ($decision) {
-            'accepted' => $this->translateService->translate('Accepted', $languageIndex),
-            'rejected', 'not_accepted' => $this->translateService->translate('Not accepted', $languageIndex),
+            Entity\InstanceRiskOp::RESIDUAL_RISK_DECISION_ACCEPTED => $this->translateService->translate('Accepted', $languageIndex),
+            Entity\InstanceRiskOp::RESIDUAL_RISK_DECISION_REJECTED,
+            Entity\InstanceRiskOp::RESIDUAL_RISK_DECISION_NOT_ACCEPTED => $this->translateService->translate('Not accepted', $languageIndex),
             default => $decision,
         };
     }
@@ -923,14 +924,9 @@ class AnrInstanceRiskOpService
             return '';
         }
 
-        return match ($reviewFrequency) {
-            'Monthly',
-            'Quarterly',
-            'Semi-annually',
-            'Annually',
-            'On trigger' => $this->translateService->translate($reviewFrequency, $languageIndex),
-            default => $reviewFrequency,
-        };
+        return in_array($reviewFrequency, Entity\InstanceRiskOp::getAvailableReviewFrequencies(), true)
+            ? $this->translateService->translate($reviewFrequency, $languageIndex)
+            : $reviewFrequency;
     }
 
     private function getDefaultNextReassessmentDate(?DateTime $lastReviewDate): ?DateTime

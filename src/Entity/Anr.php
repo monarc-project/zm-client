@@ -7,6 +7,7 @@
 
 namespace Monarc\FrontOffice\Entity;
 
+use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Anr as AnrCore;
@@ -21,6 +22,11 @@ use Ramsey\Uuid\Uuid;
  */
 class Anr extends AnrSuperClass
 {
+    public const REVIEW_FREQUENCY_MONTHLY = 'Monthly';
+    public const REVIEW_FREQUENCY_QUARTERLY = 'Quarterly';
+    public const REVIEW_FREQUENCY_SEMI_ANNUALLY = 'Semi-annually';
+    public const REVIEW_FREQUENCY_ANNUALLY = 'Annually';
+
     /**
      * @var LazyUuidFromString|string
      *
@@ -127,6 +133,21 @@ class Anr extends AnrSuperClass
     protected $isStatsCollected = 1;
 
     /**
+     * @var DateTime|null
+     *
+     * @ORM\Column(name="reassessment_last_review_date", type="date", nullable=true)
+     */
+    protected $reassessmentLastReviewDate;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="reassessment_review_frequency", type="string",
+     *             length=50, nullable=false, options={"default": "Annually"})
+     */
+    protected $reassessmentReviewFrequency = self::REVIEW_FREQUENCY_ANNUALLY;
+
+    /**
      * @var Referential[]|ArrayCollection
      *
      * @ORM\OneToMany(targetEntity="Referential", mappedBy="anr", cascade={"remove"})
@@ -172,6 +193,8 @@ class Anr extends AnrSuperClass
                 ->setLanguageCode($sourceAnr->getLanguageCode())
                 ->setIsVisibleOnDashboard((int)$sourceAnr->isVisibleOnDashboard())
                 ->setIsStatsCollected((int)$sourceAnr->isStatsCollected())
+                ->setReassessmentLastReviewDate($sourceAnr->getReassessmentLastReviewDate())
+                ->setReassessmentReviewFrequency($sourceAnr->getReassessmentReviewFrequency())
                 ->setModelId($sourceAnr->getModelId())
                 ->setCacheModelAreScalesUpdatable($sourceAnr->getCacheModelAreScalesUpdatable())
                 ->setCacheModelShowRolfBrut($sourceAnr->getCacheModelShowRolfBrut());
@@ -265,6 +288,41 @@ class Anr extends AnrSuperClass
     public function isStatsCollected(): bool
     {
         return (bool)$this->isStatsCollected;
+    }
+
+    public function getReassessmentLastReviewDate(): ?DateTime
+    {
+        return $this->reassessmentLastReviewDate;
+    }
+
+    /** @return string[] */
+    public static function getAvailableReviewFrequencies(): array
+    {
+        return [
+            self::REVIEW_FREQUENCY_MONTHLY,
+            self::REVIEW_FREQUENCY_QUARTERLY,
+            self::REVIEW_FREQUENCY_SEMI_ANNUALLY,
+            self::REVIEW_FREQUENCY_ANNUALLY,
+        ];
+    }
+
+    public function setReassessmentLastReviewDate(?DateTime $reassessmentLastReviewDate): self
+    {
+        $this->reassessmentLastReviewDate = $reassessmentLastReviewDate;
+
+        return $this;
+    }
+
+    public function getReassessmentReviewFrequency(): string
+    {
+        return $this->reassessmentReviewFrequency;
+    }
+
+    public function setReassessmentReviewFrequency(string $reassessmentReviewFrequency): self
+    {
+        $this->reassessmentReviewFrequency = $reassessmentReviewFrequency;
+
+        return $this;
     }
 
     public function setIsStatsCollected(int $isStatsCollected): self

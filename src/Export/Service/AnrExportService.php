@@ -138,6 +138,7 @@ class AnrExportService
             'interviews' => $withInterviews ? $this->prepareInterviewsData($anr) : [],
             'interestedParties' => $withInterestedParties ? $this->prepareInterestedPartiesData($anr) : [],
             'reassessmentTriggers' => $withReassessmentTriggers ? $this->prepareReassessmentTriggersData($anr) : [],
+            'reassessmentReview' => $withReassessmentTriggers ? $this->prepareReassessmentReviewData($anr) : [],
             'gdprRecords' => $withRecords ? $this->prepareGdprRecordsData($anr) : [],
         ];
     }
@@ -625,6 +626,14 @@ class AnrExportService
         }
 
         return $result;
+    }
+
+    private function prepareReassessmentReviewData(Entity\Anr $anr): array
+    {
+        return [
+            'lastReviewDate' => $anr->getReassessmentLastReviewDate()?->format('Y-m-d'),
+            'reviewFrequency' => $anr->getReassessmentReviewFrequency(),
+        ];
     }
 
     private function prepareInterestedPartiesData(Entity\Anr $anr): array
