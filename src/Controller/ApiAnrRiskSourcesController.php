@@ -10,11 +10,11 @@ namespace Monarc\FrontOffice\Controller;
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\InputFormatter\RiskSource\GetRiskSourcesInputFormatter;
-use Monarc\Core\Validator\InputValidator\RiskSource\PatchRiskSourceDataInputValidator;
-use Monarc\Core\Validator\InputValidator\RiskSource\PostRiskSourceDataInputValidator;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\RiskSource;
 use Monarc\FrontOffice\Service\RiskSourceService;
+use Monarc\FrontOffice\Validator\InputValidator\RiskSource\PatchRiskSourceDataInputValidator;
+use Monarc\FrontOffice\Validator\InputValidator\RiskSource\PostRiskSourceDataInputValidator;
 
 class ApiAnrRiskSourcesController extends AbstractRestfulControllerRequestHandler
 {

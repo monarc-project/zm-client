@@ -11,11 +11,11 @@ use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\InputFormatter\ReassessmentTrigger\GetReassessmentTriggersInputFormatter;
 use Monarc\Core\Service\ReassessmentTriggerService as CoreReassessmentTriggerService;
-use Monarc\Core\Validator\InputValidator\ReassessmentTrigger\PatchReassessmentTriggerDataInputValidator;
-use Monarc\Core\Validator\InputValidator\ReassessmentTrigger\PostReassessmentTriggerDataInputValidator;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\ReassessmentTrigger;
 use Monarc\FrontOffice\Service\ReassessmentTriggerService;
+use Monarc\FrontOffice\Validator\InputValidator\ReassessmentTrigger\PatchReassessmentTriggerDataInputValidator;
+use Monarc\FrontOffice\Validator\InputValidator\ReassessmentTrigger\PostReassessmentTriggerDataInputValidator;
 
 class ApiAnrReassessmentTriggersController extends AbstractRestfulControllerRequestHandler
 {

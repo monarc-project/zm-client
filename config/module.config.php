@@ -1550,7 +1550,6 @@ return [
             Controller\ApiAnrRisksController::class => AutowireFactory::class,
             Controller\ApiAnrSupervisorsController::class => AutowireFactory::class,
             Controller\ApiAnrRisksManagementController::class => AutowireFactory::class,
-            Controller\ApiAnrRisksManagementBatchUpdateController::class => AutowireFactory::class,
             Controller\ApiDashboardAnrRisksController::class => AutowireFactory::class,
             Controller\ApiAnrRisksOpController::class => AutowireFactory::class,
             Controller\ApiAnrLibraryController::class => AutowireFactory::class,
@@ -1916,6 +1915,14 @@ return [
                     $container->get(Table\MeasureTable::class)
                 );
             },
+            InputValidator\ReassessmentTrigger\PostReassessmentTriggerDataInputValidator::class =>
+                ReflectionBasedAbstractFactory::class,
+            InputValidator\ReassessmentTrigger\PatchReassessmentTriggerDataInputValidator::class =>
+                ReflectionBasedAbstractFactory::class,
+            InputValidator\RiskSource\PostRiskSourceDataInputValidator::class =>
+                ReflectionBasedAbstractFactory::class,
+            InputValidator\RiskSource\PatchRiskSourceDataInputValidator::class =>
+                ReflectionBasedAbstractFactory::class,
 
             // Commands
             Import\Command\ImportAnalysesCommand::class => static function (ContainerInterface $container) {

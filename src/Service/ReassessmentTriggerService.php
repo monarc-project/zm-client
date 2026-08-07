@@ -59,7 +59,7 @@ class ReassessmentTriggerService
             ->setAnr($anr)
             ->setTriggerType($data['triggerType'] ?? null)
             ->setDescription(trim((string)$data['description']))
-            ->setMonitoringApproach($this->normalizeMonitoringApproach($data['monitoringApproach'] ?? null))
+            ->setMonitoringApproach(trim((string)($data['monitoringApproach'] ?? '')))
             ->setIsActive((bool)($data['isActive'] ?? true))
             ->setCreator($this->connectedUserEmail);
 
@@ -80,9 +80,7 @@ class ReassessmentTriggerService
             $reassessmentTrigger->setDescription(trim((string)$data['description']));
         }
         if (isset($data['monitoringApproach'])) {
-            $reassessmentTrigger->setMonitoringApproach(
-                $this->normalizeMonitoringApproach($data['monitoringApproach'])
-            );
+            $reassessmentTrigger->setMonitoringApproach(trim((string)($data['monitoringApproach'])));
         }
         if (isset($data['isActive'])) {
             $reassessmentTrigger->setIsActive((bool)$data['isActive']);
@@ -165,14 +163,13 @@ class ReassessmentTriggerService
                 $triggerType = trim($triggerData['triggerType']);
                 if (isset($existingTriggersByType[$triggerType])) {
                     $existingTrigger = $existingTriggersByType[$triggerType];
+                    $monitoringApproach = trim((string)($triggerData['monitoringApproach'] ?? ''));
                     if ($existingTrigger->getDescription() !== $triggerData['description']
-                        || $existingTrigger->getMonitoringApproach()
-                            !== $this->normalizeMonitoringApproach($triggerData['monitoringApproach'] ?? null)
-                        || $existingTrigger->isActive() !== ($triggerData['isActive'] ?? true)) {
+                        || $existingTrigger->getMonitoringApproach() !== $monitoringApproach
+                        || $existingTrigger->isActive() !== ($triggerData['isActive'] ?? true)
+                    ) {
                         $existingTrigger->setDescription($triggerData['description'])
-                            ->setMonitoringApproach(
-                                $this->normalizeMonitoringApproach($triggerData['monitoringApproach'] ?? null)
-                            )
+                            ->setMonitoringApproach($monitoringApproach)
                             ->setIsActive((bool)($triggerData['isActive'] ?? true))
                             ->setUpdater($this->connectedUserEmail);
                         $this->reassessmentTriggerTable->save($existingTrigger, false);
@@ -230,12 +227,5 @@ class ReassessmentTriggerService
         }
 
         $reassessmentTrigger->setPosition($newPosition);
-    }
-
-    private function normalizeMonitoringApproach(mixed $monitoringApproach): ?string
-    {
-        $monitoringApproach = trim((string)$monitoringApproach);
-
-        return $monitoringApproach === '' ? null : $monitoringApproach;
     }
 }
