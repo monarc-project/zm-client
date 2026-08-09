@@ -29,6 +29,7 @@ class ApiConfigController extends AbstractRestfulController
             $this->configService->getMospApiUrl(),
             $this->configService->getTerms(),
             [
+                'activeLanguageCodes' => $this->configService->getActiveLanguageCodes(),
                 'isExportDefaultWithEval' => $isExportDefaultWithEval,
                 'isCopilotEnabled' => $this->configService->getConfigOption('isCopilotEnabled', false),
             ],

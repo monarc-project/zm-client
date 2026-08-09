@@ -1786,6 +1786,7 @@ return [
             Stats\Validator\GetStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
             Stats\Validator\GetProcessedStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Anr\CreateAnrDataInputValidator::class => ReflectionBasedAbstractFactory::class,
+            InputValidator\Anr\CreateEmptyAnrDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\AnrSupervisor\PostAnrSupervisorDataInputValidator::class => static function (
                 Containerinterface $container
             ) {
