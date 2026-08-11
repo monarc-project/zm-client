@@ -22,6 +22,8 @@ use Throwable;
 
 class AnrService
 {
+    private const BLANK_MODEL_ID = 31;
+
     private Entity\User $connectedUser;
 
     public function __construct(
@@ -190,6 +192,52 @@ class AnrService
         }
 
         return $this->duplicateAnr($model->getAnr(), $data);
+    }
+
+    /**
+     * Creates an analysis with no model data or knowledge-base elements.
+     */
+    public function createEmpty(array $data): Entity\Anr
+    {
+        $anr = (new Entity\Anr())
+            ->setLabel($data['label'])
+            ->setDescription($data['description'] ?? '')
+            ->setLanguage($data['language'])
+            ->setLanguageCode(strtolower($this->configService->getLanguageCodes()[$data['language']]))
+            ->setCacheModelAreScalesUpdatable(true)
+            ->setCreator($this->connectedUser->getEmail());
+
+        $userAnr = (new Entity\UserAnr())
+            ->setUser($this->connectedUser)
+            ->setAnr($anr)
+            ->setRwd(Entity\UserAnr::FULL_PERMISSIONS_RWD)
+            ->setCreator($this->connectedUser->getEmail());
+
+        $this->userAnrTable->save($userAnr, false);
+        $this->setCurrentAnrToConnectedUser($anr);
+        $this->anrTable->save($anr);
+        $this->copyBlankModelScales($anr);
+
+        return $anr;
+    }
+
+    /**
+     * An empty analysis remains independent of a model, but reuses the
+     * evaluation baseline configured on the BlankModel.
+     */
+    private function copyBlankModelScales(Entity\Anr $anr): void
+    {
+        /** @var CoreEntity\Model $blankModel */
+        $blankModel = $this->modelTable->findById(self::BLANK_MODEL_ID);
+        $blankModelAnr = $blankModel->getAnr();
+        if ($blankModelAnr === null) {
+            throw new \LogicException('The BlankModel does not have an analysis.');
+        }
+
+        $this->duplicateScales($blankModelAnr, $anr, true);
+        $this->duplicateOperationalRiskScales($blankModelAnr, $anr, true);
+        $this->duplicateSoasAndSoaScaleComments($blankModelAnr, $anr, [], true);
+        $this->anrTable->flush();
     }
 
     /**
