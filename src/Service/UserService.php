@@ -113,12 +113,10 @@ class UserService extends CoreUserService
     private function verifySystemUserUpdate(User $user, array $data = [])
     {
         if ($user->isSystemUser()) {
-            if (!empty($data['role']) && !\in_array(UserRole::SUPER_ADMIN_FO, $data['role'], true)) {
+            if (isset($data['role'])
+                && $user->hasRole(UserRole::SUPER_ADMIN_FO)
+                && !\in_array(UserRole::SUPER_ADMIN_FO, $data['role'], true)) {
                 throw new Exception('You can not remove admin role from the "System" user', 412);
-            }
-
-            if (isset($data['status']) && $data['status'] === UserSuperClass::STATUS_INACTIVE) {
-                throw new Exception('You can not deactivate the "System" user', 412);
             }
         }
     }
