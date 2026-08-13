@@ -208,6 +208,21 @@ class InstanceRiskTable extends CoreInstanceRiskTable
         return $this->getCountsBySupervisorIds($supervisorIds, 'residualAcceptanceApproverSupervisor');
     }
 
+    public function hasAssignmentsForSupervisorId(Anr $anr, int $supervisorId): bool
+    {
+        $result = $this->getRepository()->createQueryBuilder('ir')
+            ->select('ir.id')
+            ->where('ir.riskOwnerSupervisor = :supervisorId OR ir.residualAcceptanceApproverSupervisor = :supervisorId')
+            ->andWhere('ir.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->setParameter('supervisorId', $supervisorId)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getResult();
+
+        return $result !== [];
+    }
+
     /**
      * @return InstanceRisk[]
      */

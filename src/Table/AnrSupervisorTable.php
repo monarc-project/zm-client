@@ -84,6 +84,46 @@ class AnrSupervisorTable extends AbstractTable
             ->getOneOrNullResult();
     }
 
+    /** @return int[] */
+    public function getLinkedUserIdsByAnr(Anr $anr, ?int $excludeSupervisorId = null): array
+    {
+        $queryBuilder = $this->getRepository()->createQueryBuilder('s')
+            ->select('IDENTITY(s.linkedUser) AS linkedUserId')
+            ->where('s.anr = :anr')
+            ->andWhere('s.linkedUser IS NOT NULL')
+            ->setParameter('anr', $anr);
+
+        if ($excludeSupervisorId !== null) {
+            $queryBuilder->andWhere('s.id != :excludeSupervisorId')
+                ->setParameter('excludeSupervisorId', $excludeSupervisorId);
+        }
+
+        return array_map(
+            static fn (array $row): int => (int)$row['linkedUserId'],
+            $queryBuilder->getQuery()->getArrayResult()
+        );
+    }
+
+    public function findLinkedByAnrAndUser(
+        Anr $anr,
+        User $user,
+        ?int $excludeSupervisorId = null
+    ): ?AnrSupervisor {
+        $queryBuilder = $this->getRepository()->createQueryBuilder('s')
+            ->where('s.anr = :anr')
+            ->andWhere('s.linkedUser = :user')
+            ->setParameter('anr', $anr)
+            ->setParameter('user', $user)
+            ->setMaxResults(1);
+
+        if ($excludeSupervisorId !== null) {
+            $queryBuilder->andWhere('s.id != :excludeSupervisorId')
+                ->setParameter('excludeSupervisorId', $excludeSupervisorId);
+        }
+
+        return $queryBuilder->getQuery()->getOneOrNullResult();
+    }
+
     public function hasLinkedActiveRole(Anr $anr, User $user, string $role): bool
     {
         return (bool)$this->getRepository()->createQueryBuilder('s')

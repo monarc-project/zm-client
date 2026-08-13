@@ -19,6 +19,8 @@ use Monarc\FrontOffice\Entity\User;
 use Monarc\FrontOffice\Entity\UserRole;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Table\AnrSupervisorTable;
+use Monarc\FrontOffice\Table\InstanceRiskOpTable;
+use Monarc\FrontOffice\Table\InstanceRiskTable;
 use Monarc\FrontOffice\Table\UserTable;
 
 class AnrSupervisorService
@@ -27,6 +29,8 @@ class AnrSupervisorService
 
     public function __construct(
         private AnrSupervisorTable $anrSupervisorTable,
+        private InstanceRiskTable $instanceRiskTable,
+        private InstanceRiskOpTable $instanceRiskOpTable,
         private UserTable $userTable,
         private ImportCacheHelper $importCacheHelper,
         ConnectedUserService $connectedUserService
@@ -135,6 +139,12 @@ class AnrSupervisorService
             ? $this->findLinkedUser($data['linkedUserId'])
             : $existingSupervisor?->getLinkedUser();
 
+        if ($linkedUser !== null
+            && $this->anrSupervisorTable->findLinkedByAnrAndUser($anr, $linkedUser, $excludeSupervisorId) !== null
+        ) {
+            throw new Exception('This user is already linked to another supervisor in this analysis.', 412);
+        }
+
         $name = $linkedUser !== null
             ? $this->buildLinkedUserName($linkedUser)
             : trim((string)($data['name'] ?? $existingSupervisor?->getName() ?? ''));
@@ -160,13 +170,18 @@ class AnrSupervisorService
     /**
      * @return array<int, array{id:int, firstname:string, lastname:string, email:string}>
      */
-    public function getLinkableUsers(string $filter = ''): array
+    public function getLinkableUsers(Anr $anr, string $filter = '', ?int $excludeSupervisorId = null): array
     {
         $this->assertCanManageLinkedUsers();
 
         $result = [];
+        $linkedUserIds = $this->anrSupervisorTable->getLinkedUserIdsByAnr($anr, $excludeSupervisorId);
         /** @var User $user */
         foreach ($this->userTable->findBySearchString($filter) as $user) {
+            if (in_array($user->getId(), $linkedUserIds, true)) {
+                continue;
+            }
+
             $result[] = [
                 'id' => $user->getId(),
                 'firstname' => $user->getFirstname(),
@@ -405,6 +420,14 @@ class AnrSupervisorService
             'roles' => $supervisor->getRolesArray(),
             'isActive' => $supervisor->isActive(),
         ];
+    }
+
+    public function hasAssignedRisks(AnrSupervisor $supervisor): bool
+    {
+        $supervisorId = $supervisor->getId();
+
+        return $this->instanceRiskTable->hasAssignmentsForSupervisorId($supervisor->getAnr(), $supervisorId)
+            || $this->instanceRiskOpTable->hasAssignmentsForSupervisorId($supervisor->getAnr(), $supervisorId);
     }
 
     private function syncRoles(AnrSupervisor $supervisor, array $roles): void

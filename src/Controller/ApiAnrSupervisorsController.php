@@ -37,7 +37,11 @@ class ApiAnrSupervisorsController extends AbstractRestfulControllerRequestHandle
         $rawUserFilter = $this->params()->fromQuery('userFilter', null);
         if ($rawUserFilter !== null) {
             return $this->getPreparedJsonResponse([
-                'users' => $this->anrSupervisorService->getLinkableUsers(trim((string)$rawUserFilter)),
+                'users' => $this->anrSupervisorService->getLinkableUsers(
+                    $anr,
+                    trim((string)$rawUserFilter),
+                    ($excludeSupervisorId = (int)$this->params()->fromQuery('excludeSupervisorId', 0)) ?: null
+                ),
             ]);
         }
         $statusParam = $this->params()->fromQuery('status', null);
@@ -132,6 +136,7 @@ class ApiAnrSupervisorsController extends AbstractRestfulControllerRequestHandle
             'linkedUser' => $this->prepareUserData($linkedUser),
             'roles' => $supervisor->getRolesArray(),
             'isActive' => $supervisor->isActive(),
+            'hasAssignedRisks' => $this->anrSupervisorService->hasAssignedRisks($supervisor),
         ];
     }
 
