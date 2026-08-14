@@ -146,8 +146,9 @@ class InstanceRiskImportProcessor
                 }
             }
             if (array_key_exists('residualRiskDecision', $instanceRiskData)) {
-                $residualRiskDecision = mb_strtolower(trim((string)$instanceRiskData['residualRiskDecision']));
-                $instanceRisk->setResidualRiskDecision($residualRiskDecision === '' ? null : $residualRiskDecision);
+                $instanceRisk->setResidualRiskDecision(
+                    $this->normalizeResidualRiskDecision($instanceRiskData['residualRiskDecision'])
+                );
             }
             if (array_key_exists('residualAcceptanceUseRiskOwner', $instanceRiskData)) {
                 $instanceRisk->setResidualAcceptanceUseRiskOwner((bool)$instanceRiskData['residualAcceptanceUseRiskOwner']);
