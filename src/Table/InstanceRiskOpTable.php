@@ -57,6 +57,41 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
     }
 
     /**
+     * @param int[] $supervisorIds
+     *
+     * @return array<int, int>
+     */
+    public function getCountsByRiskOwnerSupervisorIds(array $supervisorIds): array
+    {
+        return $this->getCountsBySupervisorIds($supervisorIds, 'riskOwnerSupervisor');
+    }
+
+    /**
+     * @param int[] $supervisorIds
+     *
+     * @return array<int, int>
+     */
+    public function getCountsByResidualAcceptanceApproverSupervisorIds(array $supervisorIds): array
+    {
+        return $this->getCountsBySupervisorIds($supervisorIds, 'residualAcceptanceApproverSupervisor');
+    }
+
+    public function hasAssignmentsForSupervisorId(Anr $anr, int $supervisorId): bool
+    {
+        $result = $this->getRepository()->createQueryBuilder('iro')
+            ->select('iro.id')
+            ->where('iro.riskOwnerSupervisor = :supervisorId OR iro.residualAcceptanceApproverSupervisor = :supervisorId')
+            ->andWhere('iro.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->setParameter('supervisorId', $supervisorId)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getResult();
+
+        return $result !== [];
+    }
+
+    /**
      * @return InstanceRiskOp[]
      */
     public function findByAnrAndInstance(Anr $anr, Instance $instance): array
@@ -111,6 +146,7 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
         $queryBuilder = $this->getRepository()->createQueryBuilder('iro')
             ->innerJoin('iro.instance', 'i')
             ->innerJoin('i.asset', 'a', Join::WITH, 'a.type = ' . AssetSuperClass::TYPE_PRIMARY)
+            ->leftJoin('iro.riskSource', 'rs')
             ->where('iro.anr = :anr')
             ->setParameter('anr', $anr);
 
@@ -142,6 +178,7 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
             $queryBuilder->andWhere(
                 'i.name' . $language . ' LIKE :keywords OR ' .
                 'i.label' . $language . ' LIKE :keywords OR ' .
+                'rs.label LIKE :keywords OR ' .
                 'iro.riskCacheLabel' . $language . ' LIKE :keywords OR ' .
                 'iro.riskCacheDescription' . $language . ' LIKE :keywords OR ' .
                 'iro.comment LIKE :keywords'
@@ -164,6 +201,10 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
                 break;
             case 'position':
                 $queryBuilder->orderBy('i.position', $filterParams['order_direction'])
+                    ->addOrderBy('i.name' . $language);
+                break;
+            case 'riskSource':
+                $queryBuilder->orderBy('rs.label', $filterParams['order_direction'])
                     ->addOrderBy('i.name' . $language);
                 break;
             case 'brutProb':
@@ -225,5 +266,33 @@ class InstanceRiskOpTable extends CoreInstanceRiskOpTable
             ->andWhere("iro.cacheNetRisk != -1")
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @param int[] $supervisorIds
+     *
+     * @return array<int, int>
+     */
+    private function getCountsBySupervisorIds(array $supervisorIds, string $fieldName): array
+    {
+        $normalizedSupervisorIds = array_values(array_unique(array_map('intval', $supervisorIds)));
+        if ($normalizedSupervisorIds === []) {
+            return [];
+        }
+
+        $rows = $this->getRepository()->createQueryBuilder('iro')
+            ->select('IDENTITY(iro.' . $fieldName . ') AS supervisorId, COUNT(iro.id) AS risksCount')
+            ->where('iro.' . $fieldName . ' IN (:supervisorIds)')
+            ->setParameter('supervisorIds', $normalizedSupervisorIds)
+            ->groupBy('iro.' . $fieldName)
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int)$row['supervisorId']] = (int)$row['risksCount'];
+        }
+
+        return $counts;
     }
 }

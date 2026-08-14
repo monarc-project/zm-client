@@ -52,7 +52,7 @@ class CreateUsersCommand extends Command
         for ($userNum = 1; $userNum <= (int)$input->getArgument('numberOfUsers'); $userNum++) {
             $userNamePostfix = $userNum < 10 ? '0' . $userNum : $userNum;
             $usernamePrefix = $input->getArgument('namesPrefix') . $userNamePostfix;
-            $password = (int)$input->getArgument('language') === 0
+            $password = (int)$input->getArgument('generate_password') === 0
                 ? $input->getArgument('password')
                 : substr(md5(uniqid(mt_rand(), true)), 8, 10);
 

@@ -17,6 +17,7 @@ use Monarc\FrontOffice\Entity\User;
 use Monarc\FrontOffice\Entity\UserAnr;
 use Monarc\FrontOffice\Entity\UserRole;
 use Monarc\FrontOffice\Table\AnrTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 use Monarc\FrontOffice\Table\UserTable;
 
 class UserService extends CoreUserService
@@ -26,6 +27,7 @@ class UserService extends CoreUserService
         ConnectedUserService $connectedUserService,
         array $config,
         private AnrTable $anrTable,
+        private UserAnrTable $userAnrTable,
         private PasswordService $passwordService
     ) {
         parent::__construct($userTable, $connectedUserService, $config);
@@ -90,17 +92,13 @@ class UserService extends CoreUserService
     public function patch(int $userId, array $data): UserSuperClass
     {
         if (isset($data['password'])) {
-            $this->passwordService->changePasswordWithoutOldPassword($data['id'], $data['password']);
+            $this->passwordService->changePasswordWithoutOldPassword($userId, $data['password']);
         }
 
         /** @var User $user */
         $user = $this->getUpdatedUser($userId, $data);
 
         $this->verifySystemUserUpdate($user, $data);
-
-        if (isset($data['password'])) {
-            $user->setPassword($data['password']);
-        }
 
         $this->updateUserAnr($user, $data);
 
@@ -115,39 +113,46 @@ class UserService extends CoreUserService
     private function verifySystemUserUpdate(User $user, array $data = [])
     {
         if ($user->isSystemUser()) {
-            if (!empty($data['role']) && !\in_array(UserRole::SUPER_ADMIN_FO, $data['role'], true)) {
+            if (isset($data['role'])
+                && $user->hasRole(UserRole::SUPER_ADMIN_FO)
+                && !\in_array(UserRole::SUPER_ADMIN_FO, $data['role'], true)) {
                 throw new Exception('You can not remove admin role from the "System" user', 412);
-            }
-
-            if (isset($data['status']) && $data['status'] === UserSuperClass::STATUS_INACTIVE) {
-                throw new Exception('You can not deactivate the "System" user', 412);
             }
         }
     }
 
     public function updateUserAnr(User $user, array $data): void
     {
-        if (!empty($data['anrs'])) {
-            $assignedAnrIds = array_map('\intval', array_column($data['anrs'], 'id'));
-            foreach ($user->getUserAnrs() as $userAnr) {
-                $assignedAnrKey = array_search($userAnr->getAnr()->getId(), $assignedAnrIds, true);
-                if ($assignedAnrKey !== false) {
-                    $userAnr->setRwd((int)$data['anrs'][$assignedAnrKey]['rwd'])
-                        ->setUpdater($this->connectedUser->getEmail());
-                    unset($data['anrs'][$assignedAnrKey]);
-                } else {
-                    $user->removeUserAnr($userAnr);
-                }
-            }
-            foreach ($data['anrs'] as $anrData) {
-                /** @var Anr $anr */
-                $anr = $this->anrTable->findById($anrData['id']);
-                $user->addUserAnr(
-                    (new UserAnr())->setAnr($anr)->setRwd($anrData['rwd'])->setCreator($this->connectedUser->getEmail())
-                );
-            }
-
-            $this->userTable->save($user);
+        if (!array_key_exists('anrs', $data)) {
+            return;
         }
+
+        $data['anrs'] = $data['anrs'] ?? [];
+        $assignedAnrIds = array_map('\intval', array_column($data['anrs'], 'id'));
+
+        foreach ($user->getUserAnrs()->toArray() as $userAnr) {
+            $assignedAnrKey = array_search($userAnr->getAnr()->getId(), $assignedAnrIds, true);
+            if ($assignedAnrKey !== false) {
+                $userAnr->setRwd((int)$data['anrs'][$assignedAnrKey]['rwd'])
+                    ->setUpdater($this->connectedUser->getEmail());
+                unset($data['anrs'][$assignedAnrKey]);
+            } else {
+                $user->removeUserAnr($userAnr);
+                $this->userAnrTable->remove($userAnr, false);
+            }
+        }
+
+        foreach ($data['anrs'] as $anrData) {
+            /** @var Anr $anr */
+            $anr = $this->anrTable->findById((int)$anrData['id']);
+            $user->addUserAnr(
+                (new UserAnr())
+                    ->setAnr($anr)
+                    ->setRwd((int)$anrData['rwd'])
+                    ->setCreator($this->connectedUser->getEmail())
+            );
+        }
+
+        $this->userTable->save($user);
     }
 }

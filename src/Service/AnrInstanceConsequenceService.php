@@ -12,6 +12,7 @@ use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Service\Helper\ScalesCacheHelper;
 use Monarc\Core\Service\Traits\ImpactVerificationTrait;
 use Monarc\FrontOffice\Entity;
+use Monarc\FrontOffice\Entity\AnrHistory;
 use Monarc\FrontOffice\Table;
 
 class AnrInstanceConsequenceService
@@ -25,6 +26,7 @@ class AnrInstanceConsequenceService
         private Table\InstanceTable $instanceTable,
         private AnrInstanceService $anrInstanceService,
         private ScalesCacheHelper $scalesCacheHelper,
+        private AnrHistoryService $anrHistoryService,
         ConnectedUserService $connectedUserService
     ) {
         $this->connectedUser = $connectedUserService->getConnectedUser();
@@ -149,6 +151,14 @@ class AnrInstanceConsequenceService
     {
         /** @var Entity\InstanceConsequence $instanceConsequence */
         $instanceConsequence = $this->instanceConsequenceTable->findByIdAndAnr($id, $anr);
+        $beforeState = $this->prepareConsequenceHistoryState($instanceConsequence);
+        $beforeValue = $this->prepareConsequenceHistoryValue($instanceConsequence);
+        $affectedInstances = [$instanceConsequence->getInstance()->getId() => $instanceConsequence->getInstance()];
+        if ($instanceConsequence->getInstance()->getObject()->isScopeGlobal()) {
+            foreach ($this->instanceTable->findByAnrAndObject($anr, $instanceConsequence->getInstance()->getObject()) as $instance) {
+                $affectedInstances[$instance->getId()] = $instance;
+            }
+        }
 
         $this->verifyImpacts(
             $this->scalesCacheHelper->getCachedScaleByType($anr, CoreEntity\ScaleSuperClass::TYPE_IMPACT),
@@ -183,6 +193,15 @@ class AnrInstanceConsequenceService
         $this->updateSiblingsConsequences($instanceConsequence, $updateInstance);
 
         $this->instanceConsequenceTable->save($instanceConsequence);
+        $this->recordConsequenceHistory(
+            $anr,
+            $affectedInstances,
+            $instanceConsequence,
+            $beforeState,
+            $this->prepareConsequenceHistoryState($instanceConsequence),
+            $beforeValue,
+            $this->prepareConsequenceHistoryValue($instanceConsequence)
+        );
 
         return $instanceConsequence;
     }
@@ -232,5 +251,88 @@ class AnrInstanceConsequenceService
                 }
             }
         }
+    }
+
+    /**
+     * @param array<int, Entity\Instance> $affectedInstances
+     */
+    private function recordConsequenceHistory(
+        Entity\Anr $anr,
+        array $affectedInstances,
+        Entity\InstanceConsequence $instanceConsequence,
+        array $beforeState,
+        array $afterState,
+        array $beforeValue,
+        array $afterValue
+    ): void {
+        if ($beforeState === $afterState) {
+            return;
+        }
+
+        $entries = [];
+        foreach ($affectedInstances as $instance) {
+            foreach ($instance->getInstanceRisks() as $instanceRisk) {
+                if ($beforeValue !== $afterValue) {
+                    $entries[] = [
+                        'targetType' => AnrHistory::INFORMATION_RISK,
+                        'targetId' => $instanceRisk->getId(),
+                        'changeType' => AnrHistory::CONSEQUENCE_UPDATED,
+                        'fieldCode' => $this->getConsequenceFieldCode($instanceConsequence->getScaleImpactType()->getType()),
+                        'oldValue' => $beforeValue,
+                        'newValue' => $afterValue,
+                    ];
+                }
+
+                if ($beforeState['hidden'] !== $afterState['hidden']) {
+                    $entries[] = [
+                        'targetType' => AnrHistory::INFORMATION_RISK,
+                        'targetId' => $instanceRisk->getId(),
+                        'changeType' => AnrHistory::IMPACT_SCALE_UPDATED,
+                        'fieldCode' => AnrHistory::IMPACT_SCALE_UPDATE,
+                        'oldValue' => null,
+                        'newValue' => $afterState['hidden'] ? 'hidden' : 'visible',
+                    ];
+                }
+            }
+        }
+
+        $this->anrHistoryService->createEntries($anr, $entries);
+    }
+
+    private function prepareConsequenceHistoryState(Entity\InstanceConsequence $instanceConsequence): array
+    {
+        return [
+            'c' => $instanceConsequence->getConfidentiality(),
+            'i' => $instanceConsequence->getIntegrity(),
+            'a' => $instanceConsequence->getAvailability(),
+            'hidden' => $instanceConsequence->isHidden(),
+        ];
+    }
+
+    private function getConsequenceFieldCode(int $scaleImpactType): string
+    {
+        return match ($scaleImpactType) {
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_C => AnrHistory::CONSEQUENCE_CONFIDENTIALITY,
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_I => AnrHistory::CONSEQUENCE_INTEGRITY,
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_D => AnrHistory::CONSEQUENCE_AVAILABILITY,
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_R => AnrHistory::CONSEQUENCE_REPUTATION,
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_L => AnrHistory::CONSEQUENCE_LEGAL,
+            CoreEntity\ScaleImpactTypeSuperClass::SCALE_TYPE_F => AnrHistory::CONSEQUENCE_FINANCIAL,
+            default => AnrHistory::CONSEQUENCE_AVAILABILITY,
+        };
+    }
+
+    private function prepareConsequenceHistoryValue(Entity\InstanceConsequence $instanceConsequence): array
+    {
+        return [
+            'c' => $this->normalizeConsequenceHistoryValue($instanceConsequence->getConfidentiality()),
+            'i' => $this->normalizeConsequenceHistoryValue($instanceConsequence->getIntegrity()),
+            'a' => $this->normalizeConsequenceHistoryValue($instanceConsequence->getAvailability()),
+        ];
+    }
+
+    private function normalizeConsequenceHistoryValue(int $value): int|string
+    {
+        return $value === -1 ? '-' : $value;
     }
 }

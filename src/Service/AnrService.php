@@ -22,6 +22,8 @@ use Throwable;
 
 class AnrService
 {
+    private const BLANK_MODEL_ID = 31;
+
     private Entity\User $connectedUser;
 
     public function __construct(
@@ -47,6 +49,7 @@ class AnrService
         private Table\OperationalInstanceRiskScaleTable $operationalInstanceRiskScaleTable,
         private Table\OperationalRiskScaleTypeTable $operationalRiskScaleTypeTable,
         private Table\OperationalRiskScaleCommentTable $operationalRiskScaleCommentTable,
+        private Table\RiskSourceTable $riskSourceTable,
         private Table\RecommendationRiskTable $recommendationRiskTable,
         private Table\RecommendationHistoryTable $recommendationHistoryTable,
         private Table\ReferentialTable $referentialTable,
@@ -71,6 +74,7 @@ class AnrService
         private CoreTable\AssetTable $coreAssetTable,
         private CoreTable\ThreatTable $coreThreatTable,
         private CoreTable\VulnerabilityTable $coreVulnerabilityTable,
+        private CoreTable\RiskSourceTable $coreRiskSourceTable,
         private CoreTable\TranslationTable $coreTranslationTable,
         private CoreTable\SoaScaleCommentTable $coreSoaScaleCommentTable,
         private CoreTable\OperationalRiskScaleTable $coreOperationalRiskScaleTable,
@@ -88,10 +92,13 @@ class AnrService
         private AnrObjectService $anrObjectService,
         private AnrObjectCategoryService $anrObjectCategoryService,
         private AnrInstanceMetadataFieldService $anrInstanceMetadataFieldService,
-        private InstanceRiskOwnerService $instanceRiskOwnerService,
+        private AnrSupervisorService $anrSupervisorService,
+        private AnrRisksManagementService $anrRisksManagementService,
         private AnrRecommendationSetService $anrRecommendationSetService,
         private AnrRecommendationService $anrRecommendationService,
         private AnrRecommendationRiskService $anrRecommendationRiskService,
+        private InterestedPartyService $interestedPartyService,
+        private ReassessmentTriggerService $reassessmentTriggerService,
         private SoaScaleCommentService $soaScaleCommentService,
         private CronTaskService $cronTaskService,
         private StatsAnrService $statsAnrService,
@@ -108,6 +115,10 @@ class AnrService
     {
         /* For SUPER_ADMIN_FO all the analysis are fetched to be able to update the permissions. */
         $isSuperAdmin = $this->connectedUser->hasRole(Entity\UserRole::SUPER_ADMIN_FO);
+        $linkedSupervisorsByAnrId = $this->getLinkedSupervisorsByAnrId();
+        $assignedRiskCountsBySupervisorId = $this->getAssignedRiskCountsBySupervisors(
+            array_values($linkedSupervisorsByAnrId)
+        );
 
         $anrData = [];
         if ($isSuperAdmin) {
@@ -115,14 +126,38 @@ class AnrService
                 if (!$anr->isAnrSnapshot()) {
                     $anrData[] = $this->getPreparedAnrData(
                         $anr,
-                        $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser)
+                        $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser),
+                        false,
+                        $linkedSupervisorsByAnrId[$anr->getId()] ?? null,
+                        $assignedRiskCountsBySupervisorId
                     );
                 }
             }
         } else {
+            $preparedAnrs = [];
             foreach ($this->connectedUser->getUserAnrs() as $userAnr) {
-                $anrData[] = $this->getPreparedAnrData($userAnr->getAnr(), $userAnr);
+                $preparedData = $this->getPreparedAnrData(
+                    $userAnr->getAnr(),
+                    $userAnr,
+                    false,
+                    $linkedSupervisorsByAnrId[$userAnr->getAnr()->getId()] ?? null,
+                    $assignedRiskCountsBySupervisorId
+                );
+                $preparedAnrs[$preparedData['id']] = $preparedData;
             }
+            foreach ($linkedSupervisorsByAnrId as $supervisor) {
+                $anr = $supervisor->getAnr();
+                if (!$anr->isAnrSnapshot() && !isset($preparedAnrs[$anr->getId()])) {
+                    $preparedAnrs[$anr->getId()] = $this->getPreparedAnrData(
+                        $anr,
+                        null,
+                        false,
+                        $supervisor,
+                        $assignedRiskCountsBySupervisorId
+                    );
+                }
+            }
+            $anrData = array_values($preparedAnrs);
         }
 
         return $anrData;
@@ -160,6 +195,52 @@ class AnrService
     }
 
     /**
+     * Creates an analysis with no model data or knowledge-base elements.
+     */
+    public function createEmpty(array $data): Entity\Anr
+    {
+        $anr = (new Entity\Anr())
+            ->setLabel($data['label'])
+            ->setDescription($data['description'] ?? '')
+            ->setLanguage($data['language'])
+            ->setLanguageCode(strtolower($this->configService->getLanguageCodes()[$data['language']]))
+            ->setCacheModelAreScalesUpdatable(true)
+            ->setCreator($this->connectedUser->getEmail());
+
+        $userAnr = (new Entity\UserAnr())
+            ->setUser($this->connectedUser)
+            ->setAnr($anr)
+            ->setRwd(Entity\UserAnr::FULL_PERMISSIONS_RWD)
+            ->setCreator($this->connectedUser->getEmail());
+
+        $this->userAnrTable->save($userAnr, false);
+        $this->setCurrentAnrToConnectedUser($anr);
+        $this->anrTable->save($anr);
+        $this->copyBlankModelScales($anr);
+
+        return $anr;
+    }
+
+    /**
+     * An empty analysis remains independent of a model, but reuses the
+     * evaluation baseline configured on the BlankModel.
+     */
+    private function copyBlankModelScales(Entity\Anr $anr): void
+    {
+        /** @var CoreEntity\Model $blankModel */
+        $blankModel = $this->modelTable->findById(self::BLANK_MODEL_ID);
+        $blankModelAnr = $blankModel->getAnr();
+        if ($blankModelAnr === null) {
+            throw new \LogicException('The BlankModel does not have an analysis.');
+        }
+
+        $this->duplicateScales($blankModelAnr, $anr, true);
+        $this->duplicateOperationalRiskScales($blankModelAnr, $anr, true);
+        $this->duplicateSoasAndSoaScaleComments($blankModelAnr, $anr, [], true);
+        $this->anrTable->flush();
+    }
+
+    /**
      * Creates (Duplicates) an analysis based on existing one on the client's side or a model's anr
      * in the common database, and performs the biggest part of creation/restoring snapshots.
      */
@@ -183,14 +264,13 @@ class AnrService
             $data['languageCode'] = strtolower($this->configService->getLanguageCodes()[$data['language']]);
         }
 
+        /** @var Entity\Anr $newAnr */
         $newAnr = Entity\Anr::constructFromObjectAndData($sourceAnr, $data)
             ->setCreator($this->connectedUser->getEmail());
         if ($isSnapshotMode) {
             /* The "[SNAP]" prefix is added for snapshots. */
             $newAnr->setLabel('[SNAP] ' . $newAnr->getLabel());
         }
-
-        $this->anrTable->save($newAnr, false);
 
         /* Not needed for snapshots creation or restoring. */
         if (!$isSnapshotMode) {
@@ -259,6 +339,11 @@ class AnrService
         $anrInstanceMetadataFieldOldIdsToNewObjects = $this
             ->duplicateAnrMetadataInstanceFields($sourceAnr, $newAnr, $isSourceCommon);
 
+        $riskSourcesOldIdsToNewObjects = $this->duplicateRiskSources($sourceAnr, $newAnr, $isSourceCommon);
+        $supervisorsOldIdsToNewObjects = $this->duplicateSupervisors($sourceAnr, $newAnr);
+        $this->duplicateInterestedParties($sourceAnr, $newAnr, $isSourceCommon);
+        $this->duplicateReassessmentTriggers($sourceAnr, $newAnr, $isSourceCommon);
+
         /* Recreate Instances, InstanceRisks, InstanceConsequences and InstanceMetadata. */
         $this->duplicateInstancesTreeRisksSequencesRecommendationsMetadataAndScales(
             $sourceAnr,
@@ -269,6 +354,8 @@ class AnrService
             $vulnerabilitiesOldIdsToNewObjects,
             $monarcObjectsOldIdsToNewObjects,
             $anrInstanceMetadataFieldOldIdsToNewObjects,
+            $riskSourcesOldIdsToNewObjects,
+            $supervisorsOldIdsToNewObjects,
             $rolfRisksOldIdsToNewObjects,
             $isSourceCommon
         );
@@ -295,6 +382,18 @@ class AnrService
 
     public function patch(Entity\Anr $anr, array $data): Entity\Anr
     {
+        if (array_key_exists('reassessmentLastReviewDate', $data)) {
+            $anr->setReassessmentLastReviewDate($this->normalizeReassessmentLastReviewDate(
+                $data['reassessmentLastReviewDate']
+            ));
+        }
+        if (array_key_exists('reassessmentReviewFrequency', $data)) {
+            $reviewFrequency = (string)$data['reassessmentReviewFrequency'];
+            if (!in_array($reviewFrequency, Entity\Anr::getAvailableReviewFrequencies(), true)) {
+                throw new Exception('Invalid reassessment review frequency', 412);
+            }
+            $anr->setReassessmentReviewFrequency($reviewFrequency);
+        }
         /* Steps checkboxes setup. */
         if (isset($data['initAnrContext'])) {
             $anr->setInitAnrContext($data['initAnrContext']);
@@ -304,6 +403,9 @@ class AnrService
         }
         if (isset($data['initRiskContext'])) {
             $anr->setInitRiskContext($data['initRiskContext']);
+        }
+        if (isset($data['initReassessmentStrategy'])) {
+            $anr->setInitReassessmentStrategy($data['initReassessmentStrategy']);
         }
         if (isset($data['initDefContext'])) {
             $anr->setInitDefContext($data['initDefContext']);
@@ -322,6 +424,9 @@ class AnrService
         }
         if (isset($data['manageRisks'])) {
             $anr->setManageRisks($data['manageRisks']);
+        }
+        if (isset($data['manageReassessmentTriggers'])) {
+            $anr->setManageReassessmentTriggers($data['manageReassessmentTriggers']);
         }
         /* Context establishment texts. */
         if (isset($data['contextAnaRisk'])) {
@@ -380,11 +485,129 @@ class AnrService
         $this->anrTable->remove($anr);
     }
 
+    private function duplicateRiskSources(
+        CoreEntity\AnrSuperClass $sourceAnr,
+        Entity\Anr $newAnr,
+        bool $isSourceCommon
+    ): array {
+        $sourceRiskSources = $isSourceCommon
+            ? $this->coreRiskSourceTable->findByFilterParams(['isActive' => true])
+            : $this->riskSourceTable->findByAnr($sourceAnr);
+        $riskSourcesOldIdsToNewObjects = [];
+
+        foreach ($sourceRiskSources as $sourceRiskSource) {
+            $label = $sourceRiskSource->getLabel();
+            if ($isSourceCommon) {
+                $label = $this->resolveCommonRiskSourceLabel(
+                    $sourceRiskSource->getLabelTranslations(),
+                    $sourceRiskSource->getLabel(),
+                    $newAnr->getLanguageCode()
+                );
+            }
+
+            $riskSource = (new Entity\RiskSource())
+                ->setAnr($newAnr)
+                ->setLabel($label)
+                ->setIsDefault($sourceRiskSource->isDefault())
+                ->setIsActive($sourceRiskSource->isActive())
+                ->setCreator($this->connectedUser->getEmail());
+            $this->riskSourceTable->save($riskSource, false);
+            $riskSourcesOldIdsToNewObjects[$sourceRiskSource->getId()] = $riskSource;
+        }
+
+        return $riskSourcesOldIdsToNewObjects;
+    }
+
+    private function duplicateSupervisors(
+        CoreEntity\AnrSuperClass $sourceAnr,
+        Entity\Anr $newAnr
+    ): array {
+        if (!$sourceAnr instanceof Entity\Anr) {
+            return [];
+        }
+
+        $supervisorsOldIdsToNewObjects = [];
+        foreach ($this->anrSupervisorService->getList($sourceAnr) as $sourceSupervisor) {
+            $newSupervisor = $this->anrSupervisorService->createSupervisorEntity(
+                $newAnr,
+                $sourceSupervisor->getName(),
+                $sourceSupervisor->getEmail(),
+                $sourceSupervisor->getRolesArray(),
+                $sourceSupervisor->getRolePosition(),
+                $sourceSupervisor->getLinkedUser(),
+                $sourceSupervisor->isActive(),
+                false
+            );
+
+            if ($newSupervisor !== null) {
+                $supervisorsOldIdsToNewObjects[$sourceSupervisor->getId()] = $newSupervisor;
+            }
+        }
+
+        return $supervisorsOldIdsToNewObjects;
+    }
+
+    /**
+     * @param array<string, string> $labels
+     */
+    private function resolveCommonRiskSourceLabel(array $labels, string $fallbackLabel, string $languageCode): string
+    {
+        if (isset($labels[$languageCode]) && $labels[$languageCode] !== '') {
+            return $labels[$languageCode];
+        }
+
+        $defaultLanguageCode = $this->configService->getLanguageCodes()[
+            $this->configService->getConfigOption('defaultLanguageIndex', 1)
+        ] ?? null;
+        if ($defaultLanguageCode !== null && isset($labels[$defaultLanguageCode]) && $labels[$defaultLanguageCode] !== '') {
+            return $labels[$defaultLanguageCode];
+        }
+
+        if ($labels !== []) {
+            return (string)reset($labels);
+        }
+
+        return $fallbackLabel;
+    }
+
+    private function duplicateReassessmentTriggers(
+        CoreEntity\AnrSuperClass $sourceAnr,
+        Entity\Anr $newAnr,
+        bool $isSourceCommon
+    ): void {
+        if (!$isSourceCommon) {
+            $this->reassessmentTriggerService->duplicateFromSourceAnr($sourceAnr, $newAnr);
+        }
+    }
+
+    private function duplicateInterestedParties(
+        CoreEntity\AnrSuperClass $sourceAnr,
+        Entity\Anr $newAnr,
+        bool $isSourceCommon
+    ): void {
+        if (!$isSourceCommon) {
+            $this->interestedPartyService->duplicateFromSourceAnr($sourceAnr, $newAnr);
+        }
+    }
+
     private function getPreparedAnrData(
         Entity\Anr $anr,
         ?Entity\UserAnr $userAnr,
-        bool $includeSnapshotDetails = false
+        bool $includeSnapshotDetails = false,
+        ?Entity\AnrSupervisor $linkedSupervisor = null,
+        array $assignedRiskCountsBySupervisorId = []
     ): array {
+        $supervisorAccessAnr = $anr->isAnrSnapshot() ? $anr->getSnapshot()?->getAnrReference() : $anr;
+        if ($linkedSupervisor === null && $supervisorAccessAnr !== null) {
+            $linkedSupervisor = $this->anrSupervisorService->findLinkedSupervisor(
+                $supervisorAccessAnr,
+                $this->connectedUser
+            );
+        }
+        $assignedRiskCounts = $this->getAssignedRiskCountsForSupervisor(
+            $linkedSupervisor,
+            $assignedRiskCountsBySupervisorId
+        );
         $referentialData = [];
         foreach ($anr->getReferentials() as $referential) {
             $referentialData[] = [
@@ -398,8 +621,17 @@ class AnrService
             'uuid' => $anr->getUuid(),
             'label' => $anr->getLabel(),
             'description' => $anr->getDescription(),
-            'rwd' => $userAnr === null ? -1 : $userAnr->getRwd(),
+            'rwd' => $userAnr === null ? ($linkedSupervisor === null ? -1 : 0) : $userAnr->getRwd(),
             'referentials' => $referentialData,
+            'isSupervisorOnly' => (int)($userAnr === null && $linkedSupervisor !== null),
+            'linkedSupervisor' => $linkedSupervisor === null
+                ? null
+                : $this->anrSupervisorService->prepareSupervisorReference($linkedSupervisor),
+            'linkedSupervisorRoles' => $linkedSupervisor?->getRolesArray() ?? [],
+            'canApproveResidualRisk' => (int)($linkedSupervisor !== null
+                && $linkedSupervisor->hasRole(Entity\AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER)),
+            'ownedRisksCount' => $assignedRiskCounts['owned'],
+            'approvalRisksCount' => $assignedRiskCounts['approval'],
             'isCurrentAnr' => (int)($this->connectedUser->getCurrentAnr() !== null
                 && $this->connectedUser->getCurrentAnr()->getId() === $anr->getId()),
             'status' => $anr->getStatus(),
@@ -418,11 +650,15 @@ class AnrService
             'initDefContext' => $anr->getInitDefContext(),
             'initEvalContext' => $anr->getInitEvalContext(),
             'initLivrableDone' => $anr->getInitLivrableDone(),
+            'initReassessmentStrategy' => $anr->getInitReassessmentStrategy(),
             'initRiskContext' => $anr->getInitRiskContext(),
             'isSnapshot' => (int)$anr->isAnrSnapshot(),
             'isStatsCollected' => (int)$anr->isStatsCollected(),
             'isVisibleOnDashboard' => $anr->isVisibleOnDashboard(),
             'manageRisks' => $anr->getManageRisks(),
+            'manageReassessmentTriggers' => $anr->getManageReassessmentTriggers(),
+            'reassessmentLastReviewDate' => $anr->getReassessmentLastReviewDate()?->format('Y-m-d'),
+            'reassessmentReviewFrequency' => $anr->getReassessmentReviewFrequency(),
             'model' => $anr->getModelId(),
             'modelImpacts' => $anr->getModelImpacts(),
             'modelLivrableDone' => $anr->getModelLivrableDone(),
@@ -472,6 +708,85 @@ class AnrService
         return $anrData;
     }
 
+    private function normalizeReassessmentLastReviewDate(mixed $value): ?DateTime
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (!is_string($value)) {
+            throw new Exception('Invalid reassessment last review date', 412);
+        }
+
+        $date = DateTime::createFromFormat('!Y-m-d', $value);
+        if ($date === false || $date->format('Y-m-d') !== $value) {
+            throw new Exception('Invalid reassessment last review date', 412);
+        }
+
+        return $date;
+    }
+
+    /**
+     * @return array<int, Entity\AnrSupervisor>
+     */
+    private function getLinkedSupervisorsByAnrId(): array
+    {
+        $linkedSupervisorsByAnrId = [];
+        foreach ($this->anrSupervisorService->getLinkedSupervisorsByUser($this->connectedUser) as $supervisor) {
+            $anrId = $supervisor->getAnr()->getId();
+            if (!isset($linkedSupervisorsByAnrId[$anrId])) {
+                $linkedSupervisorsByAnrId[$anrId] = $supervisor;
+            }
+        }
+
+        return $linkedSupervisorsByAnrId;
+    }
+
+    /**
+     * @param Entity\AnrSupervisor[] $supervisors
+     *
+     * @return array<int, array{owned:int, approval:int}>
+     */
+    private function getAssignedRiskCountsBySupervisors(array $supervisors): array
+    {
+        $countsBySupervisorId = [];
+        foreach ($supervisors as $supervisor) {
+            $countsBySupervisorId[$supervisor->getId()] = $this->anrRisksManagementService->getAssignmentCounts(
+                $supervisor->getAnr(),
+                $supervisor
+            );
+        }
+
+        return $countsBySupervisorId;
+    }
+
+    /**
+     * @param array<int, array{owned:int, approval:int}> $assignedRiskCountsBySupervisorId
+     *
+     * @return array{owned:int, approval:int}
+     */
+    private function getAssignedRiskCountsForSupervisor(
+        ?Entity\AnrSupervisor $linkedSupervisor,
+        array $assignedRiskCountsBySupervisorId
+    ): array {
+        if ($linkedSupervisor === null) {
+            return [
+                'owned' => 0,
+                'approval' => 0,
+            ];
+        }
+
+        $supervisorId = $linkedSupervisor->getId();
+        if (isset($assignedRiskCountsBySupervisorId[$supervisorId])) {
+            return $assignedRiskCountsBySupervisorId[$supervisorId];
+        }
+
+        return $this->getAssignedRiskCountsBySupervisors([$linkedSupervisor])[$supervisorId] ?? [
+            'owned' => 0,
+            'approval' => 0,
+        ];
+    }
+
     /**
      * @param string[] $referentialUuids
      *
@@ -508,8 +823,8 @@ class AnrService
 
             /* Recreate the source's or core's referential in the analysis.  */
             $referential = (new Entity\Referential())
-                ->setUuid($referentialUuid)
                 ->setAnr($anr)
+                ->setUuid($referentialUuid)
                 ->setLabels($referentialFromSource->getLabels())
                 ->setUuid($referentialFromSource->getUuid())
                 ->setCreator($this->connectedUser->getEmail());
@@ -530,8 +845,8 @@ class AnrService
             /* Recreates the measures in the analysis. */
             foreach ($referentialFromSource->getMeasures() as $measureFromSource) {
                 $measure = (new Entity\Measure())
-                    ->setUuid($measureFromSource->getUuid())
                     ->setAnr($anr)
+                    ->setUuid($measureFromSource->getUuid())
                     ->setCode($measureFromSource->getCode())
                     ->setLabels($measureFromSource->getLabels())
                     ->setStatus($measureFromSource->getStatus())
@@ -705,9 +1020,9 @@ class AnrService
                     $label = $operationalRiskScaleType->getLabel();
                 }
                 $newOperationalRiskScaleType = (new Entity\OperationalRiskScaleType())
+                    ->setLabel($label)
                     ->setAnr($newAnr)
                     ->setOperationalRiskScale($newOperationalRiskScale)
-                    ->setLabel($label)
                     ->setIsHidden($operationalRiskScaleType->isHidden())
                     ->setCreator($this->connectedUser->getEmail());
 
@@ -766,10 +1081,10 @@ class AnrService
             $comment = $sourceOperationalRiskScaleComment->getComment();
         }
         $newOperationalRiskScaleComment = (new Entity\OperationalRiskScaleComment())
+            ->setComment($comment)
             ->setAnr($newAnr)
             ->setScaleIndex($sourceOperationalRiskScaleComment->getScaleIndex())
             ->setScaleValue($sourceOperationalRiskScaleComment->getScaleValue())
-            ->setComment($comment)
             ->setOperationalRiskScale($newOperationalRiskScale)
             ->setIsHidden($sourceOperationalRiskScaleComment->isHidden())
             ->setCreator($this->connectedUser->getEmail());
@@ -1131,7 +1446,7 @@ class AnrService
     }
 
     private function duplicateObjectsAndCategories(
-        CoreEntity\AnrSuperClass $sourceAnr,
+        CoreEntity\Anr|Entity\Anr $sourceAnr,
         Entity\Anr $newAnr,
         array $assetsOldIdsToNewObjects,
         array $rolfTagsOldIdsToNewObjects,
@@ -1237,6 +1552,8 @@ class AnrService
         array $vulnerabilitiesOldIdsToNewObjects,
         array $monarcObjectsOldIdsToNewObjects,
         array $anrInstanceMetadataFieldOldIdsToNewObjects,
+        array $riskSourcesOldIdsToNewObjects,
+        array $supervisorsOldIdsToNewObjects,
         array $rolfRisksOldIdsToNewObjects,
         bool $isSourceCommon
     ): void {
@@ -1283,13 +1600,16 @@ class AnrService
                 $amvsOldIdsToNewObjects,
                 $assetsOldIdsToNewObjects,
                 $threatsOldIdsToNewObjects,
-                $vulnerabilitiesOldIdsToNewObjects
+                $vulnerabilitiesOldIdsToNewObjects,
+                $supervisorsOldIdsToNewObjects
             );
 
             /* Recreate OperationalInstanceRisks. */
             $instanceRisksOpOldIdsToNewObjects += $this->duplicateOperationalInstanceRisks(
                 $sourceInstance,
                 $newInstance,
+                $riskSourcesOldIdsToNewObjects,
+                $supervisorsOldIdsToNewObjects,
                 $rolfRisksOldIdsToNewObjects,
                 $operationalScaleTypesOldIdsToNewObjects
             );
@@ -1421,7 +1741,8 @@ class AnrService
         array $amvsOldIdsToNewObjects,
         array $assetsOldIdsToNewObjects,
         array $threatsOldIdsToNewObjects,
-        array $vulnerabilitiesOldIdsToNewObjects
+        array $vulnerabilitiesOldIdsToNewObjects,
+        array $supervisorsOldIdsToNewObjects
     ): array {
         /** @var Entity\Anr $newAnr */
         $newAnr = $newInstance->getAnr();
@@ -1446,13 +1767,18 @@ class AnrService
                     $vulnerabilitiesOldIdsToNewObjects[$sourceInstanceRisk->getVulnerability()->getUuid()]
                 );
             }
-            if ($sourceInstanceRisk instanceof Entity\InstanceRisk
-                && $sourceInstanceRisk->getInstanceRiskOwner() !== null
-            ) {
-                $newInstanceRisk->setInstanceRiskOwner($this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
-                    $newAnr,
-                    $sourceInstanceRisk->getInstanceRiskOwner()->getName(),
-                    false
+            if ($sourceInstanceRisk instanceof Entity\InstanceRisk) {
+                $newInstanceRisk->setRiskOwnerSupervisor($this->getDuplicatedSupervisorReference(
+                    $sourceInstanceRisk->getRiskOwnerSupervisor(),
+                    $supervisorsOldIdsToNewObjects
+                ));
+                $newInstanceRisk->setResidualAcceptanceApproverSupervisor($this->getDuplicatedSupervisorReference(
+                    $sourceInstanceRisk->getResidualAcceptanceApproverSupervisor(),
+                    $supervisorsOldIdsToNewObjects
+                ));
+                $newInstanceRisk->setResidualRiskDecidedBySupervisor($this->getDuplicatedSupervisorReference(
+                    $sourceInstanceRisk->getResidualRiskDecidedBySupervisor(),
+                    $supervisorsOldIdsToNewObjects
                 ));
             }
 
@@ -1466,6 +1792,8 @@ class AnrService
     private function duplicateOperationalInstanceRisks(
         CoreEntity\InstanceSuperClass $sourceInstance,
         Entity\Instance $newInstance,
+        array $riskSourcesOldIdsToNewObjects,
+        array $supervisorsOldIdsToNewObjects,
         array $rolfRisksOldIdsToNewObjects,
         array $operationalScaleTypesOldIdsToNewObjects
     ): array {
@@ -1484,15 +1812,24 @@ class AnrService
                     $rolfRisksOldIdsToNewObjects[$sourceInstanceRiskOp->getRolfRisk()->getId()]
                 );
             }
-            if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp
-                && $sourceInstanceRiskOp->getInstanceRiskOwner() !== null
-            ) {
-                $instanceRiskOwner = $this->instanceRiskOwnerService->getOrCreateInstanceRiskOwner(
-                    $newAnr,
-                    $sourceInstanceRiskOp->getInstanceRiskOwner()->getName(),
-                    false
+            if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp && $sourceInstanceRiskOp->getRiskSource() !== null) {
+                $newInstanceRiskOp->setRiskSource(
+                    $riskSourcesOldIdsToNewObjects[$sourceInstanceRiskOp->getRiskSource()->getId()] ?? null
                 );
-                $newInstanceRiskOp->setInstanceRiskOwner($instanceRiskOwner);
+            }
+            if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp) {
+                $newInstanceRiskOp->setRiskOwnerSupervisor($this->getDuplicatedSupervisorReference(
+                    $sourceInstanceRiskOp->getRiskOwnerSupervisor(),
+                    $supervisorsOldIdsToNewObjects
+                ));
+                $newInstanceRiskOp->setResidualAcceptanceApproverSupervisor($this->getDuplicatedSupervisorReference(
+                    $sourceInstanceRiskOp->getResidualAcceptanceApproverSupervisor(),
+                    $supervisorsOldIdsToNewObjects
+                ));
+                $newInstanceRiskOp->setResidualRiskDecidedBySupervisor($this->getDuplicatedSupervisorReference(
+                    $sourceInstanceRiskOp->getResidualRiskDecidedBySupervisor(),
+                    $supervisorsOldIdsToNewObjects
+                ));
             }
 
             $this->instanceRiskOpTable->save($newInstanceRiskOp, false);
@@ -1531,6 +1868,17 @@ class AnrService
                 ->setCreator($this->connectedUser->getEmail());
             $this->operationalInstanceRiskScaleTable->save($operationalInstanceRiskScale, false);
         }
+    }
+
+    private function getDuplicatedSupervisorReference(
+        ?Entity\AnrSupervisor $sourceSupervisor,
+        array $supervisorsOldIdsToNewObjects
+    ): ?Entity\AnrSupervisor {
+        if ($sourceSupervisor === null) {
+            return null;
+        }
+
+        return $supervisorsOldIdsToNewObjects[$sourceSupervisor->getId()] ?? null;
     }
 
     private function duplicateInstanceConsequences(

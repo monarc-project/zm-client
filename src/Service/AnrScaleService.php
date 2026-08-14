@@ -74,7 +74,9 @@ class AnrScaleService
     public function areScalesNotEditable(Entity\Anr $anr): bool
     {
         $areScalesUpdatable = true;
-        if ($anr->getModelId() !== null) {
+        // An ANR created without a model stores the absence of a model as 0.
+        // Only a positive identifier can reference a common model.
+        if ($anr->getModelId() > 0) {
             /** @var CoreEntity\Model $model */
             $model = $this->modelTable->findById($anr->getModelId());
             $areScalesUpdatable = $model->areScalesUpdatable();

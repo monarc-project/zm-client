@@ -7,6 +7,8 @@
 
 namespace Monarc\FrontOffice\Import\Processor;
 
+use DateTime;
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Entity\UserSuperClass;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity;
@@ -41,12 +43,14 @@ class AnrMethodStepImportProcessor
             $anr->setInitAnrContext((int)$methodStepsData['steps']['initAnrContext'])
                 ->setInitEvalContext((int)$methodStepsData['steps']['initEvalContext'])
                 ->setInitRiskContext((int)$methodStepsData['steps']['initRiskContext'])
+                ->setInitReassessmentStrategy((int)($methodStepsData['steps']['initReassessmentStrategy'] ?? 0))
                 ->setInitDefContext((int)$methodStepsData['steps']['initDefContext'])
                 ->setModelImpacts((int)$methodStepsData['steps']['modelImpacts'])
                 ->setModelSummary((int)$methodStepsData['steps']['modelSummary'])
                 ->setEvalRisks((int)$methodStepsData['steps']['evalRisks'])
                 ->setEvalPlanRisks((int)$methodStepsData['steps']['evalPlanRisks'])
                 ->setManageRisks((int)$methodStepsData['steps']['manageRisks'])
+                ->setManageReassessmentTriggers((int)($methodStepsData['steps']['manageReassessmentTriggers'] ?? 0))
                 ->setUpdater($this->connectedUser->getEmail());
             $this->anrTable->save($anr, false);
         }
@@ -103,6 +107,25 @@ class AnrMethodStepImportProcessor
         $this->anrTable->save($anr, false);
     }
 
+    public function processReassessmentReviewData(Entity\Anr $anr, array $reassessmentReviewData): void
+    {
+        if (array_key_exists('lastReviewDate', $reassessmentReviewData)) {
+            $anr->setReassessmentLastReviewDate($this->createReassessmentReviewDate(
+                $reassessmentReviewData['lastReviewDate']
+            ));
+        }
+        if (array_key_exists('reviewFrequency', $reassessmentReviewData)) {
+            $reviewFrequency = (string)$reassessmentReviewData['reviewFrequency'];
+            if (!in_array($reviewFrequency, Entity\Anr::getAvailableReviewFrequencies(), true)) {
+                throw new Exception('Invalid reassessment review frequency', 412);
+            }
+            $anr->setReassessmentReviewFrequency($reviewFrequency);
+        }
+
+        $anr->setUpdater($this->connectedUser->getEmail());
+        $this->anrTable->save($anr, false);
+    }
+
     public function processInterviewsData(Entity\Anr $anr, array $interviewsData): void
     {
         foreach ($interviewsData as $interviewData) {
@@ -114,6 +137,24 @@ class AnrMethodStepImportProcessor
                 ->setCreator($this->connectedUser->getEmail());
             $this->interviewTable->saveEntity($newInterview, false);
         }
+    }
+
+    private function createReassessmentReviewDate(mixed $value): ?DateTime
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (!is_string($value)) {
+            throw new Exception('Invalid reassessment last review date', 412);
+        }
+
+        $date = DateTime::createFromFormat('!Y-m-d', $value);
+        if ($date === false || $date->format('Y-m-d') !== $value) {
+            throw new Exception('Invalid reassessment last review date', 412);
+        }
+
+        return $date;
     }
 
     private function processQuestionsData(Entity\Anr $anr, array $methodStepsData): void

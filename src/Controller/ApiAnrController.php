@@ -12,6 +12,7 @@ use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrService;
 use Monarc\FrontOffice\Validator\InputValidator\Anr\CreateAnrDataInputValidator;
+use Monarc\FrontOffice\Validator\InputValidator\Anr\CreateEmptyAnrDataInputValidator;
 
 class ApiAnrController extends AbstractRestfulControllerRequestHandler
 {
@@ -19,6 +20,7 @@ class ApiAnrController extends AbstractRestfulControllerRequestHandler
 
     public function __construct(
         private CreateAnrDataInputValidator $createAnrDataInputValidator,
+        private CreateEmptyAnrDataInputValidator $createEmptyAnrDataInputValidator,
         private AnrService $anrService
     ) {
     }
@@ -46,6 +48,14 @@ class ApiAnrController extends AbstractRestfulControllerRequestHandler
      */
     public function create($data)
     {
+        if (($data['emptyAnalysis'] ?? false) === true) {
+            $this->validatePostParams($this->createEmptyAnrDataInputValidator, $data);
+
+            $anr = $this->anrService->createEmpty($this->createEmptyAnrDataInputValidator->getValidData());
+
+            return $this->getSuccessfulJsonResponse(['id' => $anr->getId()]);
+        }
+
         $this->validatePostParams($this->createAnrDataInputValidator, $data);
 
         $anr = $this->anrService->createBasedOnModel($this->createAnrDataInputValidator->getValidData());

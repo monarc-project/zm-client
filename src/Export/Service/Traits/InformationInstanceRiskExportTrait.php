@@ -47,6 +47,10 @@ trait InformationInstanceRiskExportTrait
         return [
             'id' => $instanceRisk->getId(),
             'informationRisk' => $informationRiskData,
+            'riskSource' => $instanceRisk->getRiskSource() === null ? null : [
+                'id' => $instanceRisk->getRiskSource()->getId(),
+                'label' => $instanceRisk->getRiskSource()->getLabel(),
+            ],
             'threat' => $this->prepareThreatData($threat, $languageIndex, $withEval),
             'vulnerability' => $this->prepareVulnerabilityData($vulnerability, $languageIndex),
             'specific' => (int)$instanceRisk->isSpecific(),
@@ -65,7 +69,35 @@ trait InformationInstanceRiskExportTrait
             'riskIntegrity' => $withEval ? $instanceRisk->getRiskIntegrity() : -1,
             'riskAvailability' => $withEval ? $instanceRisk->getRiskAvailability() : -1,
             'context' => $withEval ? $instanceRisk->getContext() : '',
-            'riskOwner' => $withEval ? $instanceRisk->getInstanceRiskOwner()?->getName() : '',
+            'riskOwner' => $this->prepareLegacyRiskOwnerName($instanceRisk->getRiskOwnerSupervisor()),
+            'riskOwnerSupervisor' => $withEval
+                ? $this->prepareSupervisorIdentity($instanceRisk->getRiskOwnerSupervisor())
+                : null,
+            'lastReviewDate' => $withEval ? $instanceRisk->getLastReviewDate()?->format('Y-m-d') : null,
+            'reviewFrequency' => $withEval ? $instanceRisk->getReviewFrequency() : null,
+            'residualRiskDecision' => $withEval ? $instanceRisk->getResidualRiskDecision() : null,
+            'residualRiskDecidedAt' => $withEval ? $instanceRisk->getResidualRiskDecidedAt()?->format('Y-m-d') : null,
+            'residualAcceptanceUseRiskOwner' => $withEval ? $instanceRisk->isResidualAcceptanceUseRiskOwner() : false,
+            'residualAcceptanceApproverSupervisor' => $withEval
+                ? $this->prepareSupervisorIdentity($instanceRisk->getResidualAcceptanceApproverSupervisor())
+                : null,
+            'residualAcceptancePerformedByName' => $withEval ? $instanceRisk->getResidualAcceptancePerformedByName() : null,
+            'residualAcceptancePerformedByEmail' => $withEval ? $instanceRisk->getResidualAcceptancePerformedByEmail() : null,
+            'residualAcceptancePerformedOnBehalf' => $withEval
+                ? $instanceRisk->isResidualAcceptancePerformedOnBehalf()
+                : false,
+            'residualRiskJustification' => $withEval ? $instanceRisk->getResidualRiskJustification() : null,
+            'residualRiskAcceptance' => $withEval
+                ? $this->prepareResidualRiskAcceptanceData(
+                    $instanceRisk->getResidualRiskDecision(),
+                    $instanceRisk->getResidualAcceptanceApproverSupervisor(),
+                    $instanceRisk->getResidualRiskDecidedAt(),
+                    $instanceRisk->getResidualAcceptancePerformedByName(),
+                    $instanceRisk->getResidualAcceptancePerformedByEmail(),
+                    $instanceRisk->isResidualAcceptancePerformedOnBehalf(),
+                    $instanceRisk->getResidualRiskJustification()
+                )
+                : null,
             'recommendations' => $recommendationsData,
         ];
     }

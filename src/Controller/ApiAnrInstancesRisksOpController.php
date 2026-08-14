@@ -12,6 +12,8 @@ use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Validator\InputValidator\InstanceRiskOp\PatchInstanceRiskOpDataInputValidator;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrInstanceRiskOpService;
+use Monarc\FrontOffice\Service\AnrSupervisorService;
+use Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp\PatchDelegatedInstanceRiskOpDataInputValidator;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp\PostSpecificInstanceRiskOpDataInputValidator;
 use Monarc\FrontOffice\Validator\InputValidator\InstanceRiskOp\UpdateInstanceRiskOpDataInputValidator;
 
@@ -21,9 +23,11 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
 
     public function __construct(
         private AnrInstanceRiskOpService $anrInstanceRiskOpService,
+        private AnrSupervisorService $anrSupervisorService,
         private PostSpecificInstanceRiskOpDataInputValidator $postSpecificInstanceRiskOpDataInputValidator,
         private UpdateInstanceRiskOpDataInputValidator $updateInstanceRiskOpDataInputValidator,
-        private PatchInstanceRiskOpDataInputValidator $patchInstanceRiskOpDataInputValidator
+        private PatchInstanceRiskOpDataInputValidator $patchInstanceRiskOpDataInputValidator,
+        private PatchDelegatedInstanceRiskOpDataInputValidator $patchDelegatedInstanceRiskOpDataInputValidator
     ) {
     }
 
@@ -48,6 +52,7 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
     public function update($id, $data)
     {
         $this->validatePostParams($this->updateInstanceRiskOpDataInputValidator, $data);
+        $validatedData = $this->filterValidatedData($data, $this->updateInstanceRiskOpDataInputValidator->getValidData());
 
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
@@ -55,35 +60,87 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
         $instanceRiskOp = $this->anrInstanceRiskOpService->update(
             $anr,
             (int)$id,
-            $this->updateInstanceRiskOpDataInputValidator->getValidData()
+            $validatedData
         );
 
-        return $this->getPreparedJsonResponse([
-            'cacheBrutRisk' => $instanceRiskOp->getCacheBrutRisk(),
-            'cacheNetRisk' => $instanceRiskOp->getCacheNetRisk(),
-            'cacheTargetedRisk' => $instanceRiskOp->getCacheTargetedRisk(),
-        ]);
+        return $this->getPreparedJsonResponse($this->prepareInstanceRiskOpResponse($instanceRiskOp));
     }
+
     /**
      * @param array $data
      */
     public function patch($id, $data)
     {
-        $this->validatePostParams($this->patchInstanceRiskOpDataInputValidator, $data);
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $instanceRiskOp = $this->anrInstanceRiskOpService->updateScaleValue(
+        if (array_key_exists('instanceRiskScaleId', $data)) {
+            $this->validatePostParams($this->patchInstanceRiskOpDataInputValidator, $data);
+            $instanceRiskOp = $this->anrInstanceRiskOpService->updateScaleValue(
+                $anr,
+                (int)$id,
+                $this->patchInstanceRiskOpDataInputValidator->getValidData()
+            );
+
+            return $this->getPreparedJsonResponse([
+                'cacheBrutRisk' => $instanceRiskOp->getCacheBrutRisk(),
+                'cacheNetRisk' => $instanceRiskOp->getCacheNetRisk(),
+                'cacheTargetedRisk' => $instanceRiskOp->getCacheTargetedRisk(),
+            ]);
+        }
+
+        $this->validatePostParams($this->patchDelegatedInstanceRiskOpDataInputValidator, $data);
+        $validatedData = $this->filterValidatedData($data, $this->patchDelegatedInstanceRiskOpDataInputValidator->getValidData());
+
+        $instanceRiskOp = $this->anrInstanceRiskOpService->update(
             $anr,
             (int)$id,
-            $this->patchInstanceRiskOpDataInputValidator->getValidData()
+            $validatedData
         );
 
-        return $this->getPreparedJsonResponse([
+        return $this->getPreparedJsonResponse($this->prepareInstanceRiskOpResponse($instanceRiskOp));
+    }
+
+    private function prepareInstanceRiskOpResponse($instanceRiskOp): array
+    {
+        return [
             'cacheBrutRisk' => $instanceRiskOp->getCacheBrutRisk(),
             'cacheNetRisk' => $instanceRiskOp->getCacheNetRisk(),
             'cacheTargetedRisk' => $instanceRiskOp->getCacheTargetedRisk(),
-        ]);
+            'riskSourceId' => $instanceRiskOp->getRiskSource()?->getId(),
+            'riskSourceLabel' => $instanceRiskOp->getRiskSource()?->getLabel() ?? '',
+            'owner' => $instanceRiskOp->getRiskOwnerSupervisor()?->getName() ?? '',
+            'riskOwnerSupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
+                $instanceRiskOp->getRiskOwnerSupervisor()
+            ),
+            'riskOwnerSupervisorId' => $instanceRiskOp->getRiskOwnerSupervisor()?->getId(),
+            'riskOwnerSupervisorName' => $instanceRiskOp->getRiskOwnerSupervisor()?->getName(),
+            'lastReviewDate' => $instanceRiskOp->getLastReviewDate()?->format('Y-m-d'),
+            'nextReassessmentDate' => $instanceRiskOp->getNextReassessmentDate()?->format('Y-m-d'),
+            'reassessmentTriggers' => array_map(static fn ($trigger): array => [
+                'id' => $trigger->getId(),
+                'triggerType' => $trigger->getTriggerType(),
+                'description' => $trigger->getDescription(),
+            ], $instanceRiskOp->getReassessmentTriggers()->toArray()),
+            'reviewFrequency' => $instanceRiskOp->getReviewFrequency(),
+            'residualRiskDecision' => $instanceRiskOp->getResidualRiskDecision(),
+            'residualAcceptanceUseRiskOwner' => $instanceRiskOp->isResidualAcceptanceUseRiskOwner(),
+            'residualAcceptanceApproverSupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
+                $instanceRiskOp->getResidualAcceptanceApproverSupervisor()
+            ),
+            'residualAcceptanceApproverSupervisorId' => $instanceRiskOp->getResidualAcceptanceApproverSupervisor()?->getId(),
+            'residualAcceptancePerformedByName' => $instanceRiskOp->getResidualAcceptancePerformedByName(),
+            'residualAcceptancePerformedByEmail' => $instanceRiskOp->getResidualAcceptancePerformedByEmail(),
+            'residualAcceptancePerformedOnBehalf' => $instanceRiskOp->isResidualAcceptancePerformedOnBehalf(),
+            'residualRiskDecidedBySupervisor' => $this->anrSupervisorService->prepareSupervisorReference(
+                $instanceRiskOp->getResidualRiskDecidedBySupervisor()
+            ),
+            'residualRiskDecidedBySupervisorId' => $instanceRiskOp->getResidualRiskDecidedBySupervisor()?->getId(),
+            'residualRiskDecidedByUserId' => $instanceRiskOp->getResidualRiskDecidedByUser()?->getId(),
+            'residualRiskDecidedByName' => $instanceRiskOp->getResidualRiskDecidedBySupervisor()?->getName(),
+            'residualRiskDecidedAt' => $instanceRiskOp->getResidualRiskDecidedAt()?->format('Y-m-d'),
+            'residualRiskJustification' => $instanceRiskOp->getResidualRiskJustification(),
+        ];
     }
 
     public function delete($id)
@@ -94,5 +151,10 @@ class ApiAnrInstancesRisksOpController extends AbstractRestfulControllerRequestH
         $this->anrInstanceRiskOpService->delete($anr, (int)$id);
 
         return $this->getSuccessfulJsonResponse();
+    }
+    
+    private function filterValidatedData(array $sourceData, array $validatedData): array
+    {
+        return array_intersect_key($validatedData, $sourceData);
     }
 }
