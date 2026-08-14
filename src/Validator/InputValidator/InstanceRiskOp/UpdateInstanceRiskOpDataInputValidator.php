@@ -27,7 +27,16 @@ class UpdateInstanceRiskOpDataInputValidator extends CoreUpdateInstanceRiskOpDat
                 'required' => false,
                 'filters' => [
                     [
-                        'name' => ToInt::class,
+                        'name' => Callback::class,
+                        'options' => [
+                            'callback' => static function ($value): ?int {
+                                if ($value === null || $value === '') {
+                                    return null;
+                                }
+
+                                return (int)$value;
+                            },
+                        ],
                     ],
                 ],
                 'validators' => [],
