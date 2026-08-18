@@ -102,8 +102,8 @@ class AddAnrSupervisors extends AbstractMigration
             INNER JOIN instance_risk_owners iro ON iro.id = ir.risk_owner_id
             INNER JOIN anr_supervisors s
                 ON s.anr_id = iro.anr_id
-                AND s.name COLLATE utf8mb4_unicode_ci
-                    = iro.name COLLATE utf8mb4_unicode_ci
+                AND CONVERT(s.name USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    = CONVERT(iro.name USING utf8mb4) COLLATE utf8mb4_unicode_ci
             SET ir.risk_owner_supervisor_id = s.id
             WHERE ir.risk_owner_id IS NOT NULL;'
         );
@@ -113,8 +113,8 @@ class AddAnrSupervisors extends AbstractMigration
             INNER JOIN instance_risk_owners iro ON iro.id = iropr.risk_owner_id
             INNER JOIN anr_supervisors s
                 ON s.anr_id = iro.anr_id
-                AND s.name COLLATE utf8mb4_unicode_ci
-                    = iro.name COLLATE utf8mb4_unicode_ci
+                AND CONVERT(s.name USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    = CONVERT(iro.name USING utf8mb4) COLLATE utf8mb4_unicode_ci
             SET iropr.risk_owner_supervisor_id = s.id
             WHERE iropr.risk_owner_id IS NOT NULL;'
         );
