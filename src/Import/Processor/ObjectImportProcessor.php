@@ -100,7 +100,10 @@ class ObjectImportProcessor
             if (isset($objectData['label'])) {
                 $objectData['label' . $anr->getLanguage()] = $objectData['label'];
             }
-            $objectData[$nameFiledKey] = $this->prepareUniqueObjectName($objectData[$nameFiledKey]);
+            $objectData[$nameFiledKey] = $this->prepareUniqueObjectName(
+                $objectData[$nameFiledKey],
+                $objectCategory?->getId()
+            );
 
             $object = $this->anrObjectService
                 ->createMonarcObject($anr, $asset, $objectCategory, $rolfTag, $objectData, false);
@@ -111,11 +114,14 @@ class ObjectImportProcessor
                 $objectData[$nameFiledKey] . $asset->getUuid() . $object->getScope() . $objectCategory?->getId()
             );
             $this->importCacheHelper
-                ->addItemToArrayCache('objects_names', $objectData[$nameFiledKey], $objectData[$nameFiledKey]);
-        } elseif ($this->importCacheHelper->isItemInArrayCache(
-            'processed_objects_by_current_uuids',
-            $object->getUuid()
-        )) {
+                ->addItemToArrayCache(
+                    'objects_names_by_category',
+                    $objectData[$nameFiledKey],
+                    $this->getObjectNameCacheKey($objectData[$nameFiledKey], $objectCategory?->getId())
+                );
+        } elseif (
+            $this->importCacheHelper->isItemInArrayCache('processed_objects_by_current_uuids', $object->getUuid())
+        ) {
             $this->importCacheHelper->addItemToArrayCache('processed_objects_by_old_uuids', $object, $currentObjectUuid);
 
             return $object;
@@ -190,9 +196,12 @@ class ObjectImportProcessor
                     . $object->getCategory()?->getId()
                 );
                 $this->importCacheHelper->addItemToArrayCache(
-                    'objects_names',
+                    'objects_names_by_category',
                     $object->getName($languageIndex),
-                    $object->getName($languageIndex)
+                    $this->getObjectNameCacheKey(
+                        $object->getName($languageIndex),
+                        $object->getCategory()?->getId()
+                    )
                 );
             }
         }
@@ -203,19 +212,27 @@ class ObjectImportProcessor
         );
     }
 
-    private function prepareUniqueObjectName(string $objectName, int $index = 1): string
+    private function prepareUniqueObjectName(string $objectName, ?int $categoryId, int $index = 1): string
     {
-        if ($this->importCacheHelper->isItemInArrayCache('objects_names', $objectName)) {
+        if ($this->importCacheHelper->isItemInArrayCache(
+            'objects_names_by_category',
+            $this->getObjectNameCacheKey($objectName, $categoryId)
+        )) {
             if (str_contains($objectName, ' - Imp. #')) {
                 $objectName = preg_replace('/#\d+/', '#' . $index, $objectName);
             } else {
                 $objectName .= ' - Imp. #' . $index;
             }
 
-            return $this->prepareUniqueObjectName($objectName, $index + 1);
+            return $this->prepareUniqueObjectName($objectName, $categoryId, $index + 1);
         }
 
         return $objectName;
+    }
+
+    private function getObjectNameCacheKey(string $objectName, ?int $categoryId): string
+    {
+        return ($categoryId ?? 'root') . ':' . $objectName;
     }
 
     /** Merges the amvs (information risks) of the existing object. */
