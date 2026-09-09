@@ -53,187 +53,48 @@ class AddAnrSupervisors extends AbstractMigration
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;'
         );
 
-        $this->table('instances_risks')
-            ->addColumn('risk_owner_supervisor_id', 'integer', ['null' => true, 'signed' => false, 'after' => 'risk_owner_id'])
-            ->addColumn(
-                'residual_acceptance_use_risk_owner',
-                'boolean',
-                ['default' => false, 'after' => 'residual_risk_decision']
-            )
-            ->addColumn(
-                'residual_acceptance_approver_supervisor_id',
-                'integer',
-                ['null' => true, 'signed' => false, 'after' => 'residual_acceptance_use_risk_owner']
-            )
-            ->addColumn(
-                'residual_acceptance_performed_by_name',
-                'string',
-                ['limit' => 255, 'null' => true, 'after' => 'residual_acceptance_approver_supervisor_id']
-            )
-            ->addColumn(
-                'residual_acceptance_performed_by_email',
-                'string',
-                ['limit' => 255, 'null' => true, 'after' => 'residual_acceptance_performed_by_name']
-            )
-            ->addColumn(
-                'residual_acceptance_performed_on_behalf',
-                'boolean',
-                ['default' => false, 'after' => 'residual_acceptance_performed_by_email']
-            )
-            ->addColumn(
-                'residual_risk_decided_by_supervisor_id',
-                'integer',
-                ['null' => true, 'signed' => false, 'after' => 'residual_acceptance_performed_on_behalf']
-            )
-            ->addColumn(
-                'residual_risk_decided_by_user_id',
-                'integer',
-                ['null' => true, 'signed' => false, 'after' => 'residual_risk_decided_by_supervisor_id']
-            )
-            ->addColumn(
-                'residual_risk_decided_at',
-                'datetime',
-                ['null' => true, 'after' => 'residual_risk_decided_by_user_id']
-            )
-            ->addIndex(['risk_owner_supervisor_id'], ['name' => 'risk_owner_supervisor_id'])
-            ->addIndex(
-                ['residual_acceptance_approver_supervisor_id'],
-                ['name' => 'residual_acceptance_approver_supervisor_id']
-            )
-            ->addIndex(
-                ['residual_risk_decided_by_supervisor_id'],
-                ['name' => 'residual_risk_decided_by_supervisor_id']
-            )
-            ->addIndex(['residual_risk_decided_by_user_id'], ['name' => 'residual_risk_decided_by_user_id'])
-            ->addForeignKey(
-                'risk_owner_supervisor_id',
-                'anr_supervisors',
-                'id',
-                ['delete' => 'SET_NULL', 'update' => 'RESTRICT']
-            )
-            ->addForeignKey(
-                'residual_acceptance_approver_supervisor_id',
-                'anr_supervisors',
-                'id',
-                ['delete' => 'SET_NULL', 'update' => 'RESTRICT']
-            )
-            ->addForeignKey(
-                'residual_risk_decided_by_supervisor_id',
-                'anr_supervisors',
-                'id',
-                ['delete' => 'SET_NULL', 'update' => 'RESTRICT']
-            )
-            ->addForeignKey(
-                'residual_risk_decided_by_user_id',
-                'users',
-                'id',
-                ['delete' => 'SET_NULL', 'update' => 'RESTRICT']
-            )
-            ->removeColumn('residual_risk_approved_at')
-            ->removeColumn('residual_risk_approved_by')
-            ->update();
+        $this->updateRiskTable(
+            'instances_risks',
+            '',
+            [
+                'risk_owner_supervisor_id' => ['integer', ['null' => true, 'signed' => false, 'after' => 'risk_owner_id']],
+                'residual_acceptance_use_risk_owner' => ['boolean', ['default' => false, 'after' => 'residual_risk_decision']],
+                'residual_acceptance_approver_supervisor_id' => ['integer', ['null' => true, 'signed' => false, 'after' => 'residual_acceptance_use_risk_owner']],
+                'residual_acceptance_performed_by_name' => ['string', ['limit' => 255, 'null' => true, 'after' => 'residual_acceptance_approver_supervisor_id']],
+                'residual_acceptance_performed_by_email' => ['string', ['limit' => 255, 'null' => true, 'after' => 'residual_acceptance_performed_by_name']],
+                'residual_acceptance_performed_on_behalf' => ['boolean', ['default' => false, 'after' => 'residual_acceptance_performed_by_email']],
+                'residual_risk_decided_by_supervisor_id' => ['integer', ['null' => true, 'signed' => false, 'after' => 'residual_acceptance_performed_on_behalf']],
+                'residual_risk_decided_by_user_id' => ['integer', ['null' => true, 'signed' => false, 'after' => 'residual_risk_decided_by_supervisor_id']],
+                'residual_risk_decided_at' => ['datetime', ['null' => true, 'after' => 'residual_risk_decided_by_user_id']],
+            ]
+        );
 
-        $this->table('instances_risks_op')
-            ->addColumn('risk_owner_supervisor_id', 'integer', ['null' => true, 'signed' => false, 'after' => 'risk_owner_id'])
-            ->addColumn(
-                'residual_acceptance_use_risk_owner',
-                'boolean',
-                ['default' => false, 'after' => 'residual_risk_decision']
-            )
-            ->addColumn(
-                'residual_acceptance_approver_supervisor_id',
-                'integer',
-                ['null' => true, 'signed' => false, 'after' => 'residual_acceptance_use_risk_owner']
-            )
-            ->addColumn(
-                'residual_acceptance_performed_by_name',
-                'string',
-                ['limit' => 255, 'null' => true, 'after' => 'residual_acceptance_approver_supervisor_id']
-            )
-            ->addColumn(
-                'residual_acceptance_performed_by_email',
-                'string',
-                ['limit' => 255, 'null' => true, 'after' => 'residual_acceptance_performed_by_name']
-            )
-            ->addColumn(
-                'residual_acceptance_performed_on_behalf',
-                'boolean',
-                ['default' => false, 'after' => 'residual_acceptance_performed_by_email']
-            )
-            ->addColumn(
-                'residual_risk_decided_by_supervisor_id',
-                'integer',
-                ['null' => true, 'signed' => false, 'after' => 'residual_acceptance_performed_on_behalf']
-            )
-            ->addColumn(
-                'residual_risk_decided_by_user_id',
-                'integer',
-                ['null' => true, 'signed' => false, 'after' => 'residual_risk_decided_by_supervisor_id']
-            )
-            ->addColumn(
-                'residual_risk_decided_at',
-                'datetime',
-                ['null' => true, 'after' => 'residual_risk_decided_by_user_id']
-            )
-            ->addIndex(['risk_owner_supervisor_id'], ['name' => 'op_risk_owner_supervisor_id'])
-            ->addIndex(
-                ['residual_acceptance_approver_supervisor_id'],
-                ['name' => 'op_residual_acceptance_approver_supervisor_id']
-            )
-            ->addIndex(
-                ['residual_risk_decided_by_supervisor_id'],
-                ['name' => 'op_residual_risk_decided_by_supervisor_id']
-            )
-            ->addIndex(
-                ['residual_risk_decided_by_user_id'],
-                ['name' => 'op_residual_risk_decided_by_user_id']
-            )
-            ->addForeignKey(
-                'risk_owner_supervisor_id',
-                'anr_supervisors',
-                'id',
-                ['delete' => 'SET_NULL', 'update' => 'RESTRICT']
-            )
-            ->addForeignKey(
-                'residual_acceptance_approver_supervisor_id',
-                'anr_supervisors',
-                'id',
-                ['delete' => 'SET_NULL', 'update' => 'RESTRICT']
-            )
-            ->addForeignKey(
-                'residual_risk_decided_by_supervisor_id',
-                'anr_supervisors',
-                'id',
-                ['delete' => 'SET_NULL', 'update' => 'RESTRICT']
-            )
-            ->addForeignKey(
-                'residual_risk_decided_by_user_id',
-                'users',
-                'id',
-                ['delete' => 'SET_NULL', 'update' => 'RESTRICT']
-            )
-            ->removeColumn('residual_risk_approved_at')
-            ->removeColumn('residual_risk_approved_by')
-            ->update();
+        $this->updateRiskTable(
+            'instances_risks_op',
+            'op_',
+            [
+                'risk_owner_supervisor_id' => ['integer', ['null' => true, 'signed' => false, 'after' => 'risk_owner_id']],
+                'residual_acceptance_use_risk_owner' => ['boolean', ['default' => false, 'after' => 'residual_risk_decision']],
+                'residual_acceptance_approver_supervisor_id' => ['integer', ['null' => true, 'signed' => false, 'after' => 'residual_acceptance_use_risk_owner']],
+                'residual_acceptance_performed_by_name' => ['string', ['limit' => 255, 'null' => true, 'after' => 'residual_acceptance_approver_supervisor_id']],
+                'residual_acceptance_performed_by_email' => ['string', ['limit' => 255, 'null' => true, 'after' => 'residual_acceptance_performed_by_name']],
+                'residual_acceptance_performed_on_behalf' => ['boolean', ['default' => false, 'after' => 'residual_acceptance_performed_by_email']],
+                'residual_risk_decided_by_supervisor_id' => ['integer', ['null' => true, 'signed' => false, 'after' => 'residual_acceptance_performed_on_behalf']],
+                'residual_risk_decided_by_user_id' => ['integer', ['null' => true, 'signed' => false, 'after' => 'residual_risk_decided_by_supervisor_id']],
+                'residual_risk_decided_at' => ['datetime', ['null' => true, 'after' => 'residual_risk_decided_by_user_id']],
+            ]
+        );
 
         $this->execute(
             'INSERT INTO anr_supervisors (anr_id, name, email, linked_user_id, is_active, creator, created_at)
             SELECT iro.anr_id, iro.name, NULL, NULL, 1, iro.creator, COALESCE(iro.created_at, NOW())
-            FROM instance_risk_owners iro
-            LEFT JOIN anr_supervisors s
-                ON s.anr_id = iro.anr_id
-                AND LOWER(TRIM(s.name)) = LOWER(TRIM(iro.name))
-            WHERE s.id IS NULL;'
+            FROM instance_risk_owners iro;'
         );
 
         $this->execute(
             "INSERT INTO anr_supervisor_roles (anr_supervisor_id, role, creator, created_at)
             SELECT s.id, 'risk_owner', COALESCE(s.creator, 'System'), COALESCE(s.created_at, NOW())
-            FROM anr_supervisors s
-            LEFT JOIN anr_supervisor_roles sr
-                ON sr.anr_supervisor_id = s.id
-                AND sr.role = 'risk_owner'
-            WHERE sr.id IS NULL;"
+            FROM anr_supervisors s;"
         );
 
         $this->execute(
@@ -241,7 +102,8 @@ class AddAnrSupervisors extends AbstractMigration
             INNER JOIN instance_risk_owners iro ON iro.id = ir.risk_owner_id
             INNER JOIN anr_supervisors s
                 ON s.anr_id = iro.anr_id
-                AND LOWER(TRIM(s.name)) = LOWER(TRIM(iro.name))
+                AND CONVERT(s.name USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    = CONVERT(iro.name USING utf8mb4) COLLATE utf8mb4_unicode_ci
             SET ir.risk_owner_supervisor_id = s.id
             WHERE ir.risk_owner_id IS NOT NULL;'
         );
@@ -251,10 +113,52 @@ class AddAnrSupervisors extends AbstractMigration
             INNER JOIN instance_risk_owners iro ON iro.id = iropr.risk_owner_id
             INNER JOIN anr_supervisors s
                 ON s.anr_id = iro.anr_id
-                AND LOWER(TRIM(s.name)) = LOWER(TRIM(iro.name))
+                AND CONVERT(s.name USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    = CONVERT(iro.name USING utf8mb4) COLLATE utf8mb4_unicode_ci
             SET iropr.risk_owner_supervisor_id = s.id
             WHERE iropr.risk_owner_id IS NOT NULL;'
         );
+    }
+
+    /**
+     * Adds the supervisor-related schema only where a previous deployment has not already created it.
+     *
+     * @param array<string, array{0: string, 1: array<string, mixed>}> $columns
+     */
+    private function updateRiskTable(string $tableName, string $indexPrefix, array $columns): void
+    {
+        $table = $this->table($tableName);
+        foreach ($columns as $name => [$type, $options]) {
+            if (!$table->hasColumn($name)) {
+                $table->addColumn($name, $type, $options);
+            }
+        }
+
+        foreach (['residual_risk_approved_at', 'residual_risk_approved_by'] as $column) {
+            if ($table->hasColumn($column)) {
+                $table->removeColumn($column);
+            }
+        }
+
+        $table->update();
+        $table = $this->table($tableName);
+        $foreignKeys = [
+            'risk_owner_supervisor_id' => 'anr_supervisors',
+            'residual_acceptance_approver_supervisor_id' => 'anr_supervisors',
+            'residual_risk_decided_by_supervisor_id' => 'anr_supervisors',
+            'residual_risk_decided_by_user_id' => 'users',
+        ];
+
+        foreach ($foreignKeys as $column => $referenceTable) {
+            if (!$table->hasIndex([$column])) {
+                $table->addIndex([$column], ['name' => $indexPrefix . $column]);
+            }
+            if (!$table->hasForeignKey([$column])) {
+                $table->addForeignKey($column, $referenceTable, 'id', ['delete' => 'SET_NULL', 'update' => 'RESTRICT']);
+            }
+        }
+
+        $table->update();
     }
 
     public function down(): void
