@@ -20,7 +20,8 @@ class ApiAnrRecommendationsSetsController extends AbstractRestfulControllerReque
     public function __construct(
         private AnrRecommendationSetService $anrRecommendationSetService,
         private PostRecommendationSetDataInputValidator $postRecommendationSetDataInputValidator
-    ) {}
+    ) {
+    }
 
     public function getList()
     {

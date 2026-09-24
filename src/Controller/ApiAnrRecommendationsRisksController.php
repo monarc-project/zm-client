@@ -24,7 +24,8 @@ class ApiAnrRecommendationsRisksController extends AbstractRestfulControllerRequ
         private PostRecommendationRiskDataInputValidator $postRecommendationRiskDataInputValidator,
         private PatchRecommendationRiskDataInputValidator $patchRecommendationRiskDataInputValidator,
         private GetRecommendationRisksInputFormatter $getRecommendationRisksInputFormatter
-    ) {}
+    ) {
+    }
 
     public function getList()
     {

@@ -51,7 +51,9 @@ class ObjectExportService
 
         return [
             'filename' => preg_replace(
-                "/[^a-z0-9._-]+/i", '', $monarcObject->getName($anr->getLanguage()) . ($isForMosp ? '_MOSP' : '')
+                "/[^a-z0-9._-]+/i",
+                '',
+                $monarcObject->getName($anr->getLanguage()) . ($isForMosp ? '_MOSP' : '')
             ),
             'content' => empty($exportParams['password'])
                 ? $jsonResult

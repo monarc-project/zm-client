@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 namespace Monarc\FrontOffice\Validator\InputValidator\RiskSource;
+
 use Laminas\Validator\StringLength;
 use Laminas\Filter\Callback;
 use Laminas\Filter\StringTrim;

@@ -42,4 +42,3 @@ class IsModelActiveValidator extends AbstractValidator
         return true;
     }
 }
-

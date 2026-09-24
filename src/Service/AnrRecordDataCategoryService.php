@@ -30,15 +30,16 @@ class AnrRecordDataCategoryService extends AbstractService
     public function createDataCategory($data)
     {
         $dc = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $data['anr']->getId()]);
-        if(count($dc)) {
+        if (count($dc)) {
             return $dc[0]->getId();
         }
         return $this->create($data, true);
     }
 
-    public function orphanDataCategory($dataCategoryId, $anrId) {
+    public function orphanDataCategory($dataCategoryId, $anrId)
+    {
         $personalData = $this->personalDataTable->getEntityByFields(['dataCategories' => $dataCategoryId, 'anr' => $anrId]);
-        if(count($personalData)> 0) {
+        if (count($personalData)> 0) {
             return false;
         }
         return true;

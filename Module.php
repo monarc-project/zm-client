@@ -9,6 +9,7 @@ namespace Monarc\FrontOffice;
 
 use Laminas\Stdlib\ResponseInterface;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Scenario\Service\ScenarioDelegatedAuthenticationService;
 use Laminas\Http\Request;
 use Laminas\Mvc\ModuleRouteListener;
 use Laminas\Mvc\MvcEvent;
@@ -27,6 +28,9 @@ class Module
 
             $this->initRbac($e);
 
+            // Route matching runs at priority 1. Resolve the BFF identity
+            // immediately afterwards and before the route-level RBAC check.
+            $eventManager->attach(MvcEvent::EVENT_ROUTE, [$this, 'resolveScenarioDelegatedIdentity'], 1);
             $eventManager->attach(MvcEvent::EVENT_ROUTE, [$this, 'checkRbac'], 0);
             $eventManager->attach(MvcEvent::EVENT_DISPATCH_ERROR, [$this, 'onDispatchError'], 0);
             $eventManager->attach(MvcEvent::EVENT_RENDER_ERROR, [$this, 'onRenderError'], 0);
@@ -164,6 +168,40 @@ class Module
 
         $response = $mvcEvent->getResponse();
         $response->setStatusCode($connectedUser === null ? 401 : 403);
+
+        return $response;
+    }
+
+    /** Resolve the BFF-held session before the normal RBAC listener runs. */
+    public function resolveScenarioDelegatedIdentity(MvcEvent $mvcEvent): ?ResponseInterface
+    {
+        $routeMatch = $mvcEvent->getRouteMatch();
+        if ($routeMatch === null || !in_array($routeMatch->getMatchedRouteName(), [
+            'scenario_v1_anr_analysis',
+            'scenario_v1_anr_template',
+            'scenario_v1_frontoffice_templates',
+        ], true)) {
+            return null;
+        }
+        /** @var Request $request */
+        $request = $mvcEvent->getRequest();
+        $session = $request->getHeader('x-scenario-session');
+        $serviceToken = $request->getHeader('x-scenario-service-token');
+        $serviceManager = $mvcEvent->getApplication()->getServiceManager();
+        /** @var ScenarioDelegatedAuthenticationService $authentication */
+        $authentication = $serviceManager->get(ScenarioDelegatedAuthenticationService::class);
+        $anrId = $routeMatch->getParam('anrid');
+        if ($authentication->authenticate(
+            $session === false ? null : $session->getFieldValue(),
+            $serviceToken === false ? null : $serviceToken->getFieldValue(),
+            $anrId === null ? null : (int) $anrId
+        )) {
+            return null;
+        }
+        $response = $mvcEvent->getResponse();
+        $response->setStatusCode(403);
+        $mvcEvent->setResult($response);
+        $mvcEvent->stopPropagation(true);
 
         return $response;
     }

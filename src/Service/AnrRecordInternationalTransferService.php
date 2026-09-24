@@ -37,17 +37,17 @@ class AnrRecordInternationalTransferService extends AbstractService
             throw new \Monarc\Core\Exception\Exception('Entity `id` not found.');
         }
         $return = [];
-        if($entity->organisation != "") {
+        if ($entity->organisation != "") {
             $return["organisation"] = $entity->organisation;
         }
-        if($entity->description != "") {
+        if ($entity->description != "") {
             $return["description"] = $entity->description;
         }
-        if($entity->country != "") {
+        if ($entity->country != "") {
             $return["country"] = $entity->country;
         }
 
-        if($entity->documents != "") {
+        if ($entity->documents != "") {
             $return["documents"] = $entity->documents;
         }
         return $return;

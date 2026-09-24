@@ -51,13 +51,13 @@ class AnrRecordPersonalDataService extends AbstractService
         $personalDataEntity = $this->get('table')->getEntity($id);
         $anrId = $personalDataEntity->getAnr()->getId();
         $dataCategoriesToCheck = [];
-        foreach($personalDataEntity->dataCategories as $dc) {
+        foreach ($personalDataEntity->dataCategories as $dc) {
             $dataCategoriesToCheck[] = $dc->id;
         }
 
         $result = $this->get('table')->delete($id);
-        foreach($dataCategoriesToCheck as $dc) {
-            if($this->recordDataCategoryService->orphanDataCategory($dc, $anrId)) {
+        foreach ($dataCategoriesToCheck as $dc) {
+            if ($this->recordDataCategoryService->orphanDataCategory($dc, $anrId)) {
                 $this->recordDataCategoryService->delete(['anr'=> $anrId, 'id' => $dc]);
             }
         }
@@ -88,8 +88,8 @@ class AnrRecordPersonalDataService extends AbstractService
             $oldDataCategories[] = $dc->id;
         }
         $result = $this->update($id, $data);
-        foreach($oldDataCategories as $dc) {
-            if(!in_array($dc, $dataCategories)
+        foreach ($oldDataCategories as $dc) {
+            if (!in_array($dc, $dataCategories)
                 && $this->recordDataCategoryService->orphanDataCategory($dc, $data['anr'])
             ) {
                 $this->recordDataCategoryService->delete(['anr' => $data['anr'], 'id' => $dc]);
@@ -116,8 +116,8 @@ class AnrRecordPersonalDataService extends AbstractService
         if ($entity->dataSubject != "") {
             $return["data_subject"] = $entity->dataSubject;
         }
-        if($entity->dataCategories) {
-            foreach($entity->dataCategories as $dc) {
+        if ($entity->dataCategories) {
+            foreach ($entity->dataCategories as $dc) {
                 $return['data_categories'][] = $this->recordDataCategoryService->generateExportArray($dc->id);
             }
         }
@@ -127,7 +127,7 @@ class AnrRecordPersonalDataService extends AbstractService
         $return["retention_period"] = $entity->retentionPeriod;
         if ($entity->retentionPeriodMode == 0) {
             $return["retention_period_mode"] = "day(s)";
-        } else if ($entity->retentionPeriodMode == 1){
+        } elseif ($entity->retentionPeriodMode == 1) {
             $return["retention_period_mode"] = "month(s)";
         } else {
             $return["retention_period_mode"] = "year(s)";
@@ -148,7 +148,7 @@ class AnrRecordPersonalDataService extends AbstractService
     {
         $newData = [];
         $newData['anr'] = $anr;
-        if(isset($data['data_categories'])) {
+        if (isset($data['data_categories'])) {
             foreach ($data['data_categories'] as $dc) {
                 $dataCategory = [];
                 $dataCategory["id"] = $this->recordDataCategoryService->importFromArray($dc, $anr);
@@ -163,9 +163,9 @@ class AnrRecordPersonalDataService extends AbstractService
         $newData['retentionPeriod'] = $data['retention_period'];
         if (substr($data['retention_period_mode'], 0, 3) == "day") {
             $newData["retentionPeriodMode"] = 0;
-        } else if (substr($data['retention_period_mode'], 0, 3) == "mon") {
+        } elseif (substr($data['retention_period_mode'], 0, 3) == "mon") {
             $newData["retentionPeriodMode"] = 1;
-        }  else {
+        } else {
             $newData["retentionPeriodMode"] = 2;
         }
         $this->updatePersonalData($id, $newData);

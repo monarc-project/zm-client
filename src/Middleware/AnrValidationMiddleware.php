@@ -42,7 +42,9 @@ class AnrValidationMiddleware implements MiddlewareInterface
         'residualAcceptancePerformedOnBehalf',
     ];
 
-    private Entity\User $connectedUser;
+    private ConnectedUserService $connectedUserService;
+
+    private ?Entity\User $connectedUser = null;
 
     public function __construct(
         private Table\AnrTable $anrTable,
@@ -55,13 +57,16 @@ class AnrValidationMiddleware implements MiddlewareInterface
         private ResponseFactory $responseFactory,
         ConnectedUserService $connectedUserService
     ) {
-        /** @var Entity\User $connectedUser */
-        $connectedUser = $connectedUserService->getConnectedUser();
-        $this->connectedUser = $connectedUser;
+        $this->connectedUserService = $connectedUserService;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        $connectedUser = $this->connectedUserService->getConnectedUser();
+        if (!$connectedUser instanceof Entity\User) {
+            return $this->responseFactory->createResponse(StatusCodeInterface::STATUS_FORBIDDEN);
+        }
+        $this->connectedUser = $connectedUser;
         /** @var RouteMatch $routeMatch */
         $routeMatch = $request->getAttribute(RouteMatch::class);
 
@@ -97,7 +102,7 @@ class AnrValidationMiddleware implements MiddlewareInterface
         /* Ensure the record of the anr is presented in the table, means at least read permissions are allowed.
          * It's necessary e.g. for the "monarc_api_duplicate_client_anr" route. */
         $userAnr = $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser);
-        /* Supervisor view access is also allowed even if there is no explicit permission for the anr. */ 
+        /* Supervisor view access is also allowed even if there is no explicit permission for the anr. */
         $hasSupervisorViewAccess = $this->anrSupervisorService
             ->findLinkedSupervisor($anr, $this->connectedUser) !== null;
         $hasSnapshotSupervisorViewAccess = $anr->isAnrSnapshot()

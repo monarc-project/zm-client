@@ -28,11 +28,14 @@ use Monarc\FrontOffice\Middleware\AnrValidationMiddleware;
 use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Model\Table as DeprecatedTable;
+use Monarc\FrontOffice\Scenario;
 use Monarc\FrontOffice\Service;
 use Monarc\FrontOffice\Service\Model\Entity as ModelFactory;
 use Monarc\FrontOffice\Stats;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Validator\InputValidator;
+use Monarc\Core\Scenario\Feature\ScenarioCapability;
+use Monarc\Core\Scenario\Service\ScenarioAuthenticationService;
 
 $env = getenv('APPLICATION_ENV') ?: 'production';
 $appConfigDir = getenv('APP_CONF_DIR') ?? '';
@@ -45,6 +48,96 @@ if (!empty($appConfigDir)) {
 return [
     'router' => [
         'routes' => [
+            'scenario_v1_health' => [
+                'type' => 'literal',
+                'options' => [
+                    'route' => '/api/scenario/v1/health',
+                    'defaults' => [
+                        'controller' => Scenario\Controller\ApiScenarioHealthController::class,
+                    ],
+                ],
+            ],
+            'scenario_v1_ready' => [
+                'type' => 'literal',
+                'options' => [
+                    'route' => '/api/scenario/v1/ready',
+                    'defaults' => [
+                        'controller' => Scenario\Controller\ApiScenarioReadyController::class,
+                    ],
+                ],
+            ],
+            'scenario_v1_anr_analysis' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/analysis[/:id]',
+                    'constraints' => ['anrid' => '[0-9]+', 'id' => '[a-f0-9-]{36}'],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioAnalysisController::class,
+                        ),
+                    ],
+                ],
+            ],
+            'scenario_v1_anr_template' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/template[/:id]',
+                    'constraints' => [
+                        'anrid' => '[0-9]+',
+                        'id' => '[a-f0-9-]{36}',
+                    ],
+                    'defaults' => [
+                        'scenarioAction' => 'template',
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioAnalysisController::class,
+                        ),
+                    ],
+                ],
+            ],
+            'scenario_v1_frontoffice_templates' => [
+                'type' => 'literal',
+                'options' => [
+                    'route' => '/api/scenario/v1/frontoffice/templates',
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            Scenario\Controller\ApiScenarioPublishedTemplateController::class,
+                        ),
+                    ],
+                ],
+            ],
+            'scenario_v1_auth_bridge_issue' => [
+                'type' => 'literal',
+                'options' => [
+                    'route' => '/api/scenario/v1/auth/bridge/issue',
+                    'defaults' => ['controller' => Scenario\Controller\ApiScenarioAuthBridgeController::class],
+                ],
+            ],
+            'scenario_v1_auth_bridge_consume' => [
+                'type' => 'literal',
+                'options' => [
+                    'route' => '/api/scenario/v1/auth/bridge/consume',
+                    'defaults' => ['controller' => Scenario\Controller\ApiScenarioAuthBridgeController::class],
+                ],
+            ],
+            'scenario_v1_auth_session_resolve' => [
+                'type' => 'literal',
+                'options' => [
+                    'route' => '/api/scenario/v1/auth/session/resolve',
+                    'defaults' => ['controller' => Scenario\Controller\ApiScenarioAuthBridgeController::class],
+                ],
+            ],
+            'scenario_v1_auth_session_revoke' => [
+                'type' => 'literal',
+                'options' => [
+                    'route' => '/api/scenario/v1/auth/session/revoke',
+                    'defaults' => ['controller' => Scenario\Controller\ApiScenarioAuthBridgeController::class],
+                ],
+            ],
             'captcha' => [
                 'type' => 'segment',
                 'options' => [
@@ -1488,6 +1581,13 @@ return [
 
     'controllers' => [
         'factories' => [
+            Scenario\Controller\ApiScenarioHealthController::class => static function ($container) {
+                return new Scenario\Controller\ApiScenarioHealthController($container->get(ScenarioCapability::class));
+            },
+            Scenario\Controller\ApiScenarioReadyController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioAuthBridgeController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioAnalysisController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioPublishedTemplateController::class => AutowireFactory::class,
             Controller\ApiGuidesController::class => AutowireFactory::class,
             Controller\ApiGuidesItemsController::class => AutowireFactory::class,
             Controller\ApiModelsController::class => AutowireFactory::class,
@@ -1665,6 +1765,9 @@ return [
             Table\UserTokenTable::class => ClientEntityManagerFactory::class,
             Table\VulnerabilityTable::class => ClientEntityManagerFactory::class,
             CronTask\Table\CronTaskTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\LegacyBridgeTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioAnalysisTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioTemplateSnapshotTable::class => ClientEntityManagerFactory::class,
 
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
             Entity\Interview::class => ModelFactory\InterviewServiceModelEntity::class,
@@ -1747,6 +1850,42 @@ return [
             Import\Service\InstanceImportService::class => AutowireFactory::class,
             Import\Processor\RiskSourceImportProcessor::class => AutowireFactory::class,
 
+            /* Scenario services. */
+            Scenario\Service\LegacyBridgeService::class => static function ($container) {
+                $config = $container->get('config');
+                $scenarioConfig = $config['scenario'] ?? [];
+
+                return new Scenario\Service\LegacyBridgeService(
+                    $container->get(Scenario\Table\LegacyBridgeTable::class),
+                    $container->get(Table\UserTokenTable::class),
+                    $container->get(ScenarioCapability::class),
+                    $scenarioConfig,
+                    (int) ($config['monarc']['ttl'] ?? 20)
+                );
+            },
+            ScenarioAuthenticationService::class => static function ($container) {
+                return new Scenario\Service\ScenarioAuthenticationService(
+                    $container->get(Scenario\Service\LegacyBridgeService::class),
+                    $container->get(ScenarioCapability::class)
+                );
+            },
+            Scenario\Service\ScenarioReadinessService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioAnalysisService::class => static function ($container) {
+                return new Scenario\Service\ScenarioAnalysisService(
+                    $container->get(Scenario\Table\ScenarioAnalysisTable::class),
+                    $container->get(Table\AnrTable::class),
+                    $container->get(Table\UserAnrTable::class),
+                    $container->get(ConnectedUserService::class),
+                    static function (Entity\Anr $anr, Entity\User $user) use ($container) {
+                        return $container->get(Service\AnrSupervisorService::class)
+                            ->findLinkedSupervisor($anr, $user);
+                    }
+                );
+            },
+            Scenario\Service\ScenarioDelegatedAuthenticationService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioPublishedTemplateService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioTemplateInstantiationService::class => AutowireFactory::class,
+
             // Helpers
             Import\Helper\ImportCacheHelper::class => AutowireFactory::class,
             ScalesCacheHelper::class => static function (ContainerInterface $container) {
@@ -1782,6 +1921,38 @@ return [
             Stats\Provider\StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
 
             // Validators
+            Scenario\Validator\ScenarioAnalysisCreateValidator::class => static function (
+                ContainerInterface $container
+            ) {
+                return new Scenario\Validator\ScenarioAnalysisCreateValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class)
+                );
+            },
+            Scenario\Validator\ScenarioAnalysisUpdateValidator::class => static function (
+                ContainerInterface $container
+            ) {
+                return new Scenario\Validator\ScenarioAnalysisUpdateValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class)
+                );
+            },
+            Scenario\Validator\ScenarioTemplateInstantiationValidator::class => static function (
+                ContainerInterface $container
+            ) {
+                return new Scenario\Validator\ScenarioTemplateInstantiationValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class)
+                );
+            },
+            Scenario\Validator\ScenarioTemplateOverrideValidator::class => static function (
+                ContainerInterface $container
+            ) {
+                return new Scenario\Validator\ScenarioTemplateOverrideValidator(
+                    $container->get('config'),
+                    $container->get(CoreInputValidator\InputValidationTranslator::class)
+                );
+            },
             InputValidator\User\PostUserDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             Stats\Validator\GetStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
             Stats\Validator\GetProcessedStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
@@ -2008,10 +2179,26 @@ return [
     ],
     'permissions' => [
         'captcha',
+        // These routes authenticate within ApiScenarioAuthBridgeController.  They must bypass
+        // route-level RBAC so a legacy MONARC token (issue) or the private service token
+        // (consume/resolve/revoke) can be evaluated by that controller.
+        'scenario_v1_auth_bridge_issue',
+        'scenario_v1_auth_bridge_consume',
+        'scenario_v1_auth_session_resolve',
+        'scenario_v1_auth_session_revoke',
+        // These routes are reached only by the Scenario BFF. The FrontOffice
+        // route listener validates both private headers and establishes the
+        // delegated MONARC user before dispatch.
+        'scenario_v1_anr_analysis',
+        'scenario_v1_anr_template',
+        'scenario_v1_frontoffice_templates',
     ],
     'roles' => [
         // Super Admin : Management of users (and guides, models, referentials, etc.)
         Entity\UserRole::SUPER_ADMIN_FO => [
+            'scenario_v1_anr_analysis',
+            'scenario_v1_anr_template',
+            'scenario_v1_frontoffice_templates',
             'monarc_api_doc_models',
             'monarc_api_admin_users',
             'monarc_api_admin_users_roles',
@@ -2045,6 +2232,9 @@ return [
         ],
         // User : RWD access per analysis
         Entity\UserRole::USER_FO => [
+            'scenario_v1_anr_analysis',
+            'scenario_v1_anr_template',
+            'scenario_v1_frontoffice_templates',
             'monarc_api_doc_models',
             'monarc_api_models',
             'monarc_api_referentials',

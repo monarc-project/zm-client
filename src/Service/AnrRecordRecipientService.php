@@ -24,9 +24,10 @@ class AnrRecordRecipientService extends AbstractService
     protected $anrTable;
     protected $recordTable;
 
-    public function orphanRecipient($recipientId, $anrId) {
+    public function orphanRecipient($recipientId, $anrId)
+    {
         $records = $this->recordTable->getEntityByFields(['recipients' => $recipientId, 'anr' => $anrId]);
-        if(count($records) > 0) {
+        if (count($records) > 0) {
             return false;
         }
         return true;

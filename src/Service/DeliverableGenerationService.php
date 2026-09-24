@@ -5310,8 +5310,7 @@ class DeliverableGenerationService
         string $input,
         array $paragraphStyle = [],
         array $firstParagraphStyle = []
-    ): string
-    {
+    ): string {
         $phpWord = new PhpWord\PhpWord();
         $section = $phpWord->addSection();
         $baseParagraphStyle = $this->leftParagraph ?? ['alignment' => 'left', 'spaceAfter' => '1.0'];

@@ -17,6 +17,8 @@ use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Table;
 use Monarc\Core\Exception\Exception;
+use Monarc\Core\Scenario\Contract\AnalysisRegistryProjection;
+use Monarc\Core\Scenario\Feature\ScenarioCapability;
 use Monarc\FrontOffice\CronTask\Service\CronTaskService;
 use Throwable;
 
@@ -104,6 +106,7 @@ class AnrService
         private StatsAnrService $statsAnrService,
         private AnrRecordProcessorService $anrRecordProcessorService,
         private CoreService\ConfigService $configService,
+        private ScenarioCapability $scenarioCapability,
         CoreService\ConnectedUserService $connectedUserService,
     ) {
         /** @var Entity\User $connectedUser */
@@ -199,9 +202,14 @@ class AnrService
      */
     public function createEmpty(array $data): Entity\Anr
     {
+        if (($data['analysisType'] ?? Entity\Anr::ANALYSIS_TYPE_ASSET) === Entity\Anr::ANALYSIS_TYPE_SCENARIO) {
+            $this->scenarioCapability->assertEnabled();
+        }
+
         $anr = (new Entity\Anr())
             ->setLabel($data['label'])
             ->setDescription($data['description'] ?? '')
+            ->setAnalysisType($data['analysisType'] ?? Entity\Anr::ANALYSIS_TYPE_ASSET)
             ->setLanguage($data['language'])
             ->setLanguageCode(strtolower($this->configService->getLanguageCodes()[$data['language']]))
             ->setCacheModelAreScalesUpdatable(true)
@@ -559,7 +567,10 @@ class AnrService
         $defaultLanguageCode = $this->configService->getLanguageCodes()[
             $this->configService->getConfigOption('defaultLanguageIndex', 1)
         ] ?? null;
-        if ($defaultLanguageCode !== null && isset($labels[$defaultLanguageCode]) && $labels[$defaultLanguageCode] !== '') {
+        if ($defaultLanguageCode !== null
+            && isset($labels[$defaultLanguageCode])
+            && $labels[$defaultLanguageCode] !== ''
+        ) {
             return $labels[$defaultLanguageCode];
         }
 
@@ -635,6 +646,18 @@ class AnrService
             'isCurrentAnr' => (int)($this->connectedUser->getCurrentAnr() !== null
                 && $this->connectedUser->getCurrentAnr()->getId() === $anr->getId()),
             'status' => $anr->getStatus(),
+            'analysisType' => $anr->getAnalysisType(),
+            'analysisStatus' => $anr->getStatusName(),
+            'nextReviewAt' => $this->getNextReviewAt($anr),
+            'launchUrl' => AnalysisRegistryProjection::getLaunchUrl(
+                $anr->getAnalysisType(),
+                $anr->getId(),
+                $this->scenarioCapability->isEnabled()
+            ),
+            'permittedActions' => AnalysisRegistryProjection::getPermittedActions(
+                $anr->getAnalysisType(),
+                $this->scenarioCapability->isEnabled()
+            ),
             'creator' => $anr->getCreator(),
             'createdAt' => $anr->getCreatedAt()->format('d/m/Y H:i'),
             'language' => $anr->getLanguage(),
@@ -706,6 +729,24 @@ class AnrService
         }
 
         return $anrData;
+    }
+
+    private function getNextReviewAt(Entity\Anr $anr): ?string
+    {
+        $lastReviewDate = $anr->getReassessmentLastReviewDate();
+        if ($lastReviewDate === null) {
+            return null;
+        }
+
+        $nextReviewDate = clone $lastReviewDate;
+        $modifier = match ($anr->getReassessmentReviewFrequency()) {
+            Entity\Anr::REVIEW_FREQUENCY_MONTHLY => '+1 month',
+            Entity\Anr::REVIEW_FREQUENCY_QUARTERLY => '+3 months',
+            Entity\Anr::REVIEW_FREQUENCY_SEMI_ANNUALLY => '+6 months',
+            default => '+1 year',
+        };
+
+        return $nextReviewDate->modify($modifier)->format('Y-m-d');
     }
 
     private function normalizeReassessmentLastReviewDate(mixed $value): ?DateTime
@@ -1812,7 +1853,9 @@ class AnrService
                     $rolfRisksOldIdsToNewObjects[$sourceInstanceRiskOp->getRolfRisk()->getId()]
                 );
             }
-            if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp && $sourceInstanceRiskOp->getRiskSource() !== null) {
+            if ($sourceInstanceRiskOp instanceof Entity\InstanceRiskOp
+                && $sourceInstanceRiskOp->getRiskSource() !== null
+            ) {
                 $newInstanceRiskOp->setRiskSource(
                     $riskSourcesOldIdsToNewObjects[$sourceInstanceRiskOp->getRiskSource()->getId()] ?? null
                 );

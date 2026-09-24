@@ -12,6 +12,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Anr as AnrCore;
 use Monarc\Core\Entity\AnrSuperClass;
+use Monarc\Core\Scenario\Contract\AnalysisType;
 use Ramsey\Uuid\Lazy\LazyUuidFromString;
 use Ramsey\Uuid\Uuid;
 
@@ -22,6 +23,9 @@ use Ramsey\Uuid\Uuid;
  */
 class Anr extends AnrSuperClass
 {
+    public const ANALYSIS_TYPE_ASSET = AnalysisType::ASSET;
+    public const ANALYSIS_TYPE_SCENARIO = AnalysisType::SCENARIO;
+
     public const REVIEW_FREQUENCY_MONTHLY = 'Monthly';
     public const REVIEW_FREQUENCY_QUARTERLY = 'Quarterly';
     public const REVIEW_FREQUENCY_SEMI_ANNUALLY = 'Semi-annually';
@@ -33,6 +37,13 @@ class Anr extends AnrSuperClass
      * @ORM\Column(name="uuid", type="uuid", nullable=false)
      */
     protected $uuid;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="analysis_type", type="string", length=16, nullable=false, options={"default": "asset"})
+     */
+    protected $analysisType = self::ANALYSIS_TYPE_ASSET;
 
     /**
      * @var string
@@ -189,6 +200,7 @@ class Anr extends AnrSuperClass
              * For snapshots we use tha same label and description (label [SNAP] prefix will be added later). */
             $newAnr->setLabel($data['label'] ?? $sourceAnr->getLabel())
                 ->setDescription($data['description'] ?? $sourceAnr->getDescription())
+                ->setAnalysisType($sourceAnr->getAnalysisType())
                 ->setLanguage($sourceAnr->getLanguage())
                 ->setLanguageCode($sourceAnr->getLanguageCode())
                 ->setIsVisibleOnDashboard((int)$sourceAnr->isVisibleOnDashboard())
@@ -264,6 +276,22 @@ class Anr extends AnrSuperClass
     public function getUuid(): string
     {
         return (string)$this->uuid;
+    }
+
+    public function getAnalysisType(): string
+    {
+        return $this->analysisType;
+    }
+
+    public function setAnalysisType(string $analysisType): self
+    {
+        if (!AnalysisType::isValid($analysisType)) {
+            throw new \InvalidArgumentException('Invalid analysis type');
+        }
+
+        $this->analysisType = $analysisType;
+
+        return $this;
     }
 
     public function setUuid(string $uuid): self

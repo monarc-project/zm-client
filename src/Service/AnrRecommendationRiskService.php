@@ -57,7 +57,7 @@ class AnrRecommendationRiskService
                 if (isset($globalObjectsRecommendationsKeys[$key])) {
                     continue;
                 }
-                $globalObjectsRecommendationsKeys[$key] = $key;  
+                $globalObjectsRecommendationsKeys[$key] = $key;
             }
 
             $recommendationRisksData[] = $this->getPreparedRecommendationRiskData(

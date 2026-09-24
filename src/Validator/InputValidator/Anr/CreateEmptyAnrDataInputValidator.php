@@ -13,6 +13,7 @@ use Laminas\Filter\ToInt;
 use Laminas\Validator\Identical;
 use Laminas\Validator\InArray;
 use Laminas\Validator\StringLength;
+use Monarc\Core\Scenario\Contract\AnalysisType;
 use Monarc\Core\Validator\InputValidator\AbstractInputValidator;
 
 class CreateEmptyAnrDataInputValidator extends AbstractInputValidator
@@ -71,6 +72,22 @@ class CreateEmptyAnrDataInputValidator extends AbstractInputValidator
                         'name' => Identical::class,
                         'options' => [
                             'token' => true,
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'analysisType',
+                'required' => false,
+                'filters' => [
+                    ['name' => StringTrim::class],
+                ],
+                'validators' => [
+                    [
+                        'name' => InArray::class,
+                        'options' => [
+                            'haystack' => AnalysisType::all(),
+                            'strict' => true,
                         ],
                     ],
                 ],

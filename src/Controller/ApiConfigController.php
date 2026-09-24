@@ -8,13 +8,16 @@
 namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Service\ConfigService;
+use Monarc\Core\Scenario\Feature\ScenarioCapability;
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Laminas\View\Model\JsonModel;
 
 class ApiConfigController extends AbstractRestfulController
 {
-    public function __construct(private ConfigService $configService)
-    {
+    public function __construct(
+        private ConfigService $configService,
+        private ScenarioCapability $scenarioCapability
+    ) {
     }
 
     public function getList()
@@ -33,6 +36,7 @@ class ApiConfigController extends AbstractRestfulController
                 'uiLanguageCodes' => $this->configService->getUiLanguageCodes(),
                 'isExportDefaultWithEval' => $isExportDefaultWithEval,
                 'isCopilotEnabled' => $this->configService->getConfigOption('isCopilotEnabled', false),
+                'isScenarioEnabled' => $this->scenarioCapability->isEnabled(),
             ],
         ));
     }

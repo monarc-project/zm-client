@@ -23,29 +23,30 @@ class AnrRecordActorService extends AbstractService
     protected $recordTable;
     protected $processorTable;
 
-    public function orphanActor($actorId, $anrId) {
+    public function orphanActor($actorId, $anrId)
+    {
         $records = $this->recordTable->getEntityByFields(['controller' => $actorId, 'anr' => $anrId]);
-        if(count($records)> 0) {
+        if (count($records)> 0) {
             return false;
         }
         $records = $this->recordTable->getEntityByFields(['dpo' => $actorId, 'anr' => $anrId]);
-        if(count($records)> 0) {
+        if (count($records)> 0) {
             return false;
         }
         $records = $this->recordTable->getEntityByFields(['representative' => $actorId, 'anr' => $anrId]);
-        if(count($records)> 0) {
+        if (count($records)> 0) {
             return false;
         }
         $records = $this->recordTable->getEntityByFields(['jointControllers' => $actorId, 'anr' => $anrId]);
-        if(count($records)> 0) {
+        if (count($records)> 0) {
             return false;
         }
         $processors = $this->processorTable->getEntityByFields(['representative' => $actorId, 'anr' => $anrId]);
-        if(count($processors)> 0) {
+        if (count($processors)> 0) {
             return false;
         }
         $processors = $this->processorTable->getEntityByFields(['dpo' => $actorId, 'anr' => $anrId]);
-        if(count($processors)> 0) {
+        if (count($processors)> 0) {
             return false;
         }
         return true;
@@ -66,7 +67,7 @@ class AnrRecordActorService extends AbstractService
             throw new \Monarc\Core\Exception\Exception('Entity `id` not found.');
         }
         $return['name'] = $entity->label;
-        if($entity->contact != "") {
+        if ($entity->contact != "") {
             $return['contact'] = $entity->contact;
         }
         return $return;

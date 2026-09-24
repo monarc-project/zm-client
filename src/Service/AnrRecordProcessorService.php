@@ -31,15 +31,15 @@ class AnrRecordProcessorService extends AbstractService
         $entity = $this->get('table')->getEntity($id);
         $anrId = $entity->getAnr()->getId();
         $actorsToCheck = array();
-        if($entity->dpo) {
+        if ($entity->dpo) {
             array_push($actorsToCheck, $entity->dpo->id);
         }
-        if($entity->representative) {
+        if ($entity->representative) {
             array_push($actorsToCheck, $entity->representative->id);
         }
         $result = $this->get('table')->delete($id);
-        foreach($actorsToCheck as $a) {
-            if($this->recordActorService->orphanActor($a, $anrId)) {
+        foreach ($actorsToCheck as $a) {
+            if ($this->recordActorService->orphanActor($a, $anrId)) {
                 $this->recordActorService->delete(['anr'=> $anrId, 'id' => $a]);
             }
         }
@@ -54,28 +54,28 @@ class AnrRecordProcessorService extends AbstractService
     public function updateProcessor($id, $data)
     {
         $entity = $this->get('table')->getEntity($id);
-        if(isset($data['dpo']['id'])) {
+        if (isset($data['dpo']['id'])) {
             $data['dpo'] = $data['dpo']['id'];
         } else {
             $data['dpo'] = null;
         }
-        if(isset($data['representative']['id'])) {
+        if (isset($data['representative']['id'])) {
             $data['representative'] = $data['representative']['id'];
         } else {
             $data['representative'] = null;
         }
 
         $oldActors = array();
-        if($entity->representative && $entity->representative->id) {
+        if ($entity->representative && $entity->representative->id) {
             array_push($oldActors, $entity->representative->id);
         }
-        if($entity->dpo && $entity->dpo->id) {
+        if ($entity->dpo && $entity->dpo->id) {
             array_push($oldActors, $entity->dpo->id);
         }
 
         $result = $this->update($id, $data);
-        foreach($oldActors as $a) {
-            if($a != $data['dpo'] && $a != $data['representative']
+        foreach ($oldActors as $a) {
+            if ($a != $data['dpo'] && $a != $data['representative']
                && $this->recordActorService->orphanActor($a, $data['anr'])) {
                 $this->recordActorService->delete(['anr'=> $data['anr'], 'id' => $a]);
             }
@@ -83,7 +83,8 @@ class AnrRecordProcessorService extends AbstractService
         return $result;
     }
 
-    public function deleteActivityAndSecMeasure($processorId, $recordId) {
+    public function deleteActivityAndSecMeasure($processorId, $recordId)
+    {
         $entity = $this->get('table')->getEntity($processorId);
         $activities = $entity->getActivities();
         unset($activities[$recordId]);
@@ -116,27 +117,28 @@ class AnrRecordProcessorService extends AbstractService
         $return = [
             'name' => $entity->label,
         ];
-        if($entity->contact != '') {
+        if ($entity->contact != '') {
             $return['contact'] = $entity->contact;
         }
-        if($entity->activities) {
+        if ($entity->activities) {
             $return['activities'] = $entity->activities;
         }
-        if($entity->secMeasures) {
+        if ($entity->secMeasures) {
             $return['security_measures'] = $entity->secMeasures;
         }
-        if($entity->representative) {
+        if ($entity->representative) {
             $return['representative'] = $this->recordActorService->generateExportArray($entity->representative->id);
         }
-        if($entity->dpo) {
+        if ($entity->dpo) {
             $return['data_protection_officer'] = $this->recordActorService->generateExportArray($entity->dpo->id);
         }
         return $return;
     }
 
-    public function orphanProcessor($processorId, $anrId) {
+    public function orphanProcessor($processorId, $anrId)
+    {
         $records = $this->recordTable->getEntityByFields(['processors' => $processorId, 'anr' => $anrId]);
-        if(count($records) > 0) {
+        if (count($records) > 0) {
             return false;
         }
         return true;
@@ -172,13 +174,13 @@ class AnrRecordProcessorService extends AbstractService
             $newData['activities'] = '';
             $newData['secMeasures'] = '';
         }
-        if(isset($data['representative'])) {
+        if (isset($data['representative'])) {
             $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
         }
-        if(isset($data['data_protection_officer'])) {
+        if (isset($data['data_protection_officer'])) {
             $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
         }
-        return $this->updateProcessor($id,$newData);
+        return $this->updateProcessor($id, $newData);
     }
 
     public function importActivityAndSecMeasures($data, $processorId)

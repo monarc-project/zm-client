@@ -119,8 +119,7 @@ class ObjectImportProcessor
                     $objectData[$nameFiledKey],
                     $this->getObjectNameCacheKey($objectData[$nameFiledKey], $objectCategory?->getId())
                 );
-        } elseif (
-            $this->importCacheHelper->isItemInArrayCache('processed_objects_by_current_uuids', $object->getUuid())
+        } elseif ($this->importCacheHelper->isItemInArrayCache('processed_objects_by_current_uuids', $object->getUuid())
         ) {
             $this->importCacheHelper->addItemToArrayCache('processed_objects_by_old_uuids', $object, $currentObjectUuid);
 
