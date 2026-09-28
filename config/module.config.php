@@ -80,6 +80,39 @@ return [
                     ],
                 ],
             ],
+            'scenario_v1_anr_risk_scenarios' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/risk-scenarios[/:id[/:resource[/:resourceid]]]',
+                    'constraints' => [
+                        'anrid' => '[0-9]+',
+                        'id' => '[a-f0-9-]{36}',
+                        'resource' => '[a-z-]+',
+                        'resourceid' => '[a-f0-9-]{36}',
+                    ],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioRiskScenarioController::class,
+                        ),
+                    ],
+                ],
+            ],
+            'scenario_v1_anr_risk_story_references' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/risk-story-references',
+                    'constraints' => ['anrid' => '[0-9]+'],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioRiskStoryReferenceController::class,
+                        ),
+                    ],
+                ],
+            ],
             'scenario_v1_anr_template' => [
                 'type' => 'segment',
                 'options' => [
@@ -1587,6 +1620,8 @@ return [
             Scenario\Controller\ApiScenarioReadyController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioAuthBridgeController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioAnalysisController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioRiskScenarioController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioRiskStoryReferenceController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioPublishedTemplateController::class => AutowireFactory::class,
             Controller\ApiGuidesController::class => AutowireFactory::class,
             Controller\ApiGuidesItemsController::class => AutowireFactory::class,
@@ -1767,6 +1802,8 @@ return [
             CronTask\Table\CronTaskTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\LegacyBridgeTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioAnalysisTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioRiskStoryTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioReferenceTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioTemplateSnapshotTable::class => ClientEntityManagerFactory::class,
 
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
@@ -1882,6 +1919,7 @@ return [
                     }
                 );
             },
+            Scenario\Service\ScenarioRiskStoryService::class => AutowireFactory::class,
             Scenario\Service\ScenarioDelegatedAuthenticationService::class => AutowireFactory::class,
             Scenario\Service\ScenarioPublishedTemplateService::class => AutowireFactory::class,
             Scenario\Service\ScenarioTemplateInstantiationService::class => AutowireFactory::class,
@@ -1921,38 +1959,12 @@ return [
             Stats\Provider\StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
 
             // Validators
-            Scenario\Validator\ScenarioAnalysisCreateValidator::class => static function (
-                ContainerInterface $container
-            ) {
-                return new Scenario\Validator\ScenarioAnalysisCreateValidator(
-                    $container->get('config'),
-                    $container->get(CoreInputValidator\InputValidationTranslator::class)
-                );
-            },
-            Scenario\Validator\ScenarioAnalysisUpdateValidator::class => static function (
-                ContainerInterface $container
-            ) {
-                return new Scenario\Validator\ScenarioAnalysisUpdateValidator(
-                    $container->get('config'),
-                    $container->get(CoreInputValidator\InputValidationTranslator::class)
-                );
-            },
-            Scenario\Validator\ScenarioTemplateInstantiationValidator::class => static function (
-                ContainerInterface $container
-            ) {
-                return new Scenario\Validator\ScenarioTemplateInstantiationValidator(
-                    $container->get('config'),
-                    $container->get(CoreInputValidator\InputValidationTranslator::class)
-                );
-            },
-            Scenario\Validator\ScenarioTemplateOverrideValidator::class => static function (
-                ContainerInterface $container
-            ) {
-                return new Scenario\Validator\ScenarioTemplateOverrideValidator(
-                    $container->get('config'),
-                    $container->get(CoreInputValidator\InputValidationTranslator::class)
-                );
-            },
+            Scenario\Validator\ScenarioAnalysisCreateValidator::class => ReflectionBasedAbstractFactory::class,
+            Scenario\Validator\ScenarioAnalysisUpdateValidator::class => ReflectionBasedAbstractFactory::class,
+            Scenario\Validator\ScenarioRiskScenarioValidator::class => ReflectionBasedAbstractFactory::class,
+            Scenario\Validator\ScenarioRiskScenarioUpdateValidator::class => ReflectionBasedAbstractFactory::class,
+            Scenario\Validator\ScenarioTemplateInstantiationValidator::class => ReflectionBasedAbstractFactory::class,
+            Scenario\Validator\ScenarioTemplateOverrideValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\User\PostUserDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             Stats\Validator\GetStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
             Stats\Validator\GetProcessedStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
@@ -2191,6 +2203,8 @@ return [
         // delegated MONARC user before dispatch.
         'scenario_v1_anr_analysis',
         'scenario_v1_anr_template',
+        'scenario_v1_anr_risk_scenarios',
+        'scenario_v1_anr_risk_story_references',
         'scenario_v1_frontoffice_templates',
     ],
     'roles' => [

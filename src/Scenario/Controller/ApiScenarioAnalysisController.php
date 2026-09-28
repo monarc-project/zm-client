@@ -8,6 +8,7 @@ use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Scenario\Feature\ScenarioCapability;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Scenario\Service\ScenarioAnalysisService;
+use Monarc\FrontOffice\Scenario\Service\ScenarioRiskStoryService;
 use Monarc\FrontOffice\Scenario\Service\ScenarioTemplateInstantiationService;
 use Monarc\FrontOffice\Scenario\Validator\ScenarioAnalysisCreateValidator;
 use Monarc\FrontOffice\Scenario\Validator\ScenarioAnalysisUpdateValidator;
@@ -23,6 +24,7 @@ final class ApiScenarioAnalysisController extends AbstractRestfulControllerReque
         private ScenarioAnalysisService $scenarioAnalysisService,
         private ScenarioAnalysisCreateValidator $createValidator,
         private ScenarioAnalysisUpdateValidator $updateValidator,
+        private ScenarioRiskStoryService $riskStoryService,
         private ScenarioTemplateInstantiationService $templateInstantiationService,
         private ScenarioTemplateInstantiationValidator $templateInstantiationValidator,
         private ScenarioTemplateOverrideValidator $templateOverrideValidator
@@ -112,6 +114,19 @@ final class ApiScenarioAnalysisController extends AbstractRestfulControllerReque
             return $this->notFound();
         }
         $this->validatePostParams($this->updateValidator, $data);
+        $updateData = $this->updateValidator->getValidData();
+        if (($updateData['lifecycle'] ?? null) === 'active') {
+            $completeness = $this->riskStoryService->completeness($anr);
+            if (!$completeness['complete']) {
+                return new JsonResponse([
+                    'error' => [
+                        'code' => 'incomplete_risk_story',
+                        'message' => 'Complete the Scenario risk-story warnings before activation.',
+                    ],
+                    'warnings' => $completeness['warnings'],
+                ], 422);
+            }
+        }
         $ifMatch = $this->getRequest()->getHeader('If-Match');
         $revision = $ifMatch === false
             ? false
@@ -119,7 +134,7 @@ final class ApiScenarioAnalysisController extends AbstractRestfulControllerReque
         $updated = $revision !== false ? $this->scenarioAnalysisService->update(
             $anr,
             (string) $id,
-            $this->updateValidator->getValidData(),
+            $updateData,
             $revision,
             $this->correlationId()
         ) : null;

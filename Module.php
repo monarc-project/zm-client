@@ -179,6 +179,8 @@ class Module
         if ($routeMatch === null || !in_array($routeMatch->getMatchedRouteName(), [
             'scenario_v1_anr_analysis',
             'scenario_v1_anr_template',
+            'scenario_v1_anr_risk_scenarios',
+            'scenario_v1_anr_risk_story_references',
             'scenario_v1_frontoffice_templates',
         ], true)) {
             return null;
@@ -187,13 +189,26 @@ class Module
         $request = $mvcEvent->getRequest();
         $session = $request->getHeader('x-scenario-session');
         $serviceToken = $request->getHeader('x-scenario-service-token');
+        if ($session === false && $serviceToken === false) {
+            // Direct FrontOffice API requests retain the established token
+            // authentication flow. BFF requests always supply both headers.
+            return null;
+        }
+        if ($session === false || $serviceToken === false) {
+            $response = $mvcEvent->getResponse();
+            $response->setStatusCode(403);
+            $mvcEvent->setResult($response);
+            $mvcEvent->stopPropagation(true);
+
+            return $response;
+        }
         $serviceManager = $mvcEvent->getApplication()->getServiceManager();
         /** @var ScenarioDelegatedAuthenticationService $authentication */
         $authentication = $serviceManager->get(ScenarioDelegatedAuthenticationService::class);
         $anrId = $routeMatch->getParam('anrid');
         if ($authentication->authenticate(
-            $session === false ? null : $session->getFieldValue(),
-            $serviceToken === false ? null : $serviceToken->getFieldValue(),
+            $session->getFieldValue(),
+            $serviceToken->getFieldValue(),
             $anrId === null ? null : (int) $anrId
         )) {
             return null;
