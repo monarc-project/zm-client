@@ -21,23 +21,24 @@ use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Table\AnrSupervisorTable;
 use Monarc\FrontOffice\Table\InstanceRiskOpTable;
 use Monarc\FrontOffice\Table\InstanceRiskTable;
+use Monarc\FrontOffice\Table\UserAnrTable;
 use Monarc\FrontOffice\Table\UserTable;
 
 class AnrSupervisorService
 {
-    private User $connectedUser;
+    private ?User $connectedUser;
 
     public function __construct(
         private AnrSupervisorTable $anrSupervisorTable,
         private InstanceRiskTable $instanceRiskTable,
         private InstanceRiskOpTable $instanceRiskOpTable,
         private UserTable $userTable,
+        private UserAnrTable $userAnrTable,
         private ImportCacheHelper $importCacheHelper,
         ConnectedUserService $connectedUserService
     ) {
-        /** @var User $connectedUser */
         $connectedUser = $connectedUserService->getConnectedUser();
-        $this->connectedUser = $connectedUser;
+        $this->connectedUser = $connectedUser instanceof User ? $connectedUser : null;
     }
 
     /**
@@ -64,7 +65,7 @@ class AnrSupervisorService
     {
         $linkedUser = $this->findLinkedUser($data['linkedUserId'] ?? null);
         if ($linkedUser !== null) {
-            $this->assertCanManageLinkedUsers();
+            $this->assertCanManageLinkedUsers($anr);
         }
 
         $supervisor = (new AnrSupervisor())
@@ -90,7 +91,7 @@ class AnrSupervisorService
 
         if (array_key_exists('linkedUserId', $data)) {
             if ((int)($data['linkedUserId'] ?? 0) !== (int)($linkedUser?->getId() ?? 0)) {
-                $this->assertCanManageLinkedUsers();
+                $this->assertCanManageLinkedUsers($anr);
             }
             $linkedUser = $this->findLinkedUser($data['linkedUserId']);
             $supervisor->setLinkedUser($linkedUser);
@@ -132,7 +133,7 @@ class AnrSupervisorService
         if (array_key_exists('linkedUserId', $data)
             && (int)($data['linkedUserId'] ?? 0) !== (int)($existingSupervisor?->getLinkedUser()?->getId() ?? 0)
         ) {
-            $this->assertCanManageLinkedUsers();
+            $this->assertCanManageLinkedUsers($anr);
         }
 
         $linkedUser = array_key_exists('linkedUserId', $data)
@@ -172,7 +173,7 @@ class AnrSupervisorService
      */
     public function getLinkableUsers(Anr $anr, string $filter = '', ?int $excludeSupervisorId = null): array
     {
-        $this->assertCanManageLinkedUsers();
+        $this->assertCanManageLinkedUsers($anr);
 
         $result = [];
         $linkedUserIds = $this->anrSupervisorTable->getLinkedUserIdsByAnr($anr, $excludeSupervisorId);
@@ -191,6 +192,54 @@ class AnrSupervisorService
         }
 
         return $result;
+    }
+
+    public function canManageLinkedUsers(Anr $anr): bool
+    {
+        if (!$this->connectedUser instanceof User) {
+            return false;
+        }
+        if ($this->connectedUser->hasRole(UserRole::SUPER_ADMIN_FO)) {
+            return true;
+        }
+        if (!$this->connectedUser->hasRole(UserRole::USER_FO)) {
+            return false;
+        }
+
+        return $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser)?->hasWriteAccess() ?? false;
+    }
+
+    /**
+     * Creates or updates the one narrowly scoped supervisor configuration used
+     * by the Scenario residual-risk acceptance workflow.
+     */
+    public function configureResidualRiskApprover(
+        Anr $anr,
+        ?int $supervisorId,
+        int $linkedUserId,
+        bool $isActive
+    ): AnrSupervisor {
+        $this->assertCanManageLinkedUsers($anr);
+        $data = [
+            'linkedUserId' => $linkedUserId,
+            'isActive' => $isActive,
+            'roles' => [AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER],
+        ];
+
+        if ($supervisorId === null) {
+            $this->validateNoDuplicateSupervisor($anr, $data);
+
+            return $this->create($anr, $data);
+        }
+
+        $supervisor = $this->get($anr, $supervisorId);
+        $data['roles'] = array_values(array_unique(array_merge(
+            $supervisor->getRolesArray(),
+            [AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER]
+        )));
+        $this->validateNoDuplicateSupervisor($anr, $data, $supervisorId);
+
+        return $this->update($anr, $supervisorId, $data);
     }
 
     public function findLinkedSupervisor(Anr $anr, User $user): ?AnrSupervisor
@@ -319,7 +368,11 @@ class AnrSupervisorService
             return null;
         }
 
-        $supervisor = $this->get($anr, (int)$supervisorId);
+        try {
+            $supervisor = $this->get($anr, (int)$supervisorId);
+        } catch (EntityNotFoundException) {
+            throw new Exception('Residual risk approver was not found in this analysis.', 412);
+        }
         if (!$supervisor->isActive()
             || !$supervisor->hasRole(AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER)
         ) {
@@ -578,10 +631,13 @@ class AnrSupervisorService
         return $user;
     }
 
-    private function assertCanManageLinkedUsers(): void
+    private function assertCanManageLinkedUsers(Anr $anr): void
     {
-        if (!$this->connectedUser->hasRole(UserRole::SUPER_ADMIN_FO)) {
-            throw new Exception('Only an administrator can link a supervisor to a system user.', 412);
+        if (!$this->canManageLinkedUsers($anr)) {
+            throw new Exception(
+                'Write access to this analysis is required to link a supervisor to a system user.',
+                412
+            );
         }
     }
 }

@@ -181,7 +181,11 @@ class Module
             'scenario_v1_anr_template',
             'scenario_v1_anr_risk_scenarios',
             'scenario_v1_anr_risk_story_references',
+            'scenario_v1_anr_criteria_profiles',
+            'scenario_v1_anr_criteria_profiles_assigned',
+            'scenario_v1_anr_risk_scenario_assessments',
             'scenario_v1_frontoffice_templates',
+            'scenario_v1_anr_decision_authority',
         ], true)) {
             return null;
         }

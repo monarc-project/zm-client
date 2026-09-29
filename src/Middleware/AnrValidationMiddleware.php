@@ -137,11 +137,7 @@ class AnrValidationMiddleware implements MiddlewareInterface
         if ($request->getMethod() !== Request::METHOD_GET
             && ($userAnr === null || !$userAnr->hasWriteAccess())
             && !$this->isDelegatedRiskFieldUpdateAuthorized($routeMatch, $request, $anr)
-            && !$this->isResidualRiskApprovalAuthorized(
-                $routeMatch->getMatchedRouteName(),
-                $request->getMethod(),
-                $anr
-            )
+            && !$this->isResidualRiskApprovalAuthorized($routeMatch, $request->getMethod(), $anr)
             && !$this->isRisksManagementBatchUpdateAuthorized(
                 $routeMatch->getMatchedRouteName(),
                 $request->getMethod(),
@@ -182,16 +178,20 @@ class AnrValidationMiddleware implements MiddlewareInterface
             );
     }
 
-    private function isResidualRiskApprovalAuthorized(string $routeName, string $method, Entity\Anr $anr): bool
+    private function isResidualRiskApprovalAuthorized(RouteMatch $routeMatch, string $method, Entity\Anr $anr): bool
     {
         if ($method !== Request::METHOD_POST || $anr->isAnrSnapshot()) {
             return false;
         }
 
-        if (!in_array($routeName, [
+        $routeName = $routeMatch->getMatchedRouteName();
+        $legacyAcceptanceRouteNames = [
             'monarc_api_global_client_anr/instance_risk_residual_acceptance',
             'monarc_api_global_client_anr/instance_risk_op_residual_acceptance',
-        ], true)) {
+        ];
+        $isScenarioAcceptanceRoute = $routeName === 'scenario_v1_anr_risk_scenario_assessments'
+            && $routeMatch->getParam('resource') === 'acceptances';
+        if (!in_array($routeName, $legacyAcceptanceRouteNames, true) && !$isScenarioAcceptanceRoute) {
             return false;
         }
 
