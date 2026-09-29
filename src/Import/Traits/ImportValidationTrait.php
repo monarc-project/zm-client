@@ -45,7 +45,10 @@ trait ImportValidationTrait
      */
     private function setAndValidateImportingDataVersion($data): void
     {
-        if (isset($data['monarc_version'])) {
+        if (!isset($data['monarc_version'])) {
+            /* It's not allowed to import without version set. */
+            $this->importingDataVersion = '2.8.1';
+        } else {
             $this->importingDataVersion = !str_contains($data['monarc_version'], 'master')
                 ? $data['monarc_version']
                 : '999';

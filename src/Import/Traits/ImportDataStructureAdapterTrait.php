@@ -8,6 +8,7 @@
 namespace Monarc\FrontOffice\Import\Traits;
 
 use Monarc\Core\Entity\AmvSuperClass;
+use Monarc\Core\Exception\Exception;
 use Monarc\Core\Entity\InstanceRiskSuperClass;
 use Monarc\Core\Entity\ScaleSuperClass;
 use Monarc\FrontOffice\Entity\AnrSupervisorRole;
@@ -184,13 +185,10 @@ trait ImportDataStructureAdapterTrait
     {
         $newCategoryStructure = [];
         if (isset($data['object']['category'], $data['categories'][$data['object']['category']])) {
-            $newCategoryStructure = $data['categories'][$data['object']['category']];
-            $newCategoryStructure['parent'] = empty($newCategoryStructure['parent'])
-                ? null
-                : $this->prepareNewStructureOfParentsHierarchy(
-                    $data['categories'],
-                    (int)$newCategoryStructure['parent']
-                );
+            $newCategoryStructure = $this->prepareNewStructureOfParentsHierarchy(
+                $data['categories'],
+                (int)$data['object']['category']
+            ) ?? [];
         }
 
         return $newCategoryStructure;
@@ -198,11 +196,29 @@ trait ImportDataStructureAdapterTrait
 
     private function prepareNewStructureOfParentsHierarchy(array $categoriesData, int $parentId): ?array
     {
-        $parentCategoryData = null;
-        if (!empty($categoriesData[$parentId])) {
+        $parentsHierarchy = [];
+        $visitedCategoryIds = [];
+
+        while (!empty($categoriesData[$parentId])) {
+            if (isset($visitedCategoryIds[$parentId])) {
+                throw new Exception('The imported object category hierarchy contains a cycle.', 412);
+            }
+
+            $visitedCategoryIds[$parentId] = true;
             $parentCategoryData = $categoriesData[$parentId];
-            $parentCategoryData['parent'] = $this
-                ->prepareNewStructureOfParentsHierarchy($categoriesData, (int)$parentCategoryData['parent']);
+            $parentsHierarchy[] = $parentCategoryData;
+
+            if (empty($parentCategoryData['parent'])) {
+                break;
+            }
+
+            $parentId = (int)$parentCategoryData['parent'];
+        }
+
+        $parentCategoryData = null;
+        for ($index = count($parentsHierarchy) - 1; $index >= 0; --$index) {
+            $parentsHierarchy[$index]['parent'] = $parentCategoryData;
+            $parentCategoryData = $parentsHierarchy[$index];
         }
 
         return $parentCategoryData;
