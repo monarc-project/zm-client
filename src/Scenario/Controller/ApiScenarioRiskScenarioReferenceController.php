@@ -12,7 +12,7 @@ use Monarc\FrontOffice\Service\RiskSourceService;
 use Monarc\FrontOffice\Validator\InputValidator\RiskSource\PostRiskSourceDataInputValidator;
 
 /** Lists and creates a narrow, authorised contextual reference projection. */
-final class ApiScenarioRiskStoryReferenceController extends AbstractRestfulControllerRequestHandler
+final class ApiScenarioRiskScenarioReferenceController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
@@ -42,6 +42,9 @@ final class ApiScenarioRiskStoryReferenceController extends AbstractRestfulContr
         $allowed = [
             'asset', 'asset-type', 'threat', 'vulnerability', 'referential',
             'control', 'recommendation-set', 'recommendation', 'risk-source',
+            // Legacy subject links used a generic object record. This is a
+            // read-only compatibility lookup; new links use Asset library.
+            'object',
         ];
         if (!in_array($kind, $allowed, true)) {
             return new JsonResponse([

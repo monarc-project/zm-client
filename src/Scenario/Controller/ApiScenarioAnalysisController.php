@@ -8,7 +8,7 @@ use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Scenario\Feature\ScenarioCapability;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Scenario\Service\ScenarioAnalysisService;
-use Monarc\FrontOffice\Scenario\Service\ScenarioRiskStoryService;
+use Monarc\FrontOffice\Scenario\Service\ScenarioRiskScenarioService;
 use Monarc\FrontOffice\Scenario\Service\ScenarioTemplateInstantiationService;
 use Monarc\FrontOffice\Scenario\Validator\ScenarioAnalysisCreateValidator;
 use Monarc\FrontOffice\Scenario\Validator\ScenarioAnalysisUpdateValidator;
@@ -24,7 +24,7 @@ final class ApiScenarioAnalysisController extends AbstractRestfulControllerReque
         private ScenarioAnalysisService $scenarioAnalysisService,
         private ScenarioAnalysisCreateValidator $createValidator,
         private ScenarioAnalysisUpdateValidator $updateValidator,
-        private ScenarioRiskStoryService $riskStoryService,
+        private ScenarioRiskScenarioService $riskScenarioService,
         private ScenarioTemplateInstantiationService $templateInstantiationService,
         private ScenarioTemplateInstantiationValidator $templateInstantiationValidator,
         private ScenarioTemplateOverrideValidator $templateOverrideValidator
@@ -116,12 +116,12 @@ final class ApiScenarioAnalysisController extends AbstractRestfulControllerReque
         $this->validatePostParams($this->updateValidator, $data);
         $updateData = $this->updateValidator->getValidData();
         if (($updateData['lifecycle'] ?? null) === 'active') {
-            $completeness = $this->riskStoryService->completeness($anr);
+            $completeness = $this->riskScenarioService->completeness($anr);
             if (!$completeness['complete']) {
                 return new JsonResponse([
                     'error' => [
-                        'code' => 'incomplete_risk_story',
-                        'message' => 'Complete the Scenario risk-story warnings before activation.',
+                        'code' => 'incomplete_risk_scenario',
+                        'message' => 'Complete the Scenario risk-scenario warnings before activation.',
                     ],
                     'warnings' => $completeness['warnings'],
                 ], 422);

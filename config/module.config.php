@@ -188,16 +188,16 @@ return [
                     ],
                 ],
             ],
-            'scenario_v1_anr_risk_story_references' => [
+            'scenario_v1_anr_risk_scenario_references' => [
                 'type' => 'segment',
                 'options' => [
-                    'route' => '/api/scenario/v1/anrs/:anrid/risk-story-references',
+                    'route' => '/api/scenario/v1/anrs/:anrid/risk-scenario-references',
                     'constraints' => ['anrid' => '[0-9]+'],
                     'defaults' => [
                         'controller' => PipeSpec::class,
                         'middleware' => new PipeSpec(
                             AnrValidationMiddleware::class,
-                            Scenario\Controller\ApiScenarioRiskStoryReferenceController::class,
+                            Scenario\Controller\ApiScenarioRiskScenarioReferenceController::class,
                         ),
                     ],
                 ],
@@ -1713,7 +1713,7 @@ return [
             Scenario\Controller\ApiScenarioInterestedPartyReferenceController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioAssessmentController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioDecisionAuthorityController::class => AutowireFactory::class,
-            Scenario\Controller\ApiScenarioRiskStoryReferenceController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioRiskScenarioReferenceController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioPublishedTemplateController::class => AutowireFactory::class,
             Controller\ApiGuidesController::class => AutowireFactory::class,
             Controller\ApiGuidesItemsController::class => AutowireFactory::class,
@@ -1894,7 +1894,7 @@ return [
             CronTask\Table\CronTaskTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\LegacyBridgeTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioAnalysisTable::class => ClientEntityManagerFactory::class,
-            Scenario\Table\ScenarioRiskStoryTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioRiskScenarioTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioAssessmentTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioInterestedPartyReferenceTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioReferenceTable::class => ClientEntityManagerFactory::class,
@@ -2015,7 +2015,7 @@ return [
                     }
                 );
             },
-            Scenario\Service\ScenarioRiskStoryService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioRiskScenarioService::class => AutowireFactory::class,
             Scenario\Service\ScenarioAssessmentService::class => static function ($container) {
                 return new Scenario\Service\ScenarioAssessmentService(
                     $container->get(Scenario\Table\ScenarioAssessmentTable::class),
@@ -2320,7 +2320,7 @@ return [
         'scenario_v1_anr_template',
         'scenario_v1_anr_risk_scenarios',
         'scenario_v1_anr_interested_party_references',
-        'scenario_v1_anr_risk_story_references',
+        'scenario_v1_anr_risk_scenario_references',
         'scenario_v1_anr_criteria_profiles',
         'scenario_v1_anr_criteria_profiles_assigned',
         'scenario_v1_anr_risk_scenario_assessments',

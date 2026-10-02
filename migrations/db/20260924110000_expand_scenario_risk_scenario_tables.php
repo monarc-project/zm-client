@@ -2,8 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-/** Evolves the intentionally empty SRA-08 story placeholders without touching drafts. */
-final class ExpandScenarioRiskStoryTables extends AbstractMigration
+final class ExpandScenarioRiskScenarioTables extends AbstractMigration
 {
     public function up(): void
     {

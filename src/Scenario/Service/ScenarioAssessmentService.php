@@ -68,9 +68,9 @@ final class ScenarioAssessmentService
     /** @param array<string, mixed> $input @return array<string, mixed>|null */
     public function assess(
         Anr $anr,
-        string $storyUuid,
+        string $riskScenarioUuid,
         array $input,
-        int $storyRevision,
+        int $riskScenarioRevision,
         string $correlationId
     ): ?array {
         $type = (string) ($input['assessmentType'] ?? '');
@@ -95,36 +95,36 @@ final class ScenarioAssessmentService
 
         return $this->assessments->saveAssessment(
             (int) $anr->getId(),
-            $storyUuid,
+            $riskScenarioUuid,
             $type,
             (string) $input['profileVersionUuid'],
             $calculation,
             isset($input['legacyComparison']) && is_array($input['legacyComparison'])
                 ? $input['legacyComparison']
                 : null,
-            $storyRevision,
+            $riskScenarioRevision,
             $this->actorId(),
             $correlationId
         );
     }
 
     /** @return array{items: array<int, array<string, mixed>>} */
-    public function listAssessments(Anr $anr, string $storyUuid): array
+    public function listAssessments(Anr $anr, string $riskScenarioUuid): array
     {
-        return $this->assessments->listAssessments((int) $anr->getId(), $storyUuid);
+        return $this->assessments->listAssessments((int) $anr->getId(), $riskScenarioUuid);
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed>|null */
     public function createTreatment(
         Anr $anr,
-        string $storyUuid,
+        string $riskScenarioUuid,
         array $data,
-        int $storyRevision,
+        int $riskScenarioRevision,
         string $correlationId
     ): ?array {
         return $this->assessments->createTreatment(
             (int) $anr->getId(),
-            $storyUuid,
+            $riskScenarioUuid,
             [
                 'treatment_type' => $data['treatmentType'],
                 'action_text' => $data['actionText'],
@@ -132,18 +132,18 @@ final class ScenarioAssessmentService
                 'due_at' => $this->databaseDate($data['dueAt'] ?? null),
                 'status' => $data['status'],
             ],
-            $storyRevision,
+            $riskScenarioRevision,
             $this->actorId(),
             $correlationId
         );
     }
 
     /** @return array{items: array<int, array<string, mixed>>} */
-    public function listTreatments(Anr $anr, string $storyUuid): array
+    public function listTreatments(Anr $anr, string $riskScenarioUuid): array
     {
-        return $this->assessments->listStoryRecords(
+        return $this->assessments->listRiskScenarioRecords(
             (int) $anr->getId(),
-            $storyUuid,
+            $riskScenarioUuid,
             'scenario_treatments'
         );
     }
@@ -151,31 +151,31 @@ final class ScenarioAssessmentService
     /** @param array<string, mixed> $data @return array<string, mixed>|null */
     public function createMonitoring(
         Anr $anr,
-        string $storyUuid,
+        string $riskScenarioUuid,
         array $data,
-        int $storyRevision,
+        int $riskScenarioRevision,
         string $correlationId
     ): ?array {
         return $this->assessments->createMonitoring(
             (int) $anr->getId(),
-            $storyUuid,
+            $riskScenarioUuid,
             [
                 'indicator' => $data['indicator'],
                 'reassessment_trigger' => $data['reassessmentTrigger'],
                 'observation' => $data['observation'] ?? null,
             ],
-            $storyRevision,
+            $riskScenarioRevision,
             $this->actorId(),
             $correlationId
         );
     }
 
     /** @return array{items: array<int, array<string, mixed>>} */
-    public function listMonitoring(Anr $anr, string $storyUuid): array
+    public function listMonitoring(Anr $anr, string $riskScenarioUuid): array
     {
-        return $this->assessments->listStoryRecords(
+        return $this->assessments->listRiskScenarioRecords(
             (int) $anr->getId(),
-            $storyUuid,
+            $riskScenarioUuid,
             'scenario_monitoring_observations'
         );
     }
@@ -183,9 +183,9 @@ final class ScenarioAssessmentService
     /** @param array<string, mixed> $data @return array<string, mixed>|null */
     public function acceptResidualRisk(
         Anr $anr,
-        string $storyUuid,
+        string $riskScenarioUuid,
         array $data,
-        int $storyRevision,
+        int $riskScenarioRevision,
         string $correlationId
     ): ?array {
         $actor = $this->connectedUser();
@@ -201,7 +201,7 @@ final class ScenarioAssessmentService
 
         return $this->assessments->createAcceptance(
             (int) $anr->getId(),
-            $storyUuid,
+            $riskScenarioUuid,
             (string) $data['assessmentUuid'],
             (int) $assigned->getId(),
             [
@@ -211,16 +211,16 @@ final class ScenarioAssessmentService
                 'approverSupervisorId' => (int) $assigned->getId(),
                 'decidedAt' => gmdate('Y-m-d\\TH:i:s\\Z'),
             ],
-            $storyRevision,
+            $riskScenarioRevision,
             (int) $actor->getId(),
             $correlationId
         );
     }
 
     /** @return array{items: array<int, array<string, mixed>>} */
-    public function listAcceptances(Anr $anr, string $storyUuid): array
+    public function listAcceptances(Anr $anr, string $riskScenarioUuid): array
     {
-        return $this->assessments->listAcceptances((int) $anr->getId(), $storyUuid);
+        return $this->assessments->listAcceptances((int) $anr->getId(), $riskScenarioUuid);
     }
 
     private function actorId(): int

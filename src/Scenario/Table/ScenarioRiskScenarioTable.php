@@ -4,12 +4,12 @@ namespace Monarc\FrontOffice\Scenario\Table;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManager;
-use Monarc\FrontOffice\Scenario\Exception\ScenarioRiskStoryException;
+use Monarc\FrontOffice\Scenario\Exception\ScenarioRiskScenarioException;
 use Monarc\FrontOffice\Scenario\Service\ScenarioRiskGraph;
 use Ramsey\Uuid\Uuid;
 
-/** Persists ANR-scoped editable Scenario risk stories and causal relations. */
-final class ScenarioRiskStoryTable
+/** Persists ANR-scoped editable Scenario risk scenarios and causal relations. */
+final class ScenarioRiskScenarioTable
 {
     private Connection $connection;
 
@@ -89,9 +89,9 @@ final class ScenarioRiskStoryTable
                 'after' => $this->safeScenarioPatch($row),
             ]);
 
-            return $this->detail($anrId, $uuid) ?? throw new ScenarioRiskStoryException(
+            return $this->detail($anrId, $uuid) ?? throw new ScenarioRiskScenarioException(
                 'write_failed',
-                'The risk story could not be created.'
+                'The risk scenario could not be created.'
             );
         });
     }
@@ -178,7 +178,7 @@ final class ScenarioRiskStoryTable
         int $revision,
         string $correlationId
     ): ?array {
-        return $this->saveSingleStoryRecord(
+        return $this->saveSingleRiskScenarioRecord(
             'scenario_risk_sources',
             'risk_source',
             $anrId,
@@ -200,7 +200,7 @@ final class ScenarioRiskStoryTable
         int $revision,
         string $correlationId
     ): ?array {
-        return $this->saveSingleStoryRecord(
+        return $this->saveSingleRiskScenarioRecord(
             'scenario_causes',
             'cause',
             $anrId,
@@ -264,7 +264,7 @@ final class ScenarioRiskStoryTable
                 'after' => $result,
             ]);
 
-            return $result + ['scenarioRevision' => $revision + 1];
+            return $result + ['riskScenarioRevision' => $revision + 1];
         });
     }
 
@@ -302,7 +302,7 @@ final class ScenarioRiskStoryTable
             }
             $updates = $this->nodeColumns($data);
             if ($updates === []) {
-                return $this->projectNode($node) + ['scenarioRevision' => $revision];
+                return $this->projectNode($node) + ['riskScenarioRevision' => $revision];
             }
             $updates['revision'] = (int) $node['revision'] + 1;
             $this->connection->update($table, $updates, ['id' => $node['id']]);
@@ -313,7 +313,7 @@ final class ScenarioRiskStoryTable
                 'after' => $this->projectNode($after),
             ]);
 
-            return $this->projectNode($after) + ['scenarioRevision' => $revision + 1];
+            return $this->projectNode($after) + ['riskScenarioRevision' => $revision + 1];
         });
     }
 
@@ -403,7 +403,7 @@ final class ScenarioRiskStoryTable
                 'event-consequence' => $this->insertEventConsequence($anrId, $scenario, $data),
                 'subject-link' => $this->insertLink('scenario_subject_links', $anrId, $scenario, $data),
                 'control-link' => $this->insertLink('scenario_control_links', $anrId, $scenario, $data),
-                default => throw new ScenarioRiskStoryException(
+                default => throw new ScenarioRiskScenarioException(
                     'invalid_relation',
                     'The Scenario relation is invalid.'
                 ),
@@ -413,7 +413,7 @@ final class ScenarioRiskStoryTable
                 'after' => $result,
             ]);
 
-            return $result + ['scenarioRevision' => $revision + 1];
+            return $result + ['riskScenarioRevision' => $revision + 1];
         });
     }
 
@@ -463,30 +463,30 @@ final class ScenarioRiskStoryTable
     /** @return array<string, mixed> */
     public function completeness(int $anrId): array
     {
-        $stories = $this->connection->fetchAllAssociative(
+        $riskScenarios = $this->connection->fetchAllAssociative(
             'SELECT * FROM scenario_risk_scenarios WHERE anr_id = ? ORDER BY created_at ASC, uuid ASC',
             [$anrId]
         );
         $warnings = [];
-        if ($stories === []) {
-            $warnings[] = ['code' => 'risk_scenario_missing', 'message' => 'Create at least one risk story.'];
+        if ($riskScenarios === []) {
+            $warnings[] = ['code' => 'risk_scenario_missing', 'message' => 'Create at least one risk scenario.'];
         }
-        foreach ($stories as $story) {
-            $storyId = (int) $story['id'];
-            $prefix = ['riskScenarioUuid' => $story['uuid']];
-            if (!$this->hasStoryRecord('scenario_risk_sources', $storyId)) {
+        foreach ($riskScenarios as $riskScenario) {
+            $riskScenarioId = (int) $riskScenario['id'];
+            $prefix = ['riskScenarioUuid' => $riskScenario['uuid']];
+            if (!$this->hasRiskScenarioRecord('scenario_risk_sources', $riskScenarioId)) {
                 $warnings[] = $prefix + ['code' => 'risk_source_missing', 'message' => 'Add a local risk source.'];
             }
-            if (!$this->hasStoryRecord('scenario_causes', $storyId)) {
+            if (!$this->hasRiskScenarioRecord('scenario_causes', $riskScenarioId)) {
                 $warnings[] = $prefix + ['code' => 'cause_missing', 'message' => 'Add a local cause.'];
             }
-            if (!$this->hasStoryRecord('scenario_events', $storyId)) {
+            if (!$this->hasRiskScenarioRecord('scenario_events', $riskScenarioId)) {
                 $warnings[] = $prefix + ['code' => 'event_missing', 'message' => 'Add at least one event.'];
             }
-            if (!$this->hasStoryRecord('scenario_consequences', $storyId)) {
+            if (!$this->hasRiskScenarioRecord('scenario_consequences', $riskScenarioId)) {
                 $warnings[] = $prefix + ['code' => 'consequence_missing', 'message' => 'Add at least one consequence.'];
             }
-            if (!$this->hasStoryRecord('scenario_event_consequences', $storyId)) {
+            if (!$this->hasRiskScenarioRecord('scenario_event_consequences', $riskScenarioId)) {
                 $warnings[] = $prefix + [
                     'code' => 'event_consequence_missing',
                     'message' => 'Link an event to a consequence.',
@@ -505,13 +505,16 @@ final class ScenarioRiskStoryTable
         if ($from === null || $to === null
             || (int) $from['risk_scenario_id'] !== (int) $scenario['id']
             || (int) $to['risk_scenario_id'] !== (int) $scenario['id']) {
-            throw new ScenarioRiskStoryException('invalid_relation', 'Both events must belong to this risk story.');
+            throw new ScenarioRiskScenarioException(
+                'invalid_relation',
+                'Both events must belong to this risk scenario.'
+            );
         }
         if ($from['id'] === $to['id']) {
-            throw new ScenarioRiskStoryException('self_edge', 'An event cannot cause itself.');
+            throw new ScenarioRiskScenarioException('self_edge', 'An event cannot cause itself.');
         }
         if ($this->createsCycle((int) $scenario['id'], (int) $from['id'], (int) $to['id'])) {
-            throw new ScenarioRiskStoryException('cycle', 'The event relation would create a directed cycle.');
+            throw new ScenarioRiskScenarioException('cycle', 'The event relation would create a directed cycle.');
         }
         $uuid = Uuid::uuid4()->toString();
         try {
@@ -523,7 +526,7 @@ final class ScenarioRiskStoryTable
                 'to_event_id' => $to['id'],
             ]);
         } catch (\Throwable) {
-            throw new ScenarioRiskStoryException('duplicate_relation', 'This event relation already exists.');
+            throw new ScenarioRiskScenarioException('duplicate_relation', 'This event relation already exists.');
         }
 
         return ['uuid' => $uuid, 'fromEventUuid' => $from['uuid'], 'toEventUuid' => $to['uuid'], 'revision' => 1];
@@ -537,9 +540,9 @@ final class ScenarioRiskStoryTable
         if ($event === null || $consequence === null
             || (int) $event['risk_scenario_id'] !== (int) $scenario['id']
             || (int) $consequence['risk_scenario_id'] !== (int) $scenario['id']) {
-            throw new ScenarioRiskStoryException(
+            throw new ScenarioRiskScenarioException(
                 'invalid_relation',
-                'The event and consequence must belong to this risk story.'
+                'The event and consequence must belong to this risk scenario.'
             );
         }
         $uuid = Uuid::uuid4()->toString();
@@ -552,7 +555,7 @@ final class ScenarioRiskStoryTable
                 'consequence_id' => $consequence['id'],
             ]);
         } catch (\Throwable) {
-            throw new ScenarioRiskStoryException(
+            throw new ScenarioRiskScenarioException(
                 'duplicate_relation',
                 'This event-to-consequence relation already exists.'
             );
@@ -572,7 +575,7 @@ final class ScenarioRiskStoryTable
         $targetType = $data['targetType'] ?? 'risk_scenario';
         $targetUuid = $data['targetUuid'] ?? $scenario['uuid'];
         if (!$this->validLinkTarget($anrId, $scenario, $targetType, $targetUuid)) {
-            throw new ScenarioRiskStoryException('invalid_target', 'The link target is not in this risk story.');
+            throw new ScenarioRiskScenarioException('invalid_target', 'The link target is not in this risk scenario.');
         }
         $uuid = Uuid::uuid4()->toString();
         $row = [
@@ -595,7 +598,7 @@ final class ScenarioRiskStoryTable
         try {
             $this->connection->insert($table, $row);
         } catch (\Throwable) {
-            throw new ScenarioRiskStoryException('duplicate_relation', 'This Scenario link already exists.');
+            throw new ScenarioRiskScenarioException('duplicate_relation', 'This Scenario link already exists.');
         }
 
         return $this->projectRelation(
@@ -605,7 +608,7 @@ final class ScenarioRiskStoryTable
     }
 
     /** @param array<string, mixed> $data @param array<int, string> $fields @return array<string, mixed>|null */
-    private function saveSingleStoryRecord(
+    private function saveSingleRiskScenarioRecord(
         string $table,
         string $type,
         int $anrId,
@@ -659,7 +662,7 @@ final class ScenarioRiskStoryTable
                 'after' => $result,
             ]);
 
-            return $result + ['scenarioRevision' => $revision + 1];
+            return $result + ['riskScenarioRevision' => $revision + 1];
         });
     }
 
@@ -710,8 +713,8 @@ final class ScenarioRiskStoryTable
         );
 
         return $this->projectScenario($scenario) + [
-            'riskSource' => $this->storyRecord('scenario_risk_sources', $scenarioId),
-            'cause' => $this->storyRecord('scenario_causes', $scenarioId),
+            'riskSource' => $this->riskScenarioRecord('scenario_risk_sources', $scenarioId),
+            'cause' => $this->riskScenarioRecord('scenario_causes', $scenarioId),
             'events' => array_map([$this, 'projectNode'], $events),
             'consequences' => array_map([$this, 'projectNode'], $consequences),
             'edges' => $this->edgeRows($scenarioId),
@@ -722,7 +725,7 @@ final class ScenarioRiskStoryTable
     }
 
     /** @return array<string, mixed>|null */
-    private function storyRecord(string $table, int $scenarioId): ?array
+    private function riskScenarioRecord(string $table, int $scenarioId): ?array
     {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM ' . $table . ' WHERE risk_scenario_id = ?',
@@ -802,7 +805,7 @@ final class ScenarioRiskStoryTable
             ['revision' => $revision + 1],
             ['id' => $id, 'revision' => $revision]
         ) !== 1) {
-            throw new ScenarioRiskStoryException('revision_conflict', 'Reload the risk story before retrying.');
+            throw new ScenarioRiskScenarioException('revision_conflict', 'Reload the risk scenario before retrying.');
         }
     }
 
@@ -864,7 +867,7 @@ final class ScenarioRiskStoryTable
         };
     }
 
-    private function hasStoryRecord(string $table, int $scenarioId): bool
+    private function hasRiskScenarioRecord(string $table, int $scenarioId): bool
     {
         return (bool) $this->connection->fetchOne(
             'SELECT 1 FROM ' . $table . ' WHERE risk_scenario_id = ? LIMIT 1',

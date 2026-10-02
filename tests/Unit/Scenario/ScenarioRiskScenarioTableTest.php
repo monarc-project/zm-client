@@ -4,12 +4,12 @@ namespace Monarc\FrontOffice\Tests\Unit\Scenario;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManager;
-use Monarc\FrontOffice\Scenario\Table\ScenarioRiskStoryTable;
+use Monarc\FrontOffice\Scenario\Table\ScenarioRiskScenarioTable;
 use PHPUnit\Framework\TestCase;
 
-final class ScenarioRiskStoryTableTest extends TestCase
+final class ScenarioRiskScenarioTableTest extends TestCase
 {
-    public function testDeleteDoesNotRemoveAStoryWhenTheRevisionIsStale(): void
+    public function testDeleteDoesNotRemoveAScenarioWhenTheRevisionIsStale(): void
     {
         $connection = $this->createMock(Connection::class);
         $connection->method('transactional')->willReturnCallback(static fn (callable $operation) => $operation());
@@ -21,7 +21,7 @@ final class ScenarioRiskStoryTableTest extends TestCase
 
         $entityManager = $this->createMock(EntityManager::class);
         $entityManager->method('getConnection')->willReturn($connection);
-        $table = new ScenarioRiskStoryTable($entityManager);
+        $table = new ScenarioRiskScenarioTable($entityManager);
 
         self::assertFalse($table->deleteScenario(
             7,

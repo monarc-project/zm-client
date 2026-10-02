@@ -6,7 +6,7 @@ use Laminas\Filter\StringTrim;
 use Laminas\Validator\StringLength;
 use Monarc\Core\Validator\InputValidator\AbstractInputValidator;
 
-/** Validates a partial, typed risk-story write. */
+/** Validates a partial, typed risk-scenario write. */
 final class ScenarioRiskScenarioUpdateValidator extends AbstractInputValidator
 {
     protected function getRules(): array

@@ -5,7 +5,7 @@ namespace Monarc\FrontOffice\Scenario\Exception;
 use RuntimeException;
 
 /** A domain error that can be returned as a safe Scenario API response. */
-final class ScenarioRiskStoryException extends RuntimeException
+final class ScenarioRiskScenarioException extends RuntimeException
 {
     public function __construct(private string $reason, string $message)
     {

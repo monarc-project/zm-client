@@ -8,19 +8,19 @@ use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Scenario\Feature\ScenarioCapability;
 use Monarc\FrontOffice\Entity\Anr;
-use Monarc\FrontOffice\Scenario\Exception\ScenarioRiskStoryException;
-use Monarc\FrontOffice\Scenario\Service\ScenarioRiskStoryService;
+use Monarc\FrontOffice\Scenario\Exception\ScenarioRiskScenarioException;
+use Monarc\FrontOffice\Scenario\Service\ScenarioRiskScenarioService;
 use Monarc\FrontOffice\Scenario\Validator\ScenarioRiskScenarioUpdateValidator;
 use Monarc\FrontOffice\Scenario\Validator\ScenarioRiskScenarioValidator;
 
-/** Exposes the small protected API for editable Scenario risk stories. */
+/** Exposes the small protected API for editable Scenario risk scenarios. */
 final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
     public function __construct(
         private ScenarioCapability $capability,
-        private ScenarioRiskStoryService $service,
+        private ScenarioRiskScenarioService $service,
         private ScenarioRiskScenarioValidator $validator,
         private ScenarioRiskScenarioUpdateValidator $updateValidator
     ) {
@@ -48,8 +48,8 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
         if ($anr === null) {
             return $this->notFound();
         }
-        $story = $this->service->get($anr, (string) $id);
-        if ($story === null) {
+        $riskScenario = $this->service->get($anr, (string) $id);
+        if ($riskScenario === null) {
             return $this->notFound();
         }
         if ($this->resource() !== null && !in_array($this->resource(), [
@@ -66,7 +66,7 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
             return $this->resourceNotFound();
         }
 
-        return $this->getPreparedJsonResponse($this->readResource($story));
+        return $this->getPreparedJsonResponse($this->readResource($riskScenario));
     }
 
     public function create($data)
@@ -92,8 +92,8 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
             ));
         }
 
-        $storyUuid = (string) $this->params()->fromRoute('id');
-        if ($this->service->get($anr, $storyUuid) === null) {
+        $riskScenarioUuid = (string) $this->params()->fromRoute('id');
+        if ($this->service->get($anr, $riskScenarioUuid) === null) {
             return $this->notFound();
         }
         $revision = $this->ifMatchRevision();
@@ -105,21 +105,21 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
             $result = match ($resource) {
                 'risk-source' => $this->service->saveSource(
                     $anr,
-                    $storyUuid,
+                    $riskScenarioUuid,
                     $this->sourcePayload($data, true),
                     $revision,
                     $this->correlationId()
                 ),
                 'cause' => $this->service->saveCause(
                     $anr,
-                    $storyUuid,
+                    $riskScenarioUuid,
                     $this->causePayload($data, true),
                     $revision,
                     $this->correlationId()
                 ),
                 'events', 'consequences' => $this->service->createNode(
                     $anr,
-                    $storyUuid,
+                    $riskScenarioUuid,
                     $resource === 'events' ? 'event' : 'consequence',
                     $this->nodePayload($data),
                     $revision,
@@ -127,18 +127,18 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
                 ),
                 'edges', 'event-consequences', 'subject-links', 'control-links' => $this->service->createRelation(
                     $anr,
-                    $storyUuid,
+                    $riskScenarioUuid,
                     $this->relationType($resource),
                     $this->relationPayload($resource, $data),
                     $revision,
                     $this->correlationId()
                 ),
-                default => throw new ScenarioRiskStoryException(
+                default => throw new ScenarioRiskScenarioException(
                     'invalid_resource',
                     'The Scenario resource is invalid.'
                 ),
             };
-        } catch (ScenarioRiskStoryException $exception) {
+        } catch (ScenarioRiskScenarioException $exception) {
             return $this->domainError($exception);
         }
 
@@ -205,7 +205,7 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
             } else {
                 return $this->invalidPayload();
             }
-        } catch (ScenarioRiskStoryException $exception) {
+        } catch (ScenarioRiskScenarioException $exception) {
             return $this->domainError($exception);
         }
 
@@ -254,21 +254,21 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
         return $deleted ? new EmptyResponse(204) : $this->revisionConflict();
     }
 
-    /** @param array<string, mixed> $story @return array<string, mixed> */
-    private function readResource(array $story): array
+    /** @param array<string, mixed> $riskScenario @return array<string, mixed> */
+    private function readResource(array $riskScenario): array
     {
         return match ($this->resource()) {
-            null => $story,
-            'risk-source' => ['item' => $story['riskSource']],
-            'cause' => ['item' => $story['cause']],
-            'events' => ['items' => $story['events']],
-            'consequences' => ['items' => $story['consequences']],
-            'edges' => ['items' => $story['edges']],
-            'event-consequences' => ['items' => $story['eventConsequences']],
-            'subject-links' => ['items' => $story['subjectLinks']],
-            'control-links' => ['items' => $story['controlLinks']],
+            null => $riskScenario,
+            'risk-source' => ['item' => $riskScenario['riskSource']],
+            'cause' => ['item' => $riskScenario['cause']],
+            'events' => ['items' => $riskScenario['events']],
+            'consequences' => ['items' => $riskScenario['consequences']],
+            'edges' => ['items' => $riskScenario['edges']],
+            'event-consequences' => ['items' => $riskScenario['eventConsequences']],
+            'subject-links' => ['items' => $riskScenario['subjectLinks']],
+            'control-links' => ['items' => $riskScenario['controlLinks']],
             'completeness' => $this->service->completeness($this->scenarioAnr() ?? throw new \LogicException()),
-            default => $story,
+            default => $riskScenario,
         };
     }
 
@@ -278,7 +278,7 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
         $this->assertPayload($data, ['title', 'narrative', 'legacyRiskSourceId'], true);
         $this->assertStringFields($data, ['title' => 255, 'narrative' => 65535, 'legacyRiskSourceId' => 36]);
         if ($titleRequired && (!isset($data['title']) || trim((string) $data['title']) === '')) {
-            throw new ScenarioRiskStoryException('invalid_payload', 'A risk-source title is required.');
+            throw new ScenarioRiskScenarioException('invalid_payload', 'A risk-source title is required.');
         }
 
         return $this->trimmed($data);
@@ -295,11 +295,11 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
         ]);
         foreach (['threatReferenceUuid', 'vulnerabilityReferenceUuid'] as $field) {
             if (isset($data[$field]) && !$this->isUuid((string) $data[$field])) {
-                throw new ScenarioRiskStoryException('invalid_payload', 'The reference UUID is invalid.');
+                throw new ScenarioRiskScenarioException('invalid_payload', 'The reference UUID is invalid.');
             }
         }
         if ($titleRequired && (!isset($data['title']) || trim((string) $data['title']) === '')) {
-            throw new ScenarioRiskStoryException('invalid_payload', 'A cause title is required.');
+            throw new ScenarioRiskScenarioException('invalid_payload', 'A cause title is required.');
         }
 
         return $this->trimmed($data);
@@ -339,7 +339,7 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
         };
         foreach ($required as $field) {
             if (!isset($data[$field]) || trim((string) $data[$field]) === '') {
-                throw new ScenarioRiskStoryException(
+                throw new ScenarioRiskScenarioException(
                     'invalid_payload',
                     'A required Scenario relation field is missing.'
                 );
@@ -356,23 +356,23 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
         ];
         foreach ($uuidFields as $field) {
             if (isset($data[$field]) && !$this->isUuid((string) $data[$field])) {
-                throw new ScenarioRiskStoryException('invalid_payload', 'The relation UUID is invalid.');
+                throw new ScenarioRiskScenarioException('invalid_payload', 'The relation UUID is invalid.');
             }
         }
         if (isset($data['targetType'])
             && !in_array($data['targetType'], ['risk_scenario', 'event', 'consequence'], true)) {
-            throw new ScenarioRiskStoryException('invalid_payload', 'The link target type is invalid.');
+            throw new ScenarioRiskScenarioException('invalid_payload', 'The link target type is invalid.');
         }
         if (isset($data['subjectType']) && !in_array(
             $data['subjectType'],
             ['asset', 'process', 'object', 'information', 'supplier', 'objective'],
             true
         )) {
-            throw new ScenarioRiskStoryException('invalid_payload', 'The subject type is invalid.');
+            throw new ScenarioRiskScenarioException('invalid_payload', 'The subject type is invalid.');
         }
         if ($resource === 'control-links' && (!isset($data['relationshipIntent'])
             || !in_array($data['relationshipIntent'], ['existing', 'proposed'], true))) {
-            throw new ScenarioRiskStoryException('invalid_payload', 'The control relationship intent is required.');
+            throw new ScenarioRiskScenarioException('invalid_payload', 'The control relationship intent is required.');
         }
 
         return $this->trimmed($data);
@@ -382,7 +382,7 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
     private function assertPayload(array $data, array $allowed, bool $required): void
     {
         if (!$this->hasOnlyFields($data, $allowed) || ($required && $data === [])) {
-            throw new ScenarioRiskStoryException('invalid_payload', 'The Scenario request payload is invalid.');
+            throw new ScenarioRiskScenarioException('invalid_payload', 'The Scenario request payload is invalid.');
         }
     }
 
@@ -391,11 +391,11 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
     {
         foreach ($fields as $field => $maxLength) {
             if (isset($data[$field]) && (!is_string($data[$field]) || mb_strlen(trim($data[$field])) > $maxLength)) {
-                throw new ScenarioRiskStoryException('invalid_payload', 'The Scenario request payload is invalid.');
+                throw new ScenarioRiskScenarioException('invalid_payload', 'The Scenario request payload is invalid.');
             }
         }
         if (array_key_exists('title', $data) && trim((string) $data['title']) === '') {
-            throw new ScenarioRiskStoryException('invalid_payload', 'A title is required.');
+            throw new ScenarioRiskScenarioException('invalid_payload', 'A title is required.');
         }
     }
 
@@ -473,7 +473,7 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
         return $header === false ? bin2hex(random_bytes(16)) : substr($header->getFieldValue(), 0, 128);
     }
 
-    private function domainError(ScenarioRiskStoryException $exception): JsonResponse
+    private function domainError(ScenarioRiskScenarioException $exception): JsonResponse
     {
         $status = $exception->reason() === 'unavailable_reference' ? 403 : 422;
         if (in_array($exception->reason(), ['cycle', 'self_edge', 'duplicate_relation'], true)) {
@@ -488,17 +488,17 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
 
     private function revisionConflict(): JsonResponse
     {
-        return $this->error(409, 'revision_conflict', 'Reload the risk story before retrying.');
+        return $this->error(409, 'revision_conflict', 'Reload the risk scenario before retrying.');
     }
 
     private function invalidPayload(): JsonResponse
     {
-        return $this->error(422, 'invalid_payload', 'The risk-story payload is invalid.');
+        return $this->error(422, 'invalid_payload', 'The risk-scenario payload is invalid.');
     }
 
     private function notFound(): JsonResponse
     {
-        return $this->error(404, 'not_found', 'Scenario analysis or risk story was not found.');
+        return $this->error(404, 'not_found', 'Scenario analysis or risk scenario was not found.');
     }
 
     private function resourceNotFound(): JsonResponse

@@ -6,16 +6,16 @@ use Monarc\Core\Exception\ActionForbiddenException;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\User;
-use Monarc\FrontOffice\Scenario\Exception\ScenarioRiskStoryException;
+use Monarc\FrontOffice\Scenario\Exception\ScenarioRiskScenarioException;
 use Monarc\FrontOffice\Scenario\Table\ScenarioAnalysisTable;
 use Monarc\FrontOffice\Scenario\Table\ScenarioReferenceTable;
-use Monarc\FrontOffice\Scenario\Table\ScenarioRiskStoryTable;
+use Monarc\FrontOffice\Scenario\Table\ScenarioRiskScenarioTable;
 
-/** Coordinates authorised Scenario risk-story writes without exposing DBAL to controllers. */
-final class ScenarioRiskStoryService
+/** Coordinates authorised Scenario risk-scenario writes without exposing DBAL to controllers. */
+final class ScenarioRiskScenarioService
 {
     public function __construct(
-        private ScenarioRiskStoryTable $stories,
+        private ScenarioRiskScenarioTable $riskScenarios,
         private ScenarioAnalysisTable $analyses,
         private ScenarioReferenceTable $references,
         private ConnectedUserService $users
@@ -25,13 +25,13 @@ final class ScenarioRiskStoryService
     /** @return array<string, mixed> */
     public function list(Anr $anr, int $page, int $pageSize): array
     {
-        return $this->stories->list((int) $anr->getId(), $page, $pageSize);
+        return $this->riskScenarios->list((int) $anr->getId(), $page, $pageSize);
     }
 
     /** @return array<string, mixed>|null */
     public function get(Anr $anr, string $uuid): ?array
     {
-        return $this->stories->detail((int) $anr->getId(), $uuid);
+        return $this->riskScenarios->detail((int) $anr->getId(), $uuid);
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed> */
@@ -42,7 +42,7 @@ final class ScenarioRiskStoryService
             throw new ActionForbiddenException('Scenario analysis was not found.');
         }
 
-        return $this->stories->createScenario(
+        return $this->riskScenarios->createScenario(
             (int) $anr->getId(),
             $analysisId,
             $this->actorId(),
@@ -59,7 +59,7 @@ final class ScenarioRiskStoryService
         int $revision,
         string $correlationId
     ): ?array {
-        return $this->stories->updateScenario(
+        return $this->riskScenarios->updateScenario(
             (int) $anr->getId(),
             $uuid,
             $this->actorId(),
@@ -71,7 +71,7 @@ final class ScenarioRiskStoryService
 
     public function delete(Anr $anr, string $uuid, int $revision, string $correlationId): bool
     {
-        return $this->stories->deleteScenario(
+        return $this->riskScenarios->deleteScenario(
             (int) $anr->getId(),
             $uuid,
             $this->actorId(),
@@ -90,14 +90,14 @@ final class ScenarioRiskStoryService
     ): ?array {
         if (isset($data['legacyRiskSourceId'])) {
             if (!$this->references->hasRiskSource((int) $anr->getId(), (string) $data['legacyRiskSourceId'])) {
-                throw new ScenarioRiskStoryException(
+                throw new ScenarioRiskScenarioException(
                     'unavailable_reference',
                     'The selected risk source is unavailable in this analysis.'
                 );
             }
             $snapshot = $this->references->snapshot($anr, 'risk-source', (string) $data['legacyRiskSourceId']);
             if ($snapshot === null) {
-                throw new ScenarioRiskStoryException(
+                throw new ScenarioRiskScenarioException(
                     'unavailable_reference',
                     'The selected risk source is unavailable in this analysis.'
                 );
@@ -105,7 +105,7 @@ final class ScenarioRiskStoryService
             $data['referenceSnapshot'] = $snapshot;
         }
 
-        return $this->stories->saveSource(
+        return $this->riskScenarios->saveSource(
             (int) $anr->getId(),
             $uuid,
             $this->actorId(),
@@ -126,17 +126,17 @@ final class ScenarioRiskStoryService
         $anrId = (int) $anr->getId();
         if (isset($data['threatReferenceUuid'])) {
             if (!$this->references->hasThreat($anrId, (string) $data['threatReferenceUuid'])) {
-                throw new ScenarioRiskStoryException('unavailable_reference', 'The selected threat is unavailable.');
+                throw new ScenarioRiskScenarioException('unavailable_reference', 'The selected threat is unavailable.');
             }
             $snapshot = $this->references->snapshot($anr, 'threat', (string) $data['threatReferenceUuid']);
             if ($snapshot === null) {
-                throw new ScenarioRiskStoryException('unavailable_reference', 'The selected threat is unavailable.');
+                throw new ScenarioRiskScenarioException('unavailable_reference', 'The selected threat is unavailable.');
             }
             $data['threatReferenceSnapshot'] = $snapshot;
         }
         if (isset($data['vulnerabilityReferenceUuid'])) {
             if (!$this->references->hasVulnerability($anrId, (string) $data['vulnerabilityReferenceUuid'])) {
-                throw new ScenarioRiskStoryException(
+                throw new ScenarioRiskScenarioException(
                     'unavailable_reference',
                     'The selected vulnerability is unavailable.'
                 );
@@ -147,7 +147,7 @@ final class ScenarioRiskStoryService
                 (string) $data['vulnerabilityReferenceUuid']
             );
             if ($snapshot === null) {
-                throw new ScenarioRiskStoryException(
+                throw new ScenarioRiskScenarioException(
                     'unavailable_reference',
                     'The selected vulnerability is unavailable.'
                 );
@@ -155,7 +155,7 @@ final class ScenarioRiskStoryService
             $data['vulnerabilityReferenceSnapshot'] = $snapshot;
         }
 
-        return $this->stories->saveCause(
+        return $this->riskScenarios->saveCause(
             $anrId,
             $uuid,
             $this->actorId(),
@@ -174,7 +174,7 @@ final class ScenarioRiskStoryService
         int $revision,
         string $correlationId
     ): ?array {
-        return $this->stories->createNode(
+        return $this->riskScenarios->createNode(
             (int) $anr->getId(),
             $scenarioUuid,
             $type,
@@ -195,7 +195,7 @@ final class ScenarioRiskStoryService
         int $revision,
         string $correlationId
     ): ?array {
-        return $this->stories->updateNode(
+        return $this->riskScenarios->updateNode(
             (int) $anr->getId(),
             $scenarioUuid,
             $type,
@@ -215,7 +215,7 @@ final class ScenarioRiskStoryService
         int $revision,
         string $correlationId
     ): bool {
-        return $this->stories->deleteNode(
+        return $this->riskScenarios->deleteNode(
             (int) $anr->getId(),
             $scenarioUuid,
             $type,
@@ -237,7 +237,7 @@ final class ScenarioRiskStoryService
     ): ?array {
         $this->assertLinkReference($anr, $type, $data);
 
-        return $this->stories->createRelation(
+        return $this->riskScenarios->createRelation(
             (int) $anr->getId(),
             $scenarioUuid,
             $type,
@@ -256,7 +256,7 @@ final class ScenarioRiskStoryService
         int $revision,
         string $correlationId
     ): bool {
-        return $this->stories->deleteRelation(
+        return $this->riskScenarios->deleteRelation(
             (int) $anr->getId(),
             $scenarioUuid,
             $type,
@@ -270,7 +270,7 @@ final class ScenarioRiskStoryService
     /** @return array<string, mixed> */
     public function completeness(Anr $anr): array
     {
-        return $this->stories->completeness((int) $anr->getId());
+        return $this->riskScenarios->completeness((int) $anr->getId());
     }
 
     /** @param array<string, mixed> $data */
@@ -282,7 +282,7 @@ final class ScenarioRiskStoryService
             (string) $data['subjectType'],
             (string) $data['subjectReferenceUuid']
         )) {
-            throw new ScenarioRiskStoryException(
+            throw new ScenarioRiskScenarioException(
                 'unavailable_reference',
                 'The selected subject is unavailable in this analysis.'
             );
@@ -294,7 +294,7 @@ final class ScenarioRiskStoryService
                 (string) $data['subjectReferenceUuid']
             );
             if ($snapshot === null) {
-                throw new ScenarioRiskStoryException(
+                throw new ScenarioRiskScenarioException(
                     'unavailable_reference',
                     'The selected subject is unavailable in this analysis.'
                 );
@@ -305,7 +305,7 @@ final class ScenarioRiskStoryService
             $anrId,
             (string) $data['controlReferenceUuid']
         )) {
-            throw new ScenarioRiskStoryException(
+            throw new ScenarioRiskScenarioException(
                 'unavailable_reference',
                 'The selected control is unavailable in this analysis.'
             );
@@ -317,7 +317,7 @@ final class ScenarioRiskStoryService
                 (string) $data['controlReferenceUuid']
             );
             if ($snapshot === null) {
-                throw new ScenarioRiskStoryException(
+                throw new ScenarioRiskScenarioException(
                     'unavailable_reference',
                     'The selected control is unavailable in this analysis.'
                 );

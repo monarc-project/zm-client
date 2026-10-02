@@ -42,7 +42,7 @@ final class AddScenarioAssessmentTables extends AbstractMigration
             revision INT UNSIGNED NOT NULL DEFAULT 1, created_by INT UNSIGNED NOT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id), UNIQUE KEY scenario_assessments_uuid (uuid),
-            KEY scenario_assessments_story_type (risk_scenario_id, assessment_type),
+            KEY scenario_assessments_risk_scenario_type (risk_scenario_id, assessment_type),
             KEY scenario_assessments_scope (anr_id, risk_scenario_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
         $this->execute("CREATE TABLE scenario_treatments (

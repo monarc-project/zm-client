@@ -10,7 +10,7 @@ use Monarc\Core\Exception\Exception as CoreException;
 use Monarc\Core\Scenario\Feature\ScenarioCapability;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Scenario\Service\ScenarioAssessmentService;
-use Monarc\FrontOffice\Scenario\Service\ScenarioRiskStoryService;
+use Monarc\FrontOffice\Scenario\Service\ScenarioRiskScenarioService;
 
 /** Exposes the protected, backend-only SRA-13 criteria and decision API. */
 final class ApiScenarioAssessmentController extends AbstractRestfulControllerRequestHandler
@@ -20,7 +20,7 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
     public function __construct(
         private ScenarioCapability $capability,
         private ScenarioAssessmentService $assessments,
-        private ScenarioRiskStoryService $stories
+        private ScenarioRiskScenarioService $riskScenarios
     ) {
     }
 
@@ -51,16 +51,18 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
         if ($this->kind() === 'profiles') {
             return $this->notFound();
         }
-        $storyUuid = (string) $id;
-        if ($this->stories->get($anr, $storyUuid) === null) {
+        $riskScenarioUuid = (string) $id;
+        if ($this->riskScenarios->get($anr, $riskScenarioUuid) === null) {
             return $this->notFound();
         }
 
         return match ($this->resource()) {
-            null => $this->getPreparedJsonResponse($this->assessments->listAssessments($anr, $storyUuid)),
-            'treatments' => $this->getPreparedJsonResponse($this->assessments->listTreatments($anr, $storyUuid)),
-            'monitoring' => $this->getPreparedJsonResponse($this->assessments->listMonitoring($anr, $storyUuid)),
-            'acceptances' => $this->getPreparedJsonResponse($this->assessments->listAcceptances($anr, $storyUuid)),
+            null => $this->getPreparedJsonResponse($this->assessments->listAssessments($anr, $riskScenarioUuid)),
+            'treatments' => $this->getPreparedJsonResponse($this->assessments->listTreatments($anr, $riskScenarioUuid)),
+            'monitoring' => $this->getPreparedJsonResponse($this->assessments->listMonitoring($anr, $riskScenarioUuid)),
+            'acceptances' => $this->getPreparedJsonResponse(
+                $this->assessments->listAcceptances($anr, $riskScenarioUuid)
+            ),
             default => $this->notFound(),
         };
     }
@@ -91,35 +93,35 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
                     $result = $this->assessments->createProfileVersion($anr, $data, $revision, $this->correlationId());
                 }
             } else {
-                $storyUuid = (string) $this->params()->fromRoute('id');
-                if ($this->stories->get($anr, $storyUuid) === null) {
+                $riskScenarioUuid = (string) $this->params()->fromRoute('id');
+                if ($this->riskScenarios->get($anr, $riskScenarioUuid) === null) {
                     return $this->notFound();
                 }
                 $result = match ($this->resource()) {
                     null => $this->assessments->assess(
                         $anr,
-                        $storyUuid,
+                        $riskScenarioUuid,
                         $this->assessmentPayload($data),
                         $revision,
                         $this->correlationId()
                     ),
                     'treatments' => $this->assessments->createTreatment(
                         $anr,
-                        $storyUuid,
+                        $riskScenarioUuid,
                         $this->treatmentPayload($data),
                         $revision,
                         $this->correlationId()
                     ),
                     'monitoring' => $this->assessments->createMonitoring(
                         $anr,
-                        $storyUuid,
+                        $riskScenarioUuid,
                         $this->monitoringPayload($data),
                         $revision,
                         $this->correlationId()
                     ),
                     'acceptances' => $this->assessments->acceptResidualRisk(
                         $anr,
-                        $storyUuid,
+                        $riskScenarioUuid,
                         $this->acceptancePayload($data),
                         $revision,
                         $this->correlationId()
@@ -309,7 +311,7 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
 
     private function notFound(): JsonResponse
     {
-        return $this->error(404, 'not_found', 'Scenario analysis or risk story was not found.');
+        return $this->error(404, 'not_found', 'Scenario analysis or risk scenario was not found.');
     }
 
     private function error(int $status, string $code, string $message): JsonResponse

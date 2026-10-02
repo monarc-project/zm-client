@@ -3,12 +3,7 @@ declare(strict_types=1);
 
 use Phinx\Migration\AbstractMigration;
 
-/**
- * Adds the local, editable risk-source and cause records required by a
- * Scenario risk story.  The SRA-08 placeholders remain untouched so existing
- * draft metadata can be upgraded safely.
- */
-final class AddScenarioRiskStoryRelations extends AbstractMigration
+final class AddScenarioRiskScenarioRelations extends AbstractMigration
 {
     public function up(): void
     {
