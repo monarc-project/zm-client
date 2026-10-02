@@ -61,7 +61,7 @@ class AnrThreatService
             ->setCode($data['code'])
             ->setLabels($data)
             ->setDescriptions($data)
-            ->setComment($threatData['comment'] ?? '')
+            ->setComment($data['comment'] ?? '')
             ->setCreator($this->connectedUser->getEmail());
         if (isset($data['uuid'])) {
             $threat->setUuid($data['uuid']);

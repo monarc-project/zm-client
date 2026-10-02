@@ -180,12 +180,25 @@ class Module
             'scenario_v1_anr_analysis',
             'scenario_v1_anr_template',
             'scenario_v1_anr_risk_scenarios',
+            'scenario_v1_anr_interested_party_references',
             'scenario_v1_anr_risk_story_references',
             'scenario_v1_anr_criteria_profiles',
             'scenario_v1_anr_criteria_profiles_assigned',
             'scenario_v1_anr_risk_scenario_assessments',
             'scenario_v1_frontoffice_templates',
             'scenario_v1_anr_decision_authority',
+            // Narrow Scenario Knowledge-base BFF routes reuse the established
+            // FrontOffice controllers and their validators.  They still run
+            // through normal ANR validation and RBAC after this identity is
+            // resolved; no generic upstream proxy is exposed.
+            'monarc_api_global_client_anr/assets',
+            'monarc_api_global_client_anr/objects',
+            'monarc_api_global_client_anr/threats',
+            'monarc_api_global_client_anr/vulnerabilities',
+            'monarc_api_global_client_anr/measures',
+            'monarc_api_anr_recommendations',
+            'monarc_api_anr_recommendations_sets',
+            'monarc_api_global_client_anr/risk_sources',
         ], true)) {
             return null;
         }

@@ -4,8 +4,8 @@ namespace Monarc\FrontOffice\Scenario\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use Monarc\Core\Scenario\Contract\AnalysisType;
 use Monarc\Core\Scenario\Feature\ScenarioCapability;
+use Monarc\FrontOffice\Scenario\Exception\ScenarioHandoffException;
 use Monarc\FrontOffice\Scenario\Table\LegacyBridgeTable;
 use Monarc\FrontOffice\Scenario\Validator\LegacyHandoffRequestValidator;
 use Monarc\FrontOffice\Table\UserTokenTable;
@@ -23,6 +23,7 @@ final class LegacyBridgeService
         private LegacyBridgeTable $legacyBridgeTable,
         private UserTokenTable $userTokenTable,
         private ScenarioCapability $scenarioCapability,
+        private ScenarioLaunchAccessService $scenarioLaunchAccessService,
         private array $scenarioConfig,
         private int $authTtlMinutes
     ) {
@@ -59,26 +60,29 @@ final class LegacyBridgeService
     {
         $userToken = $this->userTokenTable->findByToken($token);
         if ($userToken === null || $userToken->getDateEnd() <= $this->utcDateTime()) {
-            throw new \RuntimeException('Invalid Scenario handoff');
+            throw new ScenarioHandoffException(
+                'legacy_session_expired',
+                401,
+                'Your MONARC session has expired. Please sign in again.'
+            );
         }
 
         $user = $userToken->getUser();
         $anrId = $data['anrId'];
         if (!$this->scenarioCapability->isEnabled()) {
-            throw new \RuntimeException('Invalid Scenario handoff');
+            throw new ScenarioHandoffException(
+                'scenario_unavailable',
+                403,
+                'Scenario access is unavailable in this MONARC instance.'
+            );
         }
 
-        $permitted = false;
-        foreach ($user->getUserAnrs() as $userAnr) {
-            if ($userAnr->getAnr()->getId() === $anrId
-                && $userAnr->getAnr()->getAnalysisType() === AnalysisType::SCENARIO
-            ) {
-                $permitted = true;
-                break;
-            }
-        }
-        if (!$permitted) {
-            throw new \RuntimeException('Invalid Scenario handoff');
+        if (!$this->scenarioLaunchAccessService->canOpen($user, $anrId)) {
+            throw new ScenarioHandoffException(
+                'scenario_access_forbidden',
+                403,
+                'You do not have permission to open this Scenario analysis.'
+            );
         }
 
         $code = bin2hex(random_bytes(32));

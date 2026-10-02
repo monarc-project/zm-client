@@ -171,6 +171,23 @@ return [
                     ],
                 ],
             ],
+            'scenario_v1_anr_interested_party_references' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/interested-party-references[/:id]',
+                    'constraints' => [
+                        'anrid' => '[0-9]+',
+                        'id' => '[a-f0-9-]{36}',
+                    ],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioInterestedPartyReferenceController::class,
+                        ),
+                    ],
+                ],
+            ],
             'scenario_v1_anr_risk_story_references' => [
                 'type' => 'segment',
                 'options' => [
@@ -1693,6 +1710,7 @@ return [
             Scenario\Controller\ApiScenarioAuthBridgeController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioAnalysisController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioRiskScenarioController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioInterestedPartyReferenceController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioAssessmentController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioDecisionAuthorityController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioRiskStoryReferenceController::class => AutowireFactory::class,
@@ -1878,6 +1896,7 @@ return [
             Scenario\Table\ScenarioAnalysisTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioRiskStoryTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioAssessmentTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioInterestedPartyReferenceTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioReferenceTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioTemplateSnapshotTable::class => ClientEntityManagerFactory::class,
 
@@ -1971,6 +1990,7 @@ return [
                     $container->get(Scenario\Table\LegacyBridgeTable::class),
                     $container->get(Table\UserTokenTable::class),
                     $container->get(ScenarioCapability::class),
+                    $container->get(Scenario\Service\ScenarioLaunchAccessService::class),
                     $scenarioConfig,
                     (int) ($config['monarc']['ttl'] ?? 20)
                 );
@@ -1982,6 +2002,7 @@ return [
                 );
             },
             Scenario\Service\ScenarioReadinessService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioLaunchAccessService::class => ReflectionBasedAbstractFactory::class,
             Scenario\Service\ScenarioAnalysisService::class => static function ($container) {
                 return new Scenario\Service\ScenarioAnalysisService(
                     $container->get(Scenario\Table\ScenarioAnalysisTable::class),
@@ -2047,6 +2068,7 @@ return [
             Scenario\Validator\ScenarioAnalysisUpdateValidator::class => ReflectionBasedAbstractFactory::class,
             Scenario\Validator\ScenarioRiskScenarioValidator::class => ReflectionBasedAbstractFactory::class,
             Scenario\Validator\ScenarioRiskScenarioUpdateValidator::class => ReflectionBasedAbstractFactory::class,
+            Scenario\Validator\ScenarioInterestedPartyReferenceValidator::class => ReflectionBasedAbstractFactory::class,
             Scenario\Validator\ScenarioTemplateInstantiationValidator::class => ReflectionBasedAbstractFactory::class,
             Scenario\Validator\ScenarioTemplateOverrideValidator::class => ReflectionBasedAbstractFactory::class,
             Scenario\Validator\ScenarioDecisionAuthorityWriteValidator::class => static function (
@@ -2297,6 +2319,7 @@ return [
         'scenario_v1_anr_analysis',
         'scenario_v1_anr_template',
         'scenario_v1_anr_risk_scenarios',
+        'scenario_v1_anr_interested_party_references',
         'scenario_v1_anr_risk_story_references',
         'scenario_v1_anr_criteria_profiles',
         'scenario_v1_anr_criteria_profiles_assigned',

@@ -102,11 +102,11 @@ final class LegacyBridgeTable
 
             $legacyTokenId = $this->connection->fetchOne(
                 'SELECT ut.id FROM users u '
-                . 'INNER JOIN users_anrs ua ON ua.user_id = u.id AND ua.anr_id = ? '
                 . 'INNER JOIN user_tokens ut ON ut.user_id = u.id '
                 . 'WHERE u.id = ? AND u.status = 1 AND SHA2(ut.token, 256) = ? '
-                . 'AND ut.date_end > ? LIMIT 1 FOR UPDATE',
-                [$row['anr_id'], $row['user_id'], $row['legacy_token_digest'], $legacyCurrentAt]
+                . 'AND ut.date_end > ? AND ' . $this->analysisAccessSqlCondition('u.id', '?')
+                . 'LIMIT 1 FOR UPDATE',
+                [$row['user_id'], $row['legacy_token_digest'], $legacyCurrentAt, $row['anr_id'], $row['anr_id']]
             );
             if ($legacyTokenId === false) {
                 $this->connection->rollBack();
@@ -164,11 +164,11 @@ final class LegacyBridgeTable
                 'SELECT ss.user_id, ss.anr_id, ss.office, ss.expires_at, ut.id AS legacy_token_id '
                 . 'FROM scenario_sessions ss '
                 . 'INNER JOIN users u ON u.id = ss.user_id AND u.status = 1 '
-                . 'INNER JOIN users_anrs ua ON ua.user_id = u.id AND ua.anr_id = ss.anr_id '
                 . 'INNER JOIN user_tokens ut ON ut.user_id = u.id '
                 . 'AND SHA2(ut.token, 256) = ss.legacy_token_digest '
                 . 'WHERE ss.session_digest = ? AND ss.revoked_at IS NULL '
-                . 'AND ss.expires_at > ? AND ut.date_end > ? '
+                . 'AND ss.expires_at > ? AND ut.date_end > ? AND '
+                . $this->analysisAccessSqlCondition('u.id', 'ss.anr_id')
                 . 'LIMIT 1 FOR UPDATE',
                 [hash('sha256', $session), $scenarioCurrentAt, $legacyCurrentAt]
             );
@@ -215,5 +215,22 @@ final class LegacyBridgeTable
             'UPDATE scenario_sessions SET revoked_at = UTC_TIMESTAMP() WHERE user_id = ? AND revoked_at IS NULL',
             [$userId]
         );
+    }
+
+    /**
+     * An active linked supervisor has the same Scenario analysis read access
+     * as a user with an explicit users_anrs record.
+     */
+    private function analysisAccessSqlCondition(string $userId, string $anrId): string
+    {
+        return '(EXISTS (SELECT 1 FROM users_anrs ua '
+            . sprintf('WHERE ua.user_id = %s AND ua.anr_id = %s)', $userId, $anrId)
+            . ' OR EXISTS (SELECT 1 FROM anr_supervisors supervisor '
+            . sprintf(
+                'WHERE supervisor.linked_user_id = %s AND supervisor.anr_id = %s AND supervisor.is_active = 1)',
+                $userId,
+                $anrId
+            )
+            . ')';
     }
 }

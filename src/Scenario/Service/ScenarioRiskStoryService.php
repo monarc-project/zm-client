@@ -88,12 +88,21 @@ final class ScenarioRiskStoryService
         int $revision,
         string $correlationId
     ): ?array {
-        if (isset($data['legacyRiskSourceId'])
-            && !$this->references->hasRiskSource((int) $anr->getId(), (string) $data['legacyRiskSourceId'])) {
-            throw new ScenarioRiskStoryException(
-                'unavailable_reference',
-                'The selected risk source is unavailable in this analysis.'
-            );
+        if (isset($data['legacyRiskSourceId'])) {
+            if (!$this->references->hasRiskSource((int) $anr->getId(), (string) $data['legacyRiskSourceId'])) {
+                throw new ScenarioRiskStoryException(
+                    'unavailable_reference',
+                    'The selected risk source is unavailable in this analysis.'
+                );
+            }
+            $snapshot = $this->references->snapshot($anr, 'risk-source', (string) $data['legacyRiskSourceId']);
+            if ($snapshot === null) {
+                throw new ScenarioRiskStoryException(
+                    'unavailable_reference',
+                    'The selected risk source is unavailable in this analysis.'
+                );
+            }
+            $data['referenceSnapshot'] = $snapshot;
         }
 
         return $this->stories->saveSource(
@@ -115,16 +124,35 @@ final class ScenarioRiskStoryService
         string $correlationId
     ): ?array {
         $anrId = (int) $anr->getId();
-        if (isset($data['threatReferenceUuid'])
-            && !$this->references->hasThreat($anrId, (string) $data['threatReferenceUuid'])) {
-            throw new ScenarioRiskStoryException('unavailable_reference', 'The selected threat is unavailable.');
+        if (isset($data['threatReferenceUuid'])) {
+            if (!$this->references->hasThreat($anrId, (string) $data['threatReferenceUuid'])) {
+                throw new ScenarioRiskStoryException('unavailable_reference', 'The selected threat is unavailable.');
+            }
+            $snapshot = $this->references->snapshot($anr, 'threat', (string) $data['threatReferenceUuid']);
+            if ($snapshot === null) {
+                throw new ScenarioRiskStoryException('unavailable_reference', 'The selected threat is unavailable.');
+            }
+            $data['threatReferenceSnapshot'] = $snapshot;
         }
-        if (isset($data['vulnerabilityReferenceUuid'])
-            && !$this->references->hasVulnerability($anrId, (string) $data['vulnerabilityReferenceUuid'])) {
-            throw new ScenarioRiskStoryException(
-                'unavailable_reference',
-                'The selected vulnerability is unavailable.'
+        if (isset($data['vulnerabilityReferenceUuid'])) {
+            if (!$this->references->hasVulnerability($anrId, (string) $data['vulnerabilityReferenceUuid'])) {
+                throw new ScenarioRiskStoryException(
+                    'unavailable_reference',
+                    'The selected vulnerability is unavailable.'
+                );
+            }
+            $snapshot = $this->references->snapshot(
+                $anr,
+                'vulnerability',
+                (string) $data['vulnerabilityReferenceUuid']
             );
+            if ($snapshot === null) {
+                throw new ScenarioRiskStoryException(
+                    'unavailable_reference',
+                    'The selected vulnerability is unavailable.'
+                );
+            }
+            $data['vulnerabilityReferenceSnapshot'] = $snapshot;
         }
 
         return $this->stories->saveCause(
@@ -246,7 +274,7 @@ final class ScenarioRiskStoryService
     }
 
     /** @param array<string, mixed> $data */
-    private function assertLinkReference(Anr $anr, string $type, array $data): void
+    private function assertLinkReference(Anr $anr, string $type, array &$data): void
     {
         $anrId = (int) $anr->getId();
         if ($type === 'subject-link' && !$this->references->hasSubject(
@@ -259,6 +287,20 @@ final class ScenarioRiskStoryService
                 'The selected subject is unavailable in this analysis.'
             );
         }
+        if ($type === 'subject-link') {
+            $snapshot = $this->references->snapshot(
+                $anr,
+                (string) $data['subjectType'],
+                (string) $data['subjectReferenceUuid']
+            );
+            if ($snapshot === null) {
+                throw new ScenarioRiskStoryException(
+                    'unavailable_reference',
+                    'The selected subject is unavailable in this analysis.'
+                );
+            }
+            $data['referenceSnapshot'] = $snapshot;
+        }
         if ($type === 'control-link' && !$this->references->hasControl(
             $anrId,
             (string) $data['controlReferenceUuid']
@@ -267,6 +309,20 @@ final class ScenarioRiskStoryService
                 'unavailable_reference',
                 'The selected control is unavailable in this analysis.'
             );
+        }
+        if ($type === 'control-link') {
+            $snapshot = $this->references->snapshot(
+                $anr,
+                'control',
+                (string) $data['controlReferenceUuid']
+            );
+            if ($snapshot === null) {
+                throw new ScenarioRiskStoryException(
+                    'unavailable_reference',
+                    'The selected control is unavailable in this analysis.'
+                );
+            }
+            $data['referenceSnapshot'] = $snapshot;
         }
     }
 

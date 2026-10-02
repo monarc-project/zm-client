@@ -187,7 +187,7 @@ final class ScenarioRiskStoryTable
             $data,
             $revision,
             $correlationId,
-            ['title', 'narrative', 'legacyRiskSourceId']
+            ['title', 'narrative', 'legacyRiskSourceId', 'referenceSnapshot']
         );
     }
 
@@ -209,7 +209,14 @@ final class ScenarioRiskStoryTable
             $data,
             $revision,
             $correlationId,
-            ['title', 'narrative', 'threatReferenceUuid', 'vulnerabilityReferenceUuid']
+            [
+                'title',
+                'narrative',
+                'threatReferenceUuid',
+                'vulnerabilityReferenceUuid',
+                'threatReferenceSnapshot',
+                'vulnerabilityReferenceSnapshot',
+            ]
         );
     }
 
@@ -584,6 +591,7 @@ final class ScenarioRiskStoryTable
             $row['control_reference_uuid'] = $data['controlReferenceUuid'];
             $row['relationship_intent'] = $data['relationshipIntent'];
         }
+        $row['reference_snapshot'] = json_encode($data['referenceSnapshot'] ?? null, JSON_THROW_ON_ERROR);
         try {
             $this->connection->insert($table, $row);
         } catch (\Throwable) {
@@ -818,7 +826,9 @@ final class ScenarioRiskStoryTable
         $columns = [];
         foreach ($fields as $field) {
             if (array_key_exists($field, $data)) {
-                $columns[$this->columnName($field)] = $data[$field];
+                $columns[$this->columnName($field)] = str_ends_with($field, 'Snapshot')
+                    ? json_encode($data[$field], JSON_THROW_ON_ERROR)
+                    : $data[$field];
             }
         }
 
@@ -904,13 +914,26 @@ final class ScenarioRiskStoryTable
         ];
         if (array_key_exists('legacy_risk_source_uuid', $row)) {
             $result['legacyRiskSourceId'] = $row['legacy_risk_source_uuid'];
+            $result['referenceSnapshot'] = $this->snapshot($row, 'reference_snapshot');
         }
         if (array_key_exists('threat_reference_uuid', $row)) {
             $result['threatReferenceUuid'] = $row['threat_reference_uuid'];
             $result['vulnerabilityReferenceUuid'] = $row['vulnerability_reference_uuid'];
+            $result['threatReferenceSnapshot'] = $this->snapshot($row, 'threat_reference_snapshot');
+            $result['vulnerabilityReferenceSnapshot'] = $this->snapshot($row, 'vulnerability_reference_snapshot');
         }
 
         return $result;
+    }
+
+    /** @param array<string, mixed> $row @return array<string, mixed>|null */
+    private function snapshot(array $row, string $column): ?array
+    {
+        if (!isset($row[$column]) || $row[$column] === null) {
+            return null;
+        }
+
+        return json_decode((string) $row[$column], true, 512, JSON_THROW_ON_ERROR);
     }
 
     /** @param array<string, mixed> $row @return array<string, mixed> */
@@ -935,6 +958,9 @@ final class ScenarioRiskStoryTable
         } else {
             $result['controlReferenceUuid'] = $row['control_reference_uuid'];
         }
+        $result['referenceSnapshot'] = isset($row['reference_snapshot']) && $row['reference_snapshot'] !== null
+            ? json_decode((string) $row['reference_snapshot'], true, 512, JSON_THROW_ON_ERROR)
+            : null;
 
         return $result;
     }

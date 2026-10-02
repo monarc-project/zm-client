@@ -4,6 +4,7 @@ namespace Monarc\FrontOffice\Scenario\Controller;
 
 use Laminas\Mvc\Controller\AbstractRestfulController;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\FrontOffice\Scenario\Exception\ScenarioHandoffException;
 use Monarc\FrontOffice\Scenario\Service\LegacyBridgeService;
 
 /** Handles only request extraction; bridge policy belongs to LegacyBridgeService. */
@@ -24,6 +25,12 @@ final class ApiScenarioAuthBridgeController extends AbstractRestfulController
                 $this->getHeaderValue('token'),
                 $this->getHeaderValue('x-scenario-service-token')
             ));
+        } catch (ScenarioHandoffException $exception) {
+            $this->getResponse()->setStatusCode($exception->status());
+
+            return $this->getPreparedJsonResponse([
+                'error' => ['code' => $exception->errorCode(), 'message' => $exception->getMessage()],
+            ]);
         } catch (\Throwable) {
             $this->getResponse()->setStatusCode(401);
 
