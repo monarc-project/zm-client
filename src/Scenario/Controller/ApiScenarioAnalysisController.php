@@ -8,6 +8,7 @@ use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\Core\Scenario\Feature\ScenarioCapability;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Scenario\Service\ScenarioAnalysisService;
+use Monarc\FrontOffice\Scenario\Service\ScenarioAssessmentService;
 use Monarc\FrontOffice\Scenario\Service\ScenarioRiskScenarioService;
 use Monarc\FrontOffice\Scenario\Service\ScenarioTemplateInstantiationService;
 use Monarc\FrontOffice\Scenario\Validator\ScenarioAnalysisCreateValidator;
@@ -22,6 +23,7 @@ final class ApiScenarioAnalysisController extends AbstractRestfulControllerReque
     public function __construct(
         private ScenarioCapability $capability,
         private ScenarioAnalysisService $scenarioAnalysisService,
+        private ScenarioAssessmentService $scenarioAssessmentService,
         private ScenarioAnalysisCreateValidator $createValidator,
         private ScenarioAnalysisUpdateValidator $updateValidator,
         private ScenarioRiskScenarioService $riskScenarioService,
@@ -116,6 +118,15 @@ final class ApiScenarioAnalysisController extends AbstractRestfulControllerReque
         $this->validatePostParams($this->updateValidator, $data);
         $updateData = $this->updateValidator->getValidData();
         if (($updateData['lifecycle'] ?? null) === 'active') {
+            $profile = $this->scenarioAssessmentService->assignedProfile($anr);
+            if (!($profile['isLocked'] ?? false)) {
+                return new JsonResponse([
+                    'error' => [
+                        'code' => 'criteria_not_locked',
+                        'message' => 'Complete Context Establishment and lock Scenario criteria before activation.',
+                    ],
+                ], 422);
+            }
             $completeness = $this->riskScenarioService->completeness($anr);
             if (!$completeness['complete']) {
                 return new JsonResponse([

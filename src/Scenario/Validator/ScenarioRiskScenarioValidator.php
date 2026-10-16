@@ -22,12 +22,21 @@ final class ScenarioRiskScenarioValidator extends AbstractInputValidator
                 ]],
             ],
             [
-                'name' => 'provenance',
+                'name' => 'description',
                 'required' => false,
                 'filters' => [['name' => StringTrim::class]],
                 'validators' => [[
                     'name' => StringLength::class,
-                    'options' => ['max' => 255],
+                    'options' => ['max' => 65535],
+                ]],
+            ],
+            [
+                'name' => 'summaryAddendum',
+                'required' => false,
+                'filters' => [['name' => StringTrim::class]],
+                'validators' => [[
+                    'name' => StringLength::class,
+                    'options' => ['max' => 65535],
                 ]],
             ],
             ...self::uuidRules(),

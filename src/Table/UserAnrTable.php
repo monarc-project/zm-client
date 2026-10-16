@@ -31,4 +31,18 @@ class UserAnrTable extends AbstractTable
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    /** @return array<int, UserAnr> */
+    public function findLinksForAnr(AnrSuperClass $anr): array
+    {
+        return $this->getRepository()->createQueryBuilder('userAnr')
+            ->innerJoin('userAnr.user', 'user')
+            ->addSelect('user')
+            ->where('userAnr.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->orderBy('user.lastname', 'ASC')
+            ->addOrderBy('user.firstname', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

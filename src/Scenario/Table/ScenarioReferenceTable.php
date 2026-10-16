@@ -51,6 +51,46 @@ final class ScenarioReferenceTable
         return $this->exists('measures', 'uuid', $anrId, $uuid);
     }
 
+    /**
+     * Resolves current recommendation records into immutable treatment evidence.
+     *
+     * @param array<int, string> $uuids
+     * @return array<int, array<string, mixed>>
+     */
+    public function recommendationSnapshots(Anr $anr, array $uuids): array
+    {
+        if ($uuids === []) {
+            return [];
+        }
+        $placeholders = implode(', ', array_fill(0, count($uuids), '?'));
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT recommendation.uuid, recommendation.code, recommendation.description, recommendation.importance, '
+            . 'recommendation.position, '
+            . 'recommendation.recommandation_set_uuid, recommendationSet.label AS recommendation_set_label '
+            . 'FROM recommandations recommendation LEFT JOIN recommandations_sets recommendationSet '
+            . 'ON recommendationSet.anr_id = recommendation.anr_id '
+            . 'AND recommendationSet.uuid = recommendation.recommandation_set_uuid '
+            . 'WHERE recommendation.anr_id = ? AND recommendation.uuid IN (' . $placeholders . ')',
+            [(int) $anr->getId(), ...$uuids]
+        );
+        $byUuid = [];
+        foreach ($rows as $row) {
+            $byUuid[(string) $row['uuid']] = [
+                'recommendationUuid' => (string) $row['uuid'],
+                'code' => (string) $row['code'],
+                'description' => (string) $row['description'],
+                'importance' => (int) $row['importance'],
+                'position' => (int) $row['position'],
+                'recommendationSetUuid' => (string) $row['recommandation_set_uuid'],
+                'recommendationSetLabel' => (string) ($row['recommendation_set_label'] ?? ''),
+            ];
+        }
+
+        return array_values(array_filter(
+            array_map(static fn (string $uuid): ?array => $byUuid[$uuid] ?? null, $uuids)
+        ));
+    }
+
     /** @return array<string, string>|null */
     public function snapshot(Anr $anr, string $kind, string $uuid): ?array
     {
@@ -118,8 +158,15 @@ final class ScenarioReferenceTable
     }
 
     /** @return array<string, mixed> */
-    public function list(Anr $anr, string $kind, string $query, int $page, int $pageSize, string $parent = ''): array
-    {
+    public function list(
+        Anr $anr,
+        string $kind,
+        string $query,
+        int $page,
+        int $pageSize,
+        string $parent = '',
+        bool $includeAllRecommendations = false
+    ): array {
         if ($kind === 'asset-type') {
             return $this->listAssetTypes($anr, $query, $page, $pageSize);
         }
@@ -136,7 +183,7 @@ final class ScenarioReferenceTable
             return $this->listRecommendationSets($anr, $query, $page, $pageSize);
         }
         if ($kind === 'recommendation') {
-            return $this->listRecommendations($anr, $query, $page, $pageSize, $parent);
+            return $this->listRecommendations($anr, $query, $page, $pageSize, $parent, $includeAllRecommendations);
         }
 
         $labelField = 'label' . $anr->getLanguage();
@@ -361,12 +408,22 @@ final class ScenarioReferenceTable
     private function page(array $rows, string $type, int $page, int $pageSize, int $total): array
     {
         return [
-            'items' => array_map(static fn (array $row): array => [
-                'value' => (string) $row['reference_value'],
-                'label' => (string) $row['label'],
-                'type' => $type,
-                'available' => true,
-            ], $rows),
+            'items' => array_map(static function (array $row) use ($type): array {
+                $item = [
+                    'value' => (string) $row['reference_value'],
+                    'label' => (string) $row['label'],
+                    'type' => $type,
+                    'available' => true,
+                ];
+                if (array_key_exists('importance', $row)) {
+                    $item['importance'] = (int) $row['importance'];
+                }
+                if (array_key_exists('position', $row)) {
+                    $item['position'] = (int) $row['position'];
+                }
+
+                return $item;
+            }, $rows),
             'page' => $page,
             'pageSize' => $pageSize,
             'total' => $total,
@@ -425,20 +482,30 @@ final class ScenarioReferenceTable
         string $query,
         int $page,
         int $pageSize,
-        string $recommendationSet
+        string $recommendationSet,
+        bool $includeAll
     ): array {
-        if ($recommendationSet === '') {
+        if ($recommendationSet === '' && !$includeAll) {
             return $this->parentRequiredPage(
                 $page,
                 $pageSize,
                 'Select a recommendation set to browse its recommendations.'
             );
         }
-        $label = 'recommendation.label' . $anr->getLanguage();
-        $where = 'recommendation.anr_id = ? AND recommendation.recommandation_set_uuid = ?';
-        $parameters = [(int) $anr->getId(), $recommendationSet];
+        // Recommendations use one shared description field, unlike the
+        // translated label1--label4 fields on most legacy knowledge-base
+        // resources.
+        $description = 'CONCAT_WS(\', \', NULLIF(recommendation.code, \'\'), NULLIF(recommendation.description, \'\'))';
+        $label = 'CONCAT_WS(\' — \', ' . $description
+            . ', COALESCE(NULLIF(recommendationSet.label, \'\'), \'Unspecified recommendation set\'))';
+        $where = 'recommendation.anr_id = ?';
+        $parameters = [(int) $anr->getId()];
+        if ($recommendationSet !== '') {
+            $where .= ' AND recommendation.recommandation_set_uuid = ?';
+            $parameters[] = $recommendationSet;
+        }
         if ($query !== '') {
-            $where .= sprintf(' AND (%s LIKE ? OR recommendation.code LIKE ?)', $label);
+            $where .= ' AND (recommendation.description LIKE ? OR recommendation.code LIKE ?)';
             $parameters[] = '%' . $query . '%';
             $parameters[] = '%' . $query . '%';
         }
@@ -448,8 +515,14 @@ final class ScenarioReferenceTable
         );
         $rows = $this->connection->fetchAllAssociative(
             sprintf(
-                'SELECT recommendation.uuid AS reference_value, %s AS label FROM recommandations recommendation '
-                . 'WHERE %s ORDER BY label ASC, recommendation.code ASC LIMIT %d OFFSET %d',
+                'SELECT recommendation.uuid AS reference_value, %s AS label, recommendation.importance, '
+                . 'recommendation.position FROM recommandations recommendation '
+                . 'LEFT JOIN recommandations_sets recommendationSet '
+                . 'ON recommendationSet.anr_id = recommendation.anr_id '
+                . 'AND recommendationSet.uuid = recommendation.recommandation_set_uuid '
+                . 'WHERE %s ORDER BY recommendation.importance DESC, '
+                . 'CASE WHEN recommendation.position > 0 THEN 0 ELSE 1 END ASC, '
+                . 'recommendation.position ASC, recommendation.code ASC, label ASC LIMIT %d OFFSET %d',
                 $label,
                 $where,
                 $pageSize,

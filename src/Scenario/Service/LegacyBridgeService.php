@@ -144,7 +144,6 @@ final class LegacyBridgeService
         $row = $this->legacyBridgeTable->refreshActiveSession(
             $session,
             $this->utcExpiry(sprintf('+%d minutes', $this->authTtlMinutes)),
-            $this->utcNow(),
             $this->utcNow()
         );
         if ($row === null) {

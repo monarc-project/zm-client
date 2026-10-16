@@ -178,6 +178,9 @@ class Module
         $routeMatch = $mvcEvent->getRouteMatch();
         if ($routeMatch === null || !in_array($routeMatch->getMatchedRouteName(), [
             'scenario_v1_anr_analysis',
+            'scenario_v1_anr_method_context',
+            'scenario_v1_anr_reviews',
+            'scenario_v1_anr_criteria_definition',
             'scenario_v1_anr_template',
             'scenario_v1_anr_risk_scenarios',
             'scenario_v1_anr_interested_party_references',
@@ -185,6 +188,10 @@ class Module
             'scenario_v1_anr_criteria_profiles',
             'scenario_v1_anr_criteria_profiles_assigned',
             'scenario_v1_anr_risk_scenario_assessments',
+            'scenario_v1_anr_treatment_owners',
+            'scenario_v1_anr_risk_scenario_treatment_history',
+            'scenario_v1_anr_risk_scenario_treatment_recommendation',
+            'scenario_v1_anr_risk_scenario_treatment',
             'scenario_v1_frontoffice_templates',
             'scenario_v1_anr_decision_authority',
             // Narrow Scenario Knowledge-base BFF routes reuse the established
@@ -193,12 +200,16 @@ class Module
             // resolved; no generic upstream proxy is exposed.
             'monarc_api_global_client_anr/assets',
             'monarc_api_global_client_anr/objects',
+            'monarc_api_global_client_anr/objects_categories',
             'monarc_api_global_client_anr/threats',
             'monarc_api_global_client_anr/vulnerabilities',
+            'monarc_api_global_client_anr/referentials',
+            'monarc_api_global_client_anr/soacategory',
             'monarc_api_global_client_anr/measures',
-            'monarc_api_anr_recommendations',
-            'monarc_api_anr_recommendations_sets',
+            'monarc_api_global_client_anr/recommendations',
+            'monarc_api_global_client_anr/recommendations_sets',
             'monarc_api_global_client_anr/risk_sources',
+            'monarc_api_global_client_anr/interested_parties',
         ], true)) {
             return null;
         }

@@ -16,6 +16,7 @@ use Monarc\FrontOffice\Entity\AnrSupervisorRole;
 use Monarc\FrontOffice\Entity\InstanceRisk;
 use Monarc\FrontOffice\Entity\InstanceRiskOp;
 use Monarc\FrontOffice\Entity\User;
+use Monarc\FrontOffice\Entity\UserAnr;
 use Monarc\FrontOffice\Entity\UserRole;
 use Monarc\FrontOffice\Import\Helper\ImportCacheHelper;
 use Monarc\FrontOffice\Table\AnrSupervisorTable;
@@ -26,7 +27,7 @@ use Monarc\FrontOffice\Table\UserTable;
 
 class AnrSupervisorService
 {
-    private ?User $connectedUser;
+    private ?User $connectedUser = null;
 
     public function __construct(
         private AnrSupervisorTable $anrSupervisorTable,
@@ -35,10 +36,9 @@ class AnrSupervisorService
         private UserTable $userTable,
         private UserAnrTable $userAnrTable,
         private ImportCacheHelper $importCacheHelper,
-        ConnectedUserService $connectedUserService
+        private ConnectedUserService $connectedUserService
     ) {
-        $connectedUser = $connectedUserService->getConnectedUser();
-        $this->connectedUser = $connectedUser instanceof User ? $connectedUser : null;
+        $this->refreshConnectedUser();
     }
 
     /**
@@ -179,7 +179,9 @@ class AnrSupervisorService
         $linkedUserIds = $this->anrSupervisorTable->getLinkedUserIdsByAnr($anr, $excludeSupervisorId);
         /** @var User $user */
         foreach ($this->userTable->findBySearchString($filter) as $user) {
-            if (in_array($user->getId(), $linkedUserIds, true)) {
+            if (!$user->hasRole(UserRole::USER_FO)
+                || in_array($user->getId(), $linkedUserIds, true)
+            ) {
                 continue;
             }
 
@@ -196,17 +198,38 @@ class AnrSupervisorService
 
     public function canManageLinkedUsers(Anr $anr): bool
     {
-        if (!$this->connectedUser instanceof User) {
+        $connectedUser = $this->refreshConnectedUser();
+        if (!$connectedUser instanceof User) {
             return false;
         }
-        if ($this->connectedUser->hasRole(UserRole::SUPER_ADMIN_FO)) {
+        if ($connectedUser->hasRole(UserRole::SUPER_ADMIN_FO)) {
             return true;
         }
-        if (!$this->connectedUser->hasRole(UserRole::USER_FO)) {
+        return $this->canManageSupervisors($anr);
+    }
+
+    public function canManageSupervisors(Anr $anr): bool
+    {
+        $connectedUser = $this->refreshConnectedUser();
+        if (!$connectedUser instanceof User) {
             return false;
         }
+        if ($connectedUser->hasRole(UserRole::SUPER_ADMIN_FO)) {
+            return true;
+        }
 
-        return $this->userAnrTable->findByAnrAndUser($anr, $this->connectedUser)?->hasWriteAccess() ?? false;
+        $permission = $this->userAnrTable->findByAnrAndUser($anr, $connectedUser);
+
+        return $permission instanceof UserAnr
+            && (int) $permission->getRwd() === UserAnr::FULL_PERMISSIONS_RWD;
+    }
+
+    public function canCreateUsers(): bool
+    {
+        $connectedUser = $this->refreshConnectedUser();
+
+        return $connectedUser instanceof User
+            && $connectedUser->hasRole(UserRole::SUPER_ADMIN_FO);
     }
 
     /**
@@ -216,15 +239,32 @@ class AnrSupervisorService
     public function configureResidualRiskApprover(
         Anr $anr,
         ?int $supervisorId,
-        int $linkedUserId,
-        bool $isActive
+        ?int $linkedUserId,
+        bool $isActive,
+        ?string $name = null,
+        ?string $email = null
     ): AnrSupervisor {
-        $this->assertCanManageLinkedUsers($anr);
+        if ($linkedUserId === null) {
+            if (!$this->canManageSupervisors($anr)) {
+                throw new Exception('Write access to this analysis is required to manage supervisors.', 412);
+            }
+            if (trim((string) $name) === '' && trim((string) $email) === '') {
+                throw new Exception('A name or email is required for an unlinked supervisor.', 422);
+            }
+        } else {
+            $this->assertCanManageLinkedUsers($anr);
+        }
+
         $data = [
-            'linkedUserId' => $linkedUserId,
             'isActive' => $isActive,
             'roles' => [AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER],
         ];
+        if ($linkedUserId !== null) {
+            $data['linkedUserId'] = $linkedUserId;
+        } else {
+            $data['name'] = $name;
+            $data['email'] = $email;
+        }
 
         if ($supervisorId === null) {
             $this->validateNoDuplicateSupervisor($anr, $data);
@@ -629,6 +669,16 @@ class AnrSupervisorService
         }
 
         return $user;
+    }
+
+    private function refreshConnectedUser(): ?User
+    {
+        $connectedUser = $this->connectedUserService->getConnectedUser();
+        if ($connectedUser instanceof User) {
+            $this->connectedUser = $connectedUser;
+        }
+
+        return $this->connectedUser;
     }
 
     private function assertCanManageLinkedUsers(Anr $anr): void

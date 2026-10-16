@@ -19,6 +19,14 @@ final class ScenarioAssessmentTable
         $this->connection = $entityManager->getConnection();
     }
 
+    public function hasMonitoringForReassessmentTrigger(int $anrId, int $triggerId): bool
+    {
+        return (bool) $this->connection->fetchOne(
+            'SELECT 1 FROM scenario_monitoring_observations WHERE anr_id = ? AND reassessment_trigger_id = ? LIMIT 1',
+            [$anrId, $triggerId]
+        );
+    }
+
     /** @return array{items: array<int, array<string, mixed>>} */
     public function listProfiles(): array
     {
@@ -122,11 +130,12 @@ final class ScenarioAssessmentTable
             $correlationId
         ): ?array {
             $analysis = $this->connection->fetchAssociative(
-                'SELECT id, uuid, revision FROM scenario_analyses WHERE anr_id = ? FOR UPDATE',
+                'SELECT id, uuid, revision, criteria_locked_at FROM scenario_analyses WHERE anr_id = ? FOR UPDATE',
                 [$anrId]
             );
             $profile = $this->profileByVersionUuid($profileVersionUuid, true);
-            if ($analysis === false || $profile === null || (int) $analysis['revision'] !== $expectedAnalysisRevision) {
+            if ($analysis === false || $profile === null || $analysis['criteria_locked_at'] !== null
+                || (int) $analysis['revision'] !== $expectedAnalysisRevision) {
                 return null;
             }
             $this->connection->executeStatement(
@@ -161,12 +170,18 @@ final class ScenarioAssessmentTable
     public function assignedProfile(int $anrId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            'SELECT acp.profile_snapshot FROM scenario_analysis_criteria_profiles acp '
+            'SELECT acp.profile_snapshot, a.criteria_locked_at FROM scenario_analysis_criteria_profiles acp '
             . 'INNER JOIN scenario_analyses a ON a.id = acp.scenario_analysis_id WHERE a.anr_id = ?',
             [$anrId]
         );
 
-        return $row === false ? null : json_decode((string) $row['profile_snapshot'], true, 512, JSON_THROW_ON_ERROR);
+        if ($row === false) {
+            return null;
+        }
+        $profile = json_decode((string) $row['profile_snapshot'], true, 512, JSON_THROW_ON_ERROR);
+        $profile['isLocked'] = $row['criteria_locked_at'] !== null;
+
+        return $profile;
     }
 
     /** @param array<string, mixed> $snapshot @param array<string, mixed>|null $legacyComparison @return array<string, mixed>|null */
@@ -179,7 +194,9 @@ final class ScenarioAssessmentTable
         ?array $legacyComparison,
         int $riskScenarioRevision,
         int $actorId,
-        string $correlationId
+        string $correlationId,
+        string $auditAction = 'scenario_assessment_saved',
+        array $auditPatch = []
     ): ?array {
         return $this->connection->transactional(function () use (
             $anrId,
@@ -190,7 +207,9 @@ final class ScenarioAssessmentTable
             $legacyComparison,
             $riskScenarioRevision,
             $actorId,
-            $correlationId
+            $correlationId,
+            $auditAction,
+            $auditPatch
         ): ?array {
             $riskScenario = $this->connection->fetchAssociative(
                 'SELECT id, revision FROM scenario_risk_scenarios WHERE anr_id = ? AND uuid = ? FOR UPDATE',
@@ -226,11 +245,18 @@ final class ScenarioAssessmentTable
                 ['revision' => $riskScenarioRevision + 1],
                 ['id' => $riskScenario['id']]
             );
-            $this->audit($anrId, $actorId, $correlationId, $uuid, 'scenario_assessment_saved', [
-                'assessmentType' => $type,
-                'profileVersionUuid' => $profileVersionUuid,
-                'band' => $snapshot['band'] ?? null,
-            ]);
+            $this->audit(
+                $anrId,
+                $actorId,
+                $correlationId,
+                $uuid,
+                $auditAction,
+                $auditPatch + [
+                    'assessmentType' => $type,
+                    'profileVersionUuid' => $profileVersionUuid,
+                    'band' => $snapshot['band'] ?? null,
+                ]
+            );
 
             return $this->assessmentByUuid($uuid) + ['riskScenarioRevision' => $riskScenarioRevision + 1];
         });
@@ -240,7 +266,9 @@ final class ScenarioAssessmentTable
     public function listAssessments(int $anrId, string $riskScenarioUuid): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            'SELECT a.* FROM scenario_assessments a INNER JOIN scenario_risk_scenarios s ON s.id = a.risk_scenario_id '
+            'SELECT a.*, u.firstname AS actor_firstname, u.lastname AS actor_lastname, u.email AS actor_email '
+            . 'FROM scenario_assessments a INNER JOIN scenario_risk_scenarios s ON s.id = a.risk_scenario_id '
+            . 'LEFT JOIN users u ON u.id = a.created_by '
             . 'WHERE a.anr_id = ? AND s.uuid = ? ORDER BY a.created_at DESC, a.id DESC',
             [$anrId, $riskScenarioUuid]
         );
@@ -257,15 +285,55 @@ final class ScenarioAssessmentTable
         int $actorId,
         string $correlationId
     ): ?array {
-        return $this->createRiskScenarioRecord(
-            'scenario_treatments',
+        return $this->connection->transactional(function () use (
             $anrId,
             $riskScenarioUuid,
             $data,
             $riskScenarioRevision,
             $actorId,
             $correlationId
-        );
+        ): ?array {
+            $riskScenario = $this->lockedRiskScenario($anrId, $riskScenarioUuid, $riskScenarioRevision);
+            if ($riskScenario === null) {
+                return null;
+            }
+            $uuid = Uuid::uuid4()->toString();
+            $recommendations = $data['recommendations'] ?? [];
+            unset($data['recommendations']);
+            $this->connection->insert('scenario_treatments', $data + [
+                'uuid' => $uuid,
+                'anr_id' => $anrId,
+                'risk_scenario_id' => (int) $riskScenario['id'],
+            ]);
+            $treatmentId = (int) $this->connection->lastInsertId();
+            foreach ($recommendations as $recommendation) {
+                $this->connection->insert('scenario_treatment_recommendations', [
+                    'uuid' => Uuid::uuid4()->toString(),
+                    'anr_id' => $anrId,
+                    'treatment_id' => $treatmentId,
+                    'recommendation_uuid' => $recommendation['recommendationUuid'],
+                    'recommendation_snapshot' => json_encode($recommendation, JSON_THROW_ON_ERROR),
+                ]);
+                $this->connection->insert('scenario_treatment_recommendation_implementations', [
+                    'uuid' => Uuid::uuid4()->toString(),
+                    'anr_id' => $anrId,
+                    'treatment_id' => $treatmentId,
+                    'treatment_recommendation_id' => (int) $this->connection->lastInsertId(),
+                    'status' => 'not_started',
+                ]);
+            }
+            $this->touchRiskScenario((int) $riskScenario['id'], $riskScenarioRevision);
+            $this->audit($anrId, $actorId, $correlationId, $uuid, 'scenario_treatment_created', [
+                'riskScenarioUuid' => $riskScenarioUuid,
+                'recommendationUuids' => array_column($recommendations, 'recommendationUuid'),
+            ]);
+
+            return $this->projectRiskScenarioRecord($data + [
+                'uuid' => $uuid,
+                'revision' => 1,
+                'recommendations' => $recommendations,
+            ]) + ['riskScenarioRevision' => $riskScenarioRevision + 1];
+        });
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed>|null */
@@ -297,6 +365,14 @@ final class ScenarioAssessmentTable
             . 'WHERE r.anr_id = ? AND s.uuid = ? ORDER BY r.created_at DESC, r.id DESC',
             [$anrId, $riskScenarioUuid]
         );
+
+        if ($table === 'scenario_treatments') {
+            $recommendations = $this->treatmentRecommendationsById(array_column($rows, 'id'));
+            foreach ($rows as &$row) {
+                $row['recommendations'] = $recommendations[(int) $row['id']] ?? [];
+            }
+            unset($row);
+        }
 
         return ['items' => array_map([$this, 'projectRiskScenarioRecord'], $rows)];
     }
@@ -465,6 +541,34 @@ final class ScenarioAssessmentTable
         }
     }
 
+    /**
+     * @param array<int, int|string> $treatmentIds
+     * @return array<int, array<int, array<string, mixed>>>
+     */
+    private function treatmentRecommendationsById(array $treatmentIds): array
+    {
+        if ($treatmentIds === []) {
+            return [];
+        }
+        $placeholders = implode(', ', array_fill(0, count($treatmentIds), '?'));
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT treatment_id, recommendation_snapshot FROM scenario_treatment_recommendations '
+            . 'WHERE treatment_id IN (' . $placeholders . ') ORDER BY id ASC',
+            $treatmentIds
+        );
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(int) $row['treatment_id']][] = json_decode(
+                (string) $row['recommendation_snapshot'],
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+        }
+
+        return $result;
+    }
+
     /** @param array<string, mixed> $row @return array<string, mixed> */
     private function projectProfile(array $row): array
     {
@@ -485,7 +589,11 @@ final class ScenarioAssessmentTable
     /** @return array<string, mixed> */
     private function assessmentByUuid(string $uuid): array
     {
-        $row = $this->connection->fetchAssociative('SELECT * FROM scenario_assessments WHERE uuid = ?', [$uuid]);
+        $row = $this->connection->fetchAssociative(
+            'SELECT a.*, u.firstname AS actor_firstname, u.lastname AS actor_lastname, u.email AS actor_email '
+            . 'FROM scenario_assessments a LEFT JOIN users u ON u.id = a.created_by WHERE a.uuid = ?',
+            [$uuid]
+        );
         if ($row === false) {
             throw new \RuntimeException('Scenario assessment was not saved.');
         }
@@ -506,6 +614,13 @@ final class ScenarioAssessmentTable
                 ? null
                 : json_decode((string) $row['legacy_comparison_snapshot'], true, 512, JSON_THROW_ON_ERROR),
             'createdAt' => (string) $row['created_at'],
+            'performedBy' => [
+                'name' => trim((string) ($row['actor_firstname'] ?? '') . ' ' . (string) ($row['actor_lastname'] ?? ''))
+                    ?: ((isset($row['actor_email']) && $row['actor_email'] !== null)
+                        ? (string) $row['actor_email']
+                        : 'User #' . (int) $row['created_by']),
+                'email' => $row['actor_email'] === null ? null : (string) $row['actor_email'],
+            ],
         ];
     }
 
@@ -520,12 +635,16 @@ final class ScenarioAssessmentTable
             'due_at',
             'status',
             'indicator',
+            'reassessment_trigger_id',
             'reassessment_trigger',
             'observation',
         ] as $field) {
             if (array_key_exists($field, $row)) {
                 $record[$this->camel($field)] = $row[$field];
             }
+        }
+        if (array_key_exists('recommendations', $row)) {
+            $record['recommendations'] = $row['recommendations'];
         }
 
         return $record;
@@ -584,7 +703,7 @@ final class ScenarioAssessmentTable
             'target_uuid' => $targetUuid,
             'action' => $action,
             'change_patch' => json_encode($patch, JSON_THROW_ON_ERROR),
-            'rationale' => null,
+            'justification' => null,
         ]);
     }
 }

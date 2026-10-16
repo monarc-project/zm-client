@@ -39,4 +39,15 @@ final class ScenarioRiskScenarioValidatorTest extends TestCase
         $invalid = new ScenarioRiskScenarioUpdateValidator([], $this->createMock(InputValidationTranslator::class));
         self::assertFalse($invalid->isValid(['title' => '   ']));
     }
+
+    public function testDescriptionIsOptionalAndSupportsInterviewContext(): void
+    {
+        $validator = new ScenarioRiskScenarioValidator([], $this->createMock(InputValidationTranslator::class));
+
+        self::assertTrue($validator->isValid([
+            'title' => 'Supplier compromise',
+            'description' => 'Identified after the supplier outage review.',
+        ]));
+        self::assertSame('Identified after the supplier outage review.', $validator->getValidData()['description']);
+    }
 }

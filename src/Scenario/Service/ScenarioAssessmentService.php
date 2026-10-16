@@ -8,14 +8,20 @@ use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\AnrSupervisorRole;
 use Monarc\FrontOffice\Entity\User;
 use Monarc\FrontOffice\Scenario\Table\ScenarioAssessmentTable;
+use Monarc\FrontOffice\Scenario\Table\ScenarioReferenceTable;
+use Monarc\FrontOffice\Scenario\Table\ScenarioTreatmentTable;
 use Monarc\FrontOffice\Service\AnrSupervisorService;
+use Monarc\FrontOffice\Table\ReassessmentTriggerTable;
 
 /** Coordinates authorised, explainable Scenario assessment and decision evidence. */
 final class ScenarioAssessmentService
 {
     public function __construct(
         private ScenarioAssessmentTable $assessments,
+        private ScenarioReferenceTable $references,
+        private ScenarioTreatmentTable $treatments,
         private ScenarioQualitativeCalculationService $calculator,
+        private ReassessmentTriggerTable $reassessmentTriggers,
         private ConnectedUserService $users,
         private \Closure $supervisorService
     ) {
@@ -75,13 +81,15 @@ final class ScenarioAssessmentService
     ): ?array {
         $type = (string) ($input['assessmentType'] ?? '');
         if (!in_array($type, ['inherent', 'current', 'proposed_residual'], true)) {
-            throw new \InvalidArgumentException('Assessment type is invalid.');
+            throw new \InvalidArgumentException(
+                'Only inherent, current, and proposed residual assessments are supported for Scenario analysis.'
+            );
         }
         $profile = $this->assignedProfile($anr);
-        if ($profile === null
+        if ($profile === null || !($profile['isLocked'] ?? false)
             || ($profile['versionUuid'] ?? null) !== ($input['profileVersionUuid'] ?? null)) {
             throw new ActionForbiddenException(
-                'The selected criteria profile is not assigned to this Scenario analysis.'
+                'Scenario assessment requires the locked criteria profile assigned to this Scenario analysis.'
             );
         }
 
@@ -114,6 +122,93 @@ final class ScenarioAssessmentService
         return $this->assessments->listAssessments((int) $anr->getId(), $riskScenarioUuid);
     }
 
+    /**
+     * Applies the latest proposed residual assessment as current evidence only after
+     * treatment-plan implementation is complete. This is a deliberate user action;
+     * it neither accepts the residual risk nor changes the criteria profile.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function applyRiskReduction(
+        Anr $anr,
+        string $riskScenarioUuid,
+        int $riskScenarioRevision,
+        string $correlationId
+    ): ?array {
+        $anrId = (int) $anr->getId();
+        if (!$this->treatments->isRiskReductionEligible($anrId, $riskScenarioUuid)) {
+            throw new \InvalidArgumentException(
+                'Complete or cancel every treatment and complete or mark every selected recommendation '
+                . 'not applicable before applying risk reduction.'
+            );
+        }
+
+        $proposed = null;
+        foreach ($this->assessments->listAssessments($anrId, $riskScenarioUuid)['items'] as $assessment) {
+            if (($assessment['assessmentType'] ?? null) === 'proposed_residual') {
+                $proposed = $assessment;
+                break;
+            }
+        }
+        if ($proposed === null || !is_array($proposed['calculation'] ?? null)) {
+            throw new \InvalidArgumentException(
+                'Record a proposed residual assessment before applying risk reduction.'
+            );
+        }
+
+        $calculation = $proposed['calculation'];
+        $inputs = $calculation['inputs'] ?? null;
+        $profileVersion = $calculation['profileVersion']['versionUuid'] ?? null;
+        if (!is_array($inputs) || !is_string($profileVersion)
+            || !isset($inputs['likelihood'], $inputs['dimensionSeverities'])
+            || !is_array($inputs['dimensionSeverities'])) {
+            throw new \InvalidArgumentException(
+                'The proposed residual assessment cannot be applied. Record it again first.'
+            );
+        }
+
+        $profile = $this->assignedProfile($anr);
+        if ($profile === null || !($profile['isLocked'] ?? false) || $profile['versionUuid'] !== $profileVersion) {
+            throw new ActionForbiddenException(
+                'Applying risk reduction requires the locked criteria profile used by the proposed residual assessment.'
+            );
+        }
+
+        $input = [
+            'assessmentType' => 'current',
+            'profileVersionUuid' => $profileVersion,
+            'likelihood' => $inputs['likelihood'],
+            'dimensionSeverities' => $inputs['dimensionSeverities'],
+            'justification' => 'Applied the proposed residual assessment after all treatment-plan records '
+                . 'reached a terminal implementation state.',
+        ];
+        $reducedCalculation = $this->calculator->calculate((array) $profile['payload'], $input);
+        $reducedCalculation['profileVersion'] = [
+            'profileUuid' => $profile['uuid'],
+            'versionUuid' => $profile['versionUuid'],
+            'identifier' => $profile['identifier'],
+            'version' => $profile['version'],
+        ];
+        $reducedCalculation['riskReduction'] = [
+            'sourceProposedResidualAssessmentUuid' => $proposed['uuid'],
+            'appliedAfterTreatmentCompletion' => true,
+        ];
+
+        return $this->assessments->saveAssessment(
+            $anrId,
+            $riskScenarioUuid,
+            'current',
+            $profileVersion,
+            $reducedCalculation,
+            null,
+            $riskScenarioRevision,
+            $this->actorId(),
+            $correlationId,
+            'scenario_risk_reduction_applied',
+            ['sourceProposedResidualAssessmentUuid' => $proposed['uuid']]
+        );
+    }
+
     /** @param array<string, mixed> $data @return array<string, mixed>|null */
     public function createTreatment(
         Anr $anr,
@@ -122,6 +217,16 @@ final class ScenarioAssessmentService
         int $riskScenarioRevision,
         string $correlationId
     ): ?array {
+        $recommendationReferences = is_array($data['recommendationReferences'] ?? null)
+            ? $data['recommendationReferences']
+            : [];
+        $recommendations = $this->references->recommendationSnapshots($anr, $recommendationReferences);
+        if (count($recommendations) !== count($recommendationReferences)) {
+            throw new \InvalidArgumentException(
+                'One or more selected recommendations are unavailable in this analysis.'
+            );
+        }
+
         return $this->assessments->createTreatment(
             (int) $anr->getId(),
             $riskScenarioUuid,
@@ -131,6 +236,7 @@ final class ScenarioAssessmentService
                 'owner_id' => $data['ownerId'] ?? null,
                 'due_at' => $this->databaseDate($data['dueAt'] ?? null),
                 'status' => $data['status'],
+                'recommendations' => $recommendations,
             ],
             $riskScenarioRevision,
             $this->actorId(),
@@ -156,18 +262,38 @@ final class ScenarioAssessmentService
         int $riskScenarioRevision,
         string $correlationId
     ): ?array {
+        $trigger = $this->reassessmentTriggers->findByIdAndAnr(
+            (int) $data['reassessmentTriggerId'],
+            $anr,
+            false
+        );
+        if (!$trigger instanceof \Monarc\FrontOffice\Entity\ReassessmentTrigger || !$trigger->isActive()) {
+            throw new \InvalidArgumentException(
+                'Select an active reassessment trigger from Context Establishment before recording monitoring.'
+            );
+        }
+
         return $this->assessments->createMonitoring(
             (int) $anr->getId(),
             $riskScenarioUuid,
             [
                 'indicator' => $data['indicator'],
-                'reassessment_trigger' => $data['reassessmentTrigger'],
+                'reassessment_trigger_id' => $trigger->getId(),
+                'reassessment_trigger' => $this->triggerSnapshot($trigger),
                 'observation' => $data['observation'] ?? null,
             ],
             $riskScenarioRevision,
             $this->actorId(),
             $correlationId
         );
+    }
+
+    private function triggerSnapshot(\Monarc\FrontOffice\Entity\ReassessmentTrigger $trigger): string
+    {
+        $type = trim((string) $trigger->getTriggerType());
+        $description = trim((string) $trigger->getDescription());
+
+        return $type === '' ? $description : $type . ' — ' . $description;
     }
 
     /** @return array{items: array<int, array<string, mixed>>} */

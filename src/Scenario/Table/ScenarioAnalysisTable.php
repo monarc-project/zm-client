@@ -52,6 +52,22 @@ final class ScenarioAnalysisTable
         $this->audit($anrId, $actorId, $correlationId, $targetUuid, 'template_override_updated', $patch);
     }
 
+    /** @param array<string, mixed> $patch */
+    public function auditMethodContext(
+        int $anrId,
+        int $actorId,
+        string $correlationId,
+        string $action,
+        array $patch
+    ): void {
+        $analysis = $this->findByAnr($anrId);
+        if ($analysis === null) {
+            return;
+        }
+
+        $this->audit($anrId, $actorId, $correlationId, $analysis['uuid'], $action, $patch);
+    }
+
     /**
      * @param array<string, mixed> $data
      *
@@ -72,7 +88,8 @@ final class ScenarioAnalysisTable
                 'lifecycle' => 'draft',
                 'owner_id' => $actorId,
                 'language_code' => $data['languageCode'],
-                'next_review_at' => $this->databaseDate($data['nextReviewAt'] ?? null),
+                // Context Establishment owns this derived compatibility projection.
+                'next_review_at' => null,
                 'source_anr_id' => $data['sourceAnrId'] ?? null,
             ];
             $this->connection->insert('scenario_analyses', $row);
@@ -103,8 +120,15 @@ final class ScenarioAnalysisTable
         if (isset($data['lifecycle'])) {
             $updates['lifecycle'] = $data['lifecycle'];
         }
-        if (array_key_exists('nextReviewAt', $data)) {
-            $updates['next_review_at'] = $this->databaseDate($data['nextReviewAt'] ?: null);
+        $contextColumns = [
+            'riskAnalysisContext' => 'risk_analysis_context',
+            'trendsSummary' => 'trends_summary',
+            'managementOrganisation' => 'management_organisation',
+        ];
+        foreach ($contextColumns as $input => $column) {
+            if (array_key_exists($input, $data)) {
+                $updates[$column] = $data[$input] === '' ? null : $data[$input];
+            }
         }
         if ($updates === []) {
             return $current;
@@ -118,7 +142,8 @@ final class ScenarioAnalysisTable
             $current,
             $data,
             $revision,
-            $updates
+            $updates,
+            $contextColumns
         ): ?array {
             if ($this->connection->update(
                 'scenario_analyses',
@@ -127,14 +152,18 @@ final class ScenarioAnalysisTable
             ) !== 1) {
                 return null;
             }
+            $contextFields = array_keys(array_intersect_key($contextColumns, $data));
+            $patch = $contextFields === []
+                ? ['before' => $current, 'after' => $updates]
+                : ['changedFields' => $contextFields, 'revision' => $updates['revision']];
             $this->audit(
                 $anrId,
                 $actorId,
                 $correlationId,
                 $current['uuid'],
-                'updated',
-                ['before' => $current, 'after' => $updates],
-                $data['rationale'] ?? null
+                $contextFields === [] ? 'updated' : 'analysis_context_updated',
+                $patch,
+                $data['justification'] ?? null
             );
 
             return $this->findByAnr($anrId);
@@ -148,7 +177,7 @@ final class ScenarioAnalysisTable
         string $targetUuid,
         string $action,
         array $patch,
-        ?string $rationale = null
+        ?string $justification = null
     ): void {
         $this->connection->insert('scenario_audit_events', [
             'uuid' => Uuid::uuid4()->toString(),
@@ -158,7 +187,7 @@ final class ScenarioAnalysisTable
             'target_uuid' => $targetUuid,
             'action' => $action,
             'change_patch' => json_encode($patch, JSON_THROW_ON_ERROR),
-            'rationale' => $rationale,
+            'justification' => $justification,
         ]);
     }
 
@@ -182,6 +211,13 @@ final class ScenarioAnalysisTable
             'languageCode' => $row['language_code'],
             'nextReviewAt' => $this->apiDate($row['next_review_at']),
             'sourceAnrId' => $row['source_anr_id'] === null ? null : (int) $row['source_anr_id'],
+            'riskAnalysisContext' => $row['risk_analysis_context'] ?? null,
+            'trendsSummary' => $row['trends_summary'] ?? null,
+            'managementOrganisation' => $row['management_organisation'] ?? null,
+            'criteriaLockedAt' => $this->apiDate($row['criteria_locked_at'] ?? null),
+            'criteriaLockedBy' => ($row['criteria_locked_by'] ?? null) === null
+                ? null
+                : (int) $row['criteria_locked_by'],
             'revision' => (int) $row['revision'],
             'createdAt' => $this->apiDate($row['created_at']),
             'updatedAt' => $this->apiDate($row['updated_at']),

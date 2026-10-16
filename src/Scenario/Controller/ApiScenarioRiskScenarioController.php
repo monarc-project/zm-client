@@ -48,6 +48,13 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
         if ($anr === null) {
             return $this->notFound();
         }
+        if ($this->resource() === 'status') {
+            $status = $this->service->status($anr, (string) $id);
+
+            return $status === null
+                ? $this->notFound()
+                : $this->getPreparedJsonResponse($status);
+        }
         $riskScenario = $this->service->get($anr, (string) $id);
         if ($riskScenario === null) {
             return $this->notFound();
@@ -62,6 +69,7 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
             'subject-links',
             'control-links',
             'completeness',
+            'status',
         ], true)) {
             return $this->resourceNotFound();
         }
@@ -79,7 +87,7 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
         $resource = $this->resource();
         if ($resource === null) {
             if (!$this->hasOnlyFields($data, [
-                'title', 'sourceSnapshotUuid', 'sourceInstanceRecordUuid', 'provenance',
+                'title', 'sourceSnapshotUuid', 'sourceInstanceRecordUuid', 'description', 'summaryAddendum',
             ])) {
                 return $this->invalidPayload();
             }
@@ -163,7 +171,7 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
         try {
             if ($resource === null) {
                 if (!$this->hasOnlyFields($data, [
-                    'title', 'sourceSnapshotUuid', 'sourceInstanceRecordUuid', 'provenance',
+                    'title', 'sourceSnapshotUuid', 'sourceInstanceRecordUuid', 'description', 'summaryAddendum',
                 ]) || $data === []) {
                     return $this->invalidPayload();
                 }
@@ -171,7 +179,7 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
                 $result = $this->service->update(
                     $anr,
                     (string) $id,
-                    $this->updateValidator->getValidData(),
+                    array_intersect_key($this->updateValidator->getValidData(), $data),
                     $revision,
                     $this->correlationId()
                 );
@@ -267,49 +275,82 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
             'event-consequences' => ['items' => $riskScenario['eventConsequences']],
             'subject-links' => ['items' => $riskScenario['subjectLinks']],
             'control-links' => ['items' => $riskScenario['controlLinks']],
-            'completeness' => $this->service->completeness($this->scenarioAnr() ?? throw new \LogicException()),
+            'completeness' => $this->service->completeness(
+                $this->scenarioAnr() ?? throw new \LogicException(),
+                (string) $riskScenario['uuid']
+            ),
+            'status' => throw new \LogicException('Scenario status must be read before the detail projection.'),
             default => $riskScenario,
         };
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed> */
-    private function sourcePayload(array $data, bool $titleRequired = false): array
+    private function sourcePayload(array $data, bool $sourceRequired = false): array
     {
-        $this->assertPayload($data, ['title', 'narrative', 'legacyRiskSourceId'], true);
-        $this->assertStringFields($data, ['title' => 255, 'narrative' => 65535, 'legacyRiskSourceId' => 36]);
-        if ($titleRequired && (!isset($data['title']) || trim((string) $data['title']) === '')) {
-            throw new ScenarioRiskScenarioException('invalid_payload', 'A risk-source title is required.');
+        $this->assertPayload($data, ['legacyRiskSourceId'], true);
+        $this->assertStringFields($data, ['legacyRiskSourceId' => 36]);
+        if ($sourceRequired
+            && (!isset($data['legacyRiskSourceId']) || trim((string) $data['legacyRiskSourceId']) === '')) {
+            throw new ScenarioRiskScenarioException('invalid_payload', 'Select an available risk source.');
         }
 
         return $this->trimmed($data);
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed> */
-    private function causePayload(array $data, bool $titleRequired = false): array
+    private function causePayload(array $data, bool $evidenceRequired = false): array
     {
         $this->assertPayload($data, [
-            'title', 'narrative', 'threatReferenceUuid', 'vulnerabilityReferenceUuid',
+            'title', 'description', 'threatReferenceUuid', 'vulnerabilityReferenceUuid',
         ], true);
-        $this->assertStringFields($data, [
-            'title' => 255, 'narrative' => 65535, 'threatReferenceUuid' => 36, 'vulnerabilityReferenceUuid' => 36,
+        $this->assertOptionalCauseFields($data, [
+            'title' => 255, 'description' => 65535, 'threatReferenceUuid' => 36, 'vulnerabilityReferenceUuid' => 36,
         ]);
         foreach (['threatReferenceUuid', 'vulnerabilityReferenceUuid'] as $field) {
             if (isset($data[$field]) && !$this->isUuid((string) $data[$field])) {
                 throw new ScenarioRiskScenarioException('invalid_payload', 'The reference UUID is invalid.');
             }
         }
-        if ($titleRequired && (!isset($data['title']) || trim((string) $data['title']) === '')) {
-            throw new ScenarioRiskScenarioException('invalid_payload', 'A cause title is required.');
+        $data = $this->trimmed($data);
+        if ($evidenceRequired && !$this->hasCauseEvidence($data)) {
+            throw new ScenarioRiskScenarioException(
+                'invalid_payload',
+                'Select a threat or vulnerability, or provide a cause title or description.'
+            );
         }
 
-        return $this->trimmed($data);
+        return $data;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function hasCauseEvidence(array $data): bool
+    {
+        foreach (['title', 'description', 'threatReferenceUuid', 'vulnerabilityReferenceUuid'] as $field) {
+            if (isset($data[$field]) && trim((string) $data[$field]) !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param array<string, mixed> $data @param array<string, int> $fields */
+    private function assertOptionalCauseFields(array $data, array $fields): void
+    {
+        foreach ($fields as $field => $maxLength) {
+            if (array_key_exists($field, $data)
+                && $data[$field] !== null
+                && (!is_string($data[$field]) || mb_strlen(trim($data[$field])) > $maxLength)) {
+                throw new ScenarioRiskScenarioException('invalid_payload', 'The Scenario request payload is invalid.');
+            }
+        }
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed> */
     private function nodePayload(array $data, bool $titleRequired = true): array
     {
-        $this->assertPayload($data, ['title', 'narrative'], $titleRequired);
-        $this->assertStringFields($data, ['title' => 255, 'narrative' => 65535]);
+        $this->assertPayload($data, ['title', 'description'], $titleRequired);
+        $this->assertStringFields($data, ['title' => 255, 'description' => 65535]);
 
         return $this->trimmed($data);
     }
@@ -321,10 +362,10 @@ final class ApiScenarioRiskScenarioController extends AbstractRestfulControllerR
             'edges' => ['fromEventUuid', 'toEventUuid'],
             'event-consequences' => ['eventUuid', 'consequenceUuid'],
             'subject-links' => [
-                'targetType', 'targetUuid', 'subjectType', 'subjectReferenceUuid', 'relationshipIntent', 'narrative',
+                'targetType', 'targetUuid', 'subjectType', 'subjectReferenceUuid', 'relationshipIntent', 'description',
             ],
             'control-links' => [
-                'targetType', 'targetUuid', 'controlReferenceUuid', 'relationshipIntent', 'narrative',
+                'targetType', 'targetUuid', 'controlReferenceUuid', 'relationshipIntent', 'description',
             ],
             default => [],
         };

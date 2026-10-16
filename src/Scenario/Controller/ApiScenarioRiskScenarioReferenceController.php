@@ -58,7 +58,8 @@ final class ApiScenarioRiskScenarioReferenceController extends AbstractRestfulCo
             mb_substr(trim((string) $this->params()->fromQuery('query', '')), 0, 100),
             max(1, (int) $this->params()->fromQuery('page', 1)),
             min(100, max(1, (int) $this->params()->fromQuery('pageSize', 25))),
-            trim((string) $this->params()->fromQuery('parent', ''))
+            trim((string) $this->params()->fromQuery('parent', '')),
+            $this->params()->fromQuery('all', '') === '1'
         ));
     }
 

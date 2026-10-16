@@ -8,21 +8,23 @@ final class ExpandScenarioRiskScenarioTables extends AbstractMigration
     {
         $this->execute("ALTER TABLE scenario_risk_scenarios
             ADD risk_source_title VARCHAR(255) NULL,
-            ADD risk_source_narrative TEXT NULL,
+            ADD risk_source_description TEXT NULL,
             ADD risk_source_reference_uuid CHAR(36) NULL,
             ADD cause_title VARCHAR(255) NULL,
-            ADD cause_narrative TEXT NULL,
+            ADD cause_description TEXT NULL,
             ADD threat_reference_uuid CHAR(36) NULL,
             ADD vulnerability_reference_uuid CHAR(36) NULL,
             ADD source_snapshot_uuid CHAR(36) NULL,
             ADD source_instance_record_uuid CHAR(36) NULL,
+            ADD description TEXT NULL,
+            ADD summary_addendum TEXT NULL,
             ADD provenance VARCHAR(255) NULL");
         $this->execute("ALTER TABLE scenario_events
             ADD title VARCHAR(255) NOT NULL DEFAULT '',
-            ADD narrative TEXT NULL");
+            ADD description TEXT NULL");
         $this->execute("ALTER TABLE scenario_consequences
             ADD title VARCHAR(255) NOT NULL DEFAULT '',
-            ADD narrative TEXT NULL");
+            ADD description TEXT NULL");
         $this->execute("CREATE TABLE scenario_event_consequences (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             uuid CHAR(36) NOT NULL,
@@ -43,14 +45,14 @@ final class ExpandScenarioRiskScenarioTables extends AbstractMigration
             ADD subject_type VARCHAR(16) NOT NULL DEFAULT 'asset',
             ADD subject_reference_uuid CHAR(36) NOT NULL DEFAULT '',
             ADD relationship_intent VARCHAR(32) NULL,
-            ADD narrative TEXT NULL,
+            ADD description TEXT NULL,
             ADD UNIQUE KEY scenario_subject_links_unique (risk_scenario_id, target_type, target_uuid, subject_type, subject_reference_uuid)");
         $this->execute("ALTER TABLE scenario_control_links
             ADD target_type VARCHAR(16) NOT NULL DEFAULT 'risk_scenario',
             ADD target_uuid CHAR(36) NULL,
             ADD control_reference_uuid CHAR(36) NOT NULL DEFAULT '',
             ADD relationship_intent VARCHAR(16) NOT NULL DEFAULT 'existing',
-            ADD narrative TEXT NULL,
+            ADD description TEXT NULL,
             ADD UNIQUE KEY scenario_control_links_unique (risk_scenario_id, target_type, target_uuid, control_reference_uuid, relationship_intent)");
     }
 

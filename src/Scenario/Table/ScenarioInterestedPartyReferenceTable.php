@@ -19,25 +19,51 @@ final class ScenarioInterestedPartyReferenceTable
     /** @return array<string, mixed> */
     public function list(int $anrId, string $query, int $page, int $pageSize): array
     {
-        $where = 'party.anr_id = ?';
-        $parameters = [$anrId];
+        // Retain detached source records in the Scenario evidence register.
+        // A link captures an immutable snapshot; deleting the mutable ANR
+        // context record must not make that evidence disappear from a later
+        // Scenario review.
+        $source = <<<'SQL'
+        SELECT party.id AS interested_party_id,
+               CONVERT(party.stakeholder USING utf8mb4) COLLATE utf8mb4_general_ci AS stakeholder,
+               CONVERT(party.requirement USING utf8mb4) COLLATE utf8mb4_general_ci AS requirement,
+               party.position, 1 AS source_available, link.uuid AS link_uuid, link.revision AS link_revision,
+               CONVERT(link.stakeholder_snapshot USING utf8mb4) COLLATE utf8mb4_general_ci AS stakeholder_snapshot,
+               CONVERT(link.requirement_snapshot USING utf8mb4) COLLATE utf8mb4_general_ci AS requirement_snapshot
+        FROM anr_interested_parties party
+        LEFT JOIN scenario_analysis_interested_party_links link
+            ON link.anr_id = party.anr_id AND link.interested_party_id = party.id
+        WHERE party.anr_id = ?
+        UNION ALL
+        SELECT link.interested_party_id,
+               CONVERT(link.stakeholder_snapshot USING utf8mb4) COLLATE utf8mb4_general_ci AS stakeholder,
+               CONVERT(link.requirement_snapshot USING utf8mb4) COLLATE utf8mb4_general_ci AS requirement,
+               NULL AS position, 0 AS source_available, link.uuid AS link_uuid, link.revision AS link_revision,
+               CONVERT(link.stakeholder_snapshot USING utf8mb4) COLLATE utf8mb4_general_ci AS stakeholder_snapshot,
+               CONVERT(link.requirement_snapshot USING utf8mb4) COLLATE utf8mb4_general_ci AS requirement_snapshot
+        FROM scenario_analysis_interested_party_links link
+        LEFT JOIN anr_interested_parties party
+            ON party.anr_id = link.anr_id AND party.id = link.interested_party_id
+        WHERE link.anr_id = ? AND party.id IS NULL
+        SQL;
+
+        $where = '1 = 1';
+        $parameters = [$anrId, $anrId];
         if ($query !== '') {
             $where .= ' AND (party.stakeholder LIKE ? OR party.requirement LIKE ?)';
             $parameters[] = '%' . $query . '%';
             $parameters[] = '%' . $query . '%';
         }
         $total = (int) $this->connection->fetchOne(
-            sprintf('SELECT COUNT(*) FROM anr_interested_parties party WHERE %s', $where),
+            sprintf('SELECT COUNT(*) FROM (%s) party WHERE %s', $source, $where),
             $parameters
         );
         $rows = $this->connection->fetchAllAssociative(
             sprintf(
-                'SELECT party.id, party.stakeholder, party.requirement, party.position, link.uuid AS link_uuid, '
-                . 'link.revision AS link_revision, link.stakeholder_snapshot, link.requirement_snapshot '
-                . 'FROM anr_interested_parties party '
-                . 'LEFT JOIN scenario_analysis_interested_party_links link '
-                . 'ON link.anr_id = party.anr_id AND link.interested_party_id = party.id '
-                . 'WHERE %s ORDER BY party.position ASC, party.id ASC LIMIT %d OFFSET %d',
+                'SELECT * FROM (%s) party WHERE %s '
+                . 'ORDER BY party.source_available DESC, party.position ASC, '
+                . 'party.interested_party_id ASC LIMIT %d OFFSET %d',
+                $source,
                 $where,
                 $pageSize,
                 ($page - 1) * $pageSize
@@ -89,7 +115,9 @@ final class ScenarioInterestedPartyReferenceTable
             );
             if ($existing !== false) {
                 return $this->project(array_merge($party, [
+                    'interested_party_id' => $party['id'],
                     'position' => 0,
+                    'source_available' => 1,
                     'link_uuid' => $existing['uuid'],
                     'link_revision' => $existing['revision'],
                     'stakeholder_snapshot' => $existing['stakeholder_snapshot'],
@@ -110,11 +138,17 @@ final class ScenarioInterestedPartyReferenceTable
                 'stakeholder_snapshot' => $snapshot['stakeholder'],
                 'requirement_snapshot' => $snapshot['requirement'],
             ]);
-            $this->connection->update('scenario_analyses', ['revision' => $analysisRevision + 1], ['id' => $analysis['id']]);
+            $this->connection->update(
+                'scenario_analyses',
+                ['revision' => $analysisRevision + 1],
+                ['id' => $analysis['id']]
+            );
             $this->audit($anrId, $actorId, $correlationId, $uuid, 'scenario_interested_party_attached', $snapshot);
 
             return $this->project(array_merge($party, [
+                'interested_party_id' => $party['id'],
                 'position' => 0,
+                'source_available' => 1,
                 'link_uuid' => $uuid,
                 'link_revision' => 1,
                 'stakeholder_snapshot' => $snapshot['stakeholder'],
@@ -147,7 +181,11 @@ final class ScenarioInterestedPartyReferenceTable
                 return false;
             }
             $this->connection->delete('scenario_analysis_interested_party_links', ['id' => $link['id']]);
-            $this->connection->update('scenario_analyses', ['revision' => $analysisRevision + 1], ['id' => $analysis['id']]);
+            $this->connection->update(
+                'scenario_analyses',
+                ['revision' => $analysisRevision + 1],
+                ['id' => $analysis['id']]
+            );
             $this->audit($anrId, $actorId, $correlationId, $uuid, 'scenario_interested_party_detached', [
                 'snapshot' => [
                     'stakeholder' => $link['stakeholder_snapshot'],
@@ -171,9 +209,10 @@ final class ScenarioInterestedPartyReferenceTable
         $linked = $row['link_uuid'] !== null;
 
         return [
-            'interestedPartyId' => (int) $row['id'],
+            'interestedPartyId' => (int) $row['interested_party_id'],
             'stakeholder' => (string) $row['stakeholder'],
             'requirement' => (string) $row['requirement'],
+            'sourceAvailable' => (bool) $row['source_available'],
             'linked' => $linked,
             'linkUuid' => $linked ? (string) $row['link_uuid'] : null,
             'referenceSnapshot' => $linked ? [
@@ -185,8 +224,14 @@ final class ScenarioInterestedPartyReferenceTable
     }
 
     /** @param array<string, mixed> $patch */
-    private function audit(int $anrId, int $actorId, string $correlationId, string $targetUuid, string $action, array $patch): void
-    {
+    private function audit(
+        int $anrId,
+        int $actorId,
+        string $correlationId,
+        string $targetUuid,
+        string $action,
+        array $patch
+    ): void {
         $this->connection->insert('scenario_audit_events', [
             'uuid' => Uuid::uuid4()->toString(),
             'anr_id' => $anrId,

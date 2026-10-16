@@ -37,4 +37,5 @@ class ReassessmentTriggerTable extends AbstractTable implements PositionUpdatabl
             ->getQuery()
             ->getResult();
     }
+
 }

@@ -12,7 +12,7 @@ final class ScenarioRiskScenarioUpdateValidator extends AbstractInputValidator
     protected function getRules(): array
     {
         $rules = [];
-        $fields = ['title' => 255, 'provenance' => 255];
+        $fields = ['title' => 255, 'description' => 65535, 'summaryAddendum' => 65535];
         foreach ($fields as $name => $max) {
             $rules[] = [
                 'name' => $name,

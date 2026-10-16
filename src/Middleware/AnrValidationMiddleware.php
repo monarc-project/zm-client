@@ -120,7 +120,10 @@ class AnrValidationMiddleware implements MiddlewareInterface
                         && !$this->isPostAuthorizedForRoute($routeMatch->getMatchedRouteName(), $request->getMethod())
                     )
                     || $this->userAnrTable
-                        ->findByAnrAndUser($anr->getSnapshot()->getAnrReference(), $this->connectedUser) === null
+                        ->findByAnrAndUser(
+                            $anr->getSnapshot()->getAnrReference(),
+                            $this->connectedUser
+                        ) === null
                         && !$hasSnapshotSupervisorViewAccess
                 )
             )

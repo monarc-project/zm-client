@@ -48,6 +48,20 @@ final class ScenarioRiskScenarioTable
         return $row === null ? null : $this->projectScenario($row);
     }
 
+    /** @return array{uuid: string, revision: int}|null */
+    public function status(int $anrId, string $uuid): ?array
+    {
+        $row = $this->connection->fetchAssociative(
+            'SELECT uuid, revision FROM scenario_risk_scenarios WHERE anr_id = ? AND uuid = ?',
+            [$anrId, $uuid]
+        );
+
+        return $row === false ? null : [
+            'uuid' => (string) $row['uuid'],
+            'revision' => (int) $row['revision'],
+        ];
+    }
+
     /** @return array<string, mixed>|null */
     public function detail(int $anrId, string $uuid): ?array
     {
@@ -82,7 +96,12 @@ final class ScenarioRiskScenarioTable
                 'title' => $data['title'],
                 'source_snapshot_uuid' => $data['sourceSnapshotUuid'] ?? null,
                 'source_instance_record_uuid' => $data['sourceInstanceRecordUuid'] ?? null,
-                'provenance' => $data['provenance'] ?? null,
+                'description' => $data['description'] ?? null,
+                'summary_addendum' => $data['summaryAddendum'] ?? null,
+                // This is internal lineage, not workshop-authored content. The
+                // actor, time and request correlation are recorded in the
+                // append-only audit event below.
+                'provenance' => $this->generatedProvenance($uuid),
             ];
             $this->connection->insert('scenario_risk_scenarios', $row);
             $this->audit($anrId, $actorId, $correlationId, $uuid, 'risk_scenario_created', [
@@ -187,7 +206,7 @@ final class ScenarioRiskScenarioTable
             $data,
             $revision,
             $correlationId,
-            ['title', 'narrative', 'legacyRiskSourceId', 'referenceSnapshot']
+            ['title', 'description', 'legacyRiskSourceId', 'referenceSnapshot']
         );
     }
 
@@ -211,7 +230,7 @@ final class ScenarioRiskScenarioTable
             $correlationId,
             [
                 'title',
-                'narrative',
+                'description',
                 'threatReferenceUuid',
                 'vulnerabilityReferenceUuid',
                 'threatReferenceSnapshot',
@@ -255,7 +274,7 @@ final class ScenarioRiskScenarioTable
                 'anr_id' => $anrId,
                 'risk_scenario_id' => (int) $scenario['id'],
                 'title' => $data['title'],
-                'narrative' => $data['narrative'] ?? null,
+                'description' => $data['description'] ?? null,
             ];
             $this->connection->insert($table, $row);
             $this->touchScenario((int) $scenario['id'], $revision);
@@ -461,14 +480,19 @@ final class ScenarioRiskScenarioTable
     }
 
     /** @return array<string, mixed> */
-    public function completeness(int $anrId): array
+    public function completeness(int $anrId, ?string $riskScenarioUuid = null): array
     {
-        $riskScenarios = $this->connection->fetchAllAssociative(
-            'SELECT * FROM scenario_risk_scenarios WHERE anr_id = ? ORDER BY created_at ASC, uuid ASC',
-            [$anrId]
-        );
+        $riskScenarios = $riskScenarioUuid === null
+            ? $this->connection->fetchAllAssociative(
+                'SELECT * FROM scenario_risk_scenarios WHERE anr_id = ? ORDER BY created_at ASC, uuid ASC',
+                [$anrId]
+            )
+            : $this->connection->fetchAllAssociative(
+                'SELECT * FROM scenario_risk_scenarios WHERE anr_id = ? AND uuid = ? ORDER BY created_at ASC, uuid ASC',
+                [$anrId, $riskScenarioUuid]
+            );
         $warnings = [];
-        if ($riskScenarios === []) {
+        if ($riskScenarios === [] && $riskScenarioUuid === null) {
             $warnings[] = ['code' => 'risk_scenario_missing', 'message' => 'Create at least one risk scenario.'];
         }
         foreach ($riskScenarios as $riskScenario) {
@@ -476,9 +500,6 @@ final class ScenarioRiskScenarioTable
             $prefix = ['riskScenarioUuid' => $riskScenario['uuid']];
             if (!$this->hasRiskScenarioRecord('scenario_risk_sources', $riskScenarioId)) {
                 $warnings[] = $prefix + ['code' => 'risk_source_missing', 'message' => 'Add a local risk source.'];
-            }
-            if (!$this->hasRiskScenarioRecord('scenario_causes', $riskScenarioId)) {
-                $warnings[] = $prefix + ['code' => 'cause_missing', 'message' => 'Add a local cause.'];
             }
             if (!$this->hasRiskScenarioRecord('scenario_events', $riskScenarioId)) {
                 $warnings[] = $prefix + ['code' => 'event_missing', 'message' => 'Add at least one event.'];
@@ -585,7 +606,7 @@ final class ScenarioRiskScenarioTable
             'target_type' => $targetType,
             'target_uuid' => $targetUuid,
             'relationship_intent' => $data['relationshipIntent'] ?? null,
-            'narrative' => $data['narrative'] ?? null,
+            'description' => $data['description'] ?? null,
         ];
         if ($table === 'scenario_subject_links') {
             $row['subject_type'] = $data['subjectType'];
@@ -719,8 +740,18 @@ final class ScenarioRiskScenarioTable
             'consequences' => array_map([$this, 'projectNode'], $consequences),
             'edges' => $this->edgeRows($scenarioId),
             'eventConsequences' => $this->eventConsequenceRows($scenarioId),
-            'subjectLinks' => $this->linkRows('scenario_subject_links', 'subject-link', $scenarioId),
-            'controlLinks' => $this->linkRows('scenario_control_links', 'control-link', $scenarioId),
+            'subjectLinks' => $this->linkRows(
+                'scenario_subject_links',
+                'subject-link',
+                $scenarioId,
+                (int) $scenario['anr_id']
+            ),
+            'controlLinks' => $this->linkRows(
+                'scenario_control_links',
+                'control-link',
+                $scenarioId,
+                (int) $scenario['anr_id']
+            ),
         ];
     }
 
@@ -766,14 +797,17 @@ final class ScenarioRiskScenarioTable
     }
 
     /** @return array<int, array<string, mixed>> */
-    private function linkRows(string $table, string $type, int $scenarioId): array
+    private function linkRows(string $table, string $type, int $scenarioId, int $anrId): array
     {
         $rows = $this->connection->fetchAllAssociative(
             'SELECT * FROM ' . $table . ' WHERE risk_scenario_id = ? ORDER BY created_at ASC, uuid ASC',
             [$scenarioId]
         );
 
-        return array_map(fn (array $row): array => $this->projectRelation($type, $row), $rows);
+        return array_map(
+            fn (array $row): array => $this->projectRelation($type, $row, $anrId),
+            $rows
+        );
     }
 
     private function createsCycle(int $scenarioId, int $fromId, int $toId): bool
@@ -813,14 +847,14 @@ final class ScenarioRiskScenarioTable
     private function scenarioColumns(array $data): array
     {
         return $this->recordColumns($data, [
-            'title', 'sourceSnapshotUuid', 'sourceInstanceRecordUuid', 'provenance',
+            'title', 'sourceSnapshotUuid', 'sourceInstanceRecordUuid', 'description', 'summaryAddendum',
         ]);
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed> */
     private function nodeColumns(array $data): array
     {
-        return $this->recordColumns($data, ['title', 'narrative']);
+        return $this->recordColumns($data, ['title', 'description']);
     }
 
     /** @param array<string, mixed> $data @param array<int, string> $fields @return array<string, mixed> */
@@ -828,7 +862,11 @@ final class ScenarioRiskScenarioTable
     {
         $columns = [];
         foreach ($fields as $field) {
-            if (array_key_exists($field, $data)) {
+            // Laminas input filters expose omitted optional fields as null.
+            // A partial Description update must therefore not overwrite the
+            // required title, while nullable description/source fields can
+            // still be explicitly cleared.
+            if (array_key_exists($field, $data) && !($field === 'title' && $data[$field] === null)) {
                 $columns[$this->columnName($field)] = str_ends_with($field, 'Snapshot')
                     ? json_encode($data[$field], JSON_THROW_ON_ERROR)
                     : $data[$field];
@@ -845,6 +883,11 @@ final class ScenarioRiskScenarioTable
         }
 
         return strtolower((string) preg_replace('/([a-z])([A-Z])/', '$1_$2', $field));
+    }
+
+    private function generatedProvenance(string $uuid): string
+    {
+        return sprintf('risk_scenario:%s', $uuid);
     }
 
     private function nodeTable(string $type): ?string
@@ -884,7 +927,8 @@ final class ScenarioRiskScenarioTable
             'title' => $row['title'],
             'sourceSnapshotUuid' => $row['source_snapshot_uuid'],
             'sourceInstanceRecordUuid' => $row['source_instance_record_uuid'],
-            'provenance' => $row['provenance'],
+            'description' => $row['description'] ?? null,
+            'summaryAddendum' => $row['summary_addendum'] ?? null,
             'revision' => (int) $row['revision'],
             'createdAt' => $row['created_at'],
             'updatedAt' => $row['updated_at'],
@@ -897,7 +941,7 @@ final class ScenarioRiskScenarioTable
         return [
             'uuid' => $row['uuid'],
             'title' => $row['title'],
-            'narrative' => $row['narrative'],
+            'description' => $row['description'],
             'revision' => (int) $row['revision'],
             'createdAt' => $row['created_at'],
             'updatedAt' => $row['updated_at'],
@@ -909,8 +953,8 @@ final class ScenarioRiskScenarioTable
     {
         $result = [
             'uuid' => $row['uuid'],
-            'title' => $row['title'],
-            'narrative' => $row['narrative'],
+            'title' => $row['title'] ?? '',
+            'description' => $row['description'],
             'revision' => (int) ($row['revision'] ?? 1),
             'createdAt' => $row['created_at'] ?? null,
             'updatedAt' => $row['updated_at'] ?? null,
@@ -940,7 +984,7 @@ final class ScenarioRiskScenarioTable
     }
 
     /** @param array<string, mixed> $row @return array<string, mixed> */
-    private function projectRelation(string $type, array $row): array
+    private function projectRelation(string $type, array $row, ?int $anrId = null): array
     {
         $result = ['uuid' => $row['uuid'], 'revision' => (int) ($row['revision'] ?? 1)];
         if ($type === 'edge') {
@@ -953,7 +997,7 @@ final class ScenarioRiskScenarioTable
             'targetType' => $row['target_type'],
             'targetUuid' => $row['target_uuid'],
             'relationshipIntent' => $row['relationship_intent'],
-            'narrative' => $row['narrative'],
+            'description' => $row['description'],
         ];
         if ($type === 'subject-link') {
             $result['subjectType'] = $row['subject_type'];
@@ -961,11 +1005,115 @@ final class ScenarioRiskScenarioTable
         } else {
             $result['controlReferenceUuid'] = $row['control_reference_uuid'];
         }
-        $result['referenceSnapshot'] = isset($row['reference_snapshot']) && $row['reference_snapshot'] !== null
-            ? json_decode((string) $row['reference_snapshot'], true, 512, JSON_THROW_ON_ERROR)
-            : null;
+        $result['referenceSnapshot'] = $this->relationSnapshot($type, $row, $anrId);
 
         return $result;
+    }
+
+    /** Resolve legacy links that predate persisted, readable reference snapshots. */
+    private function relationSnapshot(string $type, array $row, ?int $anrId): ?array
+    {
+        $snapshot = isset($row['reference_snapshot']) && $row['reference_snapshot'] !== null
+            ? json_decode((string) $row['reference_snapshot'], true, 512, JSON_THROW_ON_ERROR)
+            : null;
+        $storedLabel = is_array($snapshot) ? trim((string) ($snapshot['label'] ?? '')) : '';
+        if ($anrId === null || ($storedLabel !== '' && !self::isUuid($storedLabel))) {
+            return is_array($snapshot) ? $snapshot : null;
+        }
+
+        $language = (int) $this->connection->fetchOne(
+            'SELECT language FROM anrs WHERE id = ? LIMIT 1',
+            [$anrId]
+        );
+        $language = $language >= 1 && $language <= 4 ? $language : 1;
+        $labelField = 'label' . $language;
+        $uuid = $type === 'subject-link'
+            ? (string) ($row['subject_reference_uuid'] ?? '')
+            : (string) ($row['control_reference_uuid'] ?? '');
+        if ($uuid === '') {
+            return is_array($snapshot) ? $snapshot : null;
+        }
+
+        if ($type === 'control-link') {
+            $control = $this->connection->fetchAssociative(
+                sprintf(
+                    'SELECT measure.%1$s AS control_label, referential.%1$s AS referential_label '
+                    . 'FROM measures measure LEFT JOIN referentials referential '
+                    . 'ON referential.anr_id = measure.anr_id '
+                    . 'AND referential.uuid = measure.referential_uuid '
+                    . 'WHERE measure.anr_id = ? AND measure.uuid = ? LIMIT 1',
+                    $labelField
+                ),
+                [$anrId, $uuid]
+            );
+            if ($control !== false) {
+                $controlLabel = trim((string) ($control['control_label'] ?? ''));
+                $referentialLabel = trim((string) ($control['referential_label'] ?? ''));
+                if ($controlLabel !== '') {
+                    return [
+                        'kind' => 'control',
+                        'identity' => $uuid,
+                        'label' => $referentialLabel !== ''
+                            ? $controlLabel . ' — ' . $referentialLabel
+                            : $controlLabel,
+                        'sourceScope' => 'current-analysis',
+                    ];
+                }
+            }
+        } else {
+            $subjectType = (string) ($row['subject_type'] ?? 'asset');
+            if ($subjectType === 'asset') {
+                $asset = $this->connection->fetchAssociative(
+                    sprintf(
+                        'SELECT CONCAT('
+                        . 'COALESCE(NULLIF(object.name%1$d, \'\'), '
+                        . 'NULLIF(object.label%1$d, \'\'), \'Unlabelled asset\'), '
+                        . 'IF(asset.uuid IS NULL, \'\', CONCAT(\' — \', '
+                        . 'COALESCE(NULLIF(asset.label%1$d, \'\'), \'Unlabelled asset type\')))) AS label '
+                        . 'FROM objects object LEFT JOIN assets asset '
+                        . 'ON asset.anr_id = object.anr_id AND asset.uuid = object.asset_id '
+                        . 'WHERE object.anr_id = ? AND object.uuid = ? AND object.asset_id IS NOT NULL LIMIT 1',
+                        $language
+                    ),
+                    [$anrId, $uuid]
+                );
+                if ($asset !== false && trim((string) $asset['label']) !== '') {
+                    return [
+                        'kind' => 'asset',
+                        'identity' => $uuid,
+                        'label' => trim((string) $asset['label']),
+                        'sourceScope' => 'current-analysis',
+                    ];
+                }
+            }
+            $object = $this->connection->fetchAssociative(
+                sprintf(
+                    'SELECT COALESCE(NULLIF(object.name%1$d, \'\'), '
+                    . 'NULLIF(object.label%1$d, \'\'), \'Unlabelled reference\') AS label '
+                    . 'FROM objects object WHERE object.anr_id = ? AND object.uuid = ? LIMIT 1',
+                    $language
+                ),
+                [$anrId, $uuid]
+            );
+            if ($object !== false && trim((string) $object['label']) !== '') {
+                return [
+                    'kind' => $subjectType,
+                    'identity' => $uuid,
+                    'label' => trim((string) $object['label']),
+                    'sourceScope' => 'current-analysis',
+                ];
+            }
+        }
+
+        return is_array($snapshot) ? $snapshot : null;
+    }
+
+    private static function isUuid(string $value): bool
+    {
+        return (bool) preg_match(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i',
+            $value
+        );
     }
 
     /** @param array<string, mixed> $row @return array<string, mixed> */
@@ -975,7 +1123,7 @@ final class ScenarioRiskScenarioTable
             'title' => $row['title'],
             'sourceSnapshotUuid' => $row['source_snapshot_uuid'] ?? null,
             'sourceInstanceRecordUuid' => $row['source_instance_record_uuid'] ?? null,
-            'provenance' => $row['provenance'] ?? null,
+            'description' => $row['description'] ?? null,
         ];
     }
 

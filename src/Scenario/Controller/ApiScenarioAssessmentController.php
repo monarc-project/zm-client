@@ -11,6 +11,8 @@ use Monarc\Core\Scenario\Feature\ScenarioCapability;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Scenario\Service\ScenarioAssessmentService;
 use Monarc\FrontOffice\Scenario\Service\ScenarioRiskScenarioService;
+use Monarc\FrontOffice\Scenario\Service\ScenarioTreatmentService;
+use Monarc\FrontOffice\Scenario\Validator\ScenarioTreatmentValidator;
 
 /** Exposes the protected, backend-only SRA-13 criteria and decision API. */
 final class ApiScenarioAssessmentController extends AbstractRestfulControllerRequestHandler
@@ -20,7 +22,8 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
     public function __construct(
         private ScenarioCapability $capability,
         private ScenarioAssessmentService $assessments,
-        private ScenarioRiskScenarioService $riskScenarios
+        private ScenarioRiskScenarioService $riskScenarios,
+        private ScenarioTreatmentService $treatments
     ) {
     }
 
@@ -58,7 +61,7 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
 
         return match ($this->resource()) {
             null => $this->getPreparedJsonResponse($this->assessments->listAssessments($anr, $riskScenarioUuid)),
-            'treatments' => $this->getPreparedJsonResponse($this->assessments->listTreatments($anr, $riskScenarioUuid)),
+            'treatments' => $this->getPreparedJsonResponse($this->treatments->list($anr, $riskScenarioUuid)),
             'monitoring' => $this->getPreparedJsonResponse($this->assessments->listMonitoring($anr, $riskScenarioUuid)),
             'acceptances' => $this->getPreparedJsonResponse(
                 $this->assessments->listAcceptances($anr, $riskScenarioUuid)
@@ -97,6 +100,9 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
                 if ($this->riskScenarios->get($anr, $riskScenarioUuid) === null) {
                     return $this->notFound();
                 }
+                if ($this->resource() === 'reduce') {
+                    $this->reductionPayload($data);
+                }
                 $result = match ($this->resource()) {
                     null => $this->assessments->assess(
                         $anr,
@@ -105,7 +111,7 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
                         $revision,
                         $this->correlationId()
                     ),
-                    'treatments' => $this->assessments->createTreatment(
+                    'treatments' => $this->treatments->create(
                         $anr,
                         $riskScenarioUuid,
                         $this->treatmentPayload($data),
@@ -123,6 +129,12 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
                         $anr,
                         $riskScenarioUuid,
                         $this->acceptancePayload($data),
+                        $revision,
+                        $this->correlationId()
+                    ),
+                    'reduce' => $this->assessments->applyRiskReduction(
+                        $anr,
+                        $riskScenarioUuid,
                         $revision,
                         $this->correlationId()
                     ),
@@ -178,7 +190,7 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
             'dimensionSeverities',
             'controlReferences',
             'evidenceReferences',
-            'rationale',
+            'justification',
             'legacyComparison',
         ];
         $this->assertOnly($data, $allowed, [
@@ -186,12 +198,12 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
             'profileVersionUuid',
             'likelihood',
             'dimensionSeverities',
-            'rationale',
+            'justification',
         ]);
         if (!$this->isUuid((string) $data['profileVersionUuid'])
             || !is_int($data['likelihood']) && !ctype_digit((string) $data['likelihood'])
             || !is_array($data['dimensionSeverities'])
-            || trim((string) $data['rationale']) === '') {
+            || trim((string) $data['justification']) === '') {
             throw new \InvalidArgumentException('The assessment payload is invalid.');
         }
 
@@ -201,18 +213,23 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
     /** @param array<string, mixed> $data @return array<string, mixed> */
     private function treatmentPayload(array $data): array
     {
-        $this->assertOnly(
-            $data,
-            ['treatmentType', 'actionText', 'ownerId', 'dueAt', 'status'],
-            ['treatmentType', 'actionText', 'status']
-        );
-        if (!in_array($data['treatmentType'], ['avoid', 'modify', 'share', 'retain'], true)
-            || trim((string) $data['actionText']) === ''
-            || !in_array($data['status'], ['planned', 'in_progress', 'completed', 'cancelled'], true)) {
-            throw new \InvalidArgumentException('The treatment payload is invalid.');
+        return ScenarioTreatmentValidator::create($data);
+    }
+
+    private function validRecommendationReferences(mixed $references): bool
+    {
+        if (!is_array($references)
+            || array_filter($references, static fn (mixed $uuid): bool => !is_string($uuid)) !== []) {
+            return false;
+        }
+        if (count($references) !== count(array_unique($references))) {
+            return false;
         }
 
-        return $data;
+        return array_filter(
+            $references,
+            fn (mixed $uuid): bool => !is_string($uuid) || !$this->isUuid($uuid)
+        ) === [];
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed> */
@@ -220,14 +237,21 @@ final class ApiScenarioAssessmentController extends AbstractRestfulControllerReq
     {
         $this->assertOnly(
             $data,
-            ['indicator', 'reassessmentTrigger', 'observation'],
-            ['indicator', 'reassessmentTrigger']
+            ['indicator', 'reassessmentTriggerId', 'observation'],
+            ['indicator', 'reassessmentTriggerId']
         );
-        if (trim((string) $data['indicator']) === '' || trim((string) $data['reassessmentTrigger']) === '') {
+        if (trim((string) $data['indicator']) === ''
+            || !filter_var($data['reassessmentTriggerId'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
             throw new \InvalidArgumentException('The monitoring payload is invalid.');
         }
 
         return $data;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function reductionPayload(array $data): void
+    {
+        $this->assertOnly($data, [], []);
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed> */

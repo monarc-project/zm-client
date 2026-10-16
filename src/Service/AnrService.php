@@ -25,6 +25,10 @@ use Throwable;
 class AnrService
 {
     private const BLANK_MODEL_ID = 31;
+    private const DEFAULT_SEUIL1 = 8;
+    private const DEFAULT_SEUIL2 = 27;
+    private const DEFAULT_SEUIL_ROLF1 = 3;
+    private const DEFAULT_SEUIL_ROLF2 = 8;
 
     private Entity\User $connectedUser;
 
@@ -212,6 +216,10 @@ class AnrService
             ->setAnalysisType($data['analysisType'] ?? Entity\Anr::ANALYSIS_TYPE_ASSET)
             ->setLanguage($data['language'])
             ->setLanguageCode(strtolower($this->configService->getLanguageCodes()[$data['language']]))
+            ->setSeuil1(self::DEFAULT_SEUIL1)
+            ->setSeuil2(self::DEFAULT_SEUIL2)
+            ->setSeuilRolf1(self::DEFAULT_SEUIL_ROLF1)
+            ->setSeuilRolf2(self::DEFAULT_SEUIL_ROLF2)
             ->setCacheModelAreScalesUpdatable(true)
             ->setCreator($this->connectedUser->getEmail());
 

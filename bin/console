@@ -9,6 +9,7 @@ use Monarc\FrontOffice\Import\Command\ImportAnalysesCommand;
 use Monarc\FrontOffice\Stats\Command\CollectStatsCommand;
 use Monarc\FrontOffice\Command\CreateUsersCommand;
 use Monarc\FrontOffice\Command\FixRecommendationsPosition;
+use Monarc\FrontOffice\Command\OpenScenarioDueReviewsCommand;
 use Symfony\Component\Console\Application as ConsoleApp;
 use Laminas\Mvc\Application as LaminasApp;
 
@@ -19,6 +20,7 @@ $consoleApp = new ConsoleApp();
 
 $consoleApp->add($laminasApp->getServiceManager()->get(CreateUsersCommand::class));
 $consoleApp->add($laminasApp->getServiceManager()->get(FixRecommendationsPosition::class));
+$consoleApp->add($laminasApp->getServiceManager()->get(OpenScenarioDueReviewsCommand::class));
 $consoleApp->add($laminasApp->getServiceManager()->get(CollectStatsCommand::class));
 $consoleApp->add($laminasApp->getServiceManager()->get(ImportAnalysesCommand::class));
 

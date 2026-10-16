@@ -80,6 +80,62 @@ return [
                     ],
                 ],
             ],
+            'scenario_v1_anr_method_context' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/method-context/:resource[/:id]',
+                    'constraints' => [
+                        'anrid' => '[0-9]+',
+                        'resource' => 'trends|reassessment|reassessment-triggers',
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioMethodContextController::class,
+                        ),
+                    ],
+                ],
+            ],
+            // Review resources are constrained to their explicit fixed children so
+            // they cannot be captured by the generic risk-scenario route below.
+            'scenario_v1_anr_reviews' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/reviews/:resource[/:id[/:action]]',
+                    'constraints' => [
+                        'anrid' => '[0-9]+',
+                        'resource' => 'schedule|cases|occurrences',
+                        'id' => '[a-f0-9-]{36}',
+                        'action' => 'start|assign|scope|dispositions|complete|dismiss',
+                    ],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioReviewController::class,
+                        ),
+                    ],
+                ],
+            ],
+            'scenario_v1_anr_criteria_definition' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/criteria-definition/:resource',
+                    'constraints' => [
+                        'anrid' => '[0-9]+',
+                        'resource' => 'source|draft|lock',
+                    ],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioCriteriaDefinitionController::class,
+                        ),
+                    ],
+                ],
+            ],
             'scenario_v1_anr_criteria_profiles' => [
                 'type' => 'segment',
                 'options' => [
@@ -115,6 +171,81 @@ return [
                     ],
                 ],
             ],
+            // These concrete children intentionally precede the generic assessment
+            // segment route so a treatment UUID can never be captured as a resource.
+            'scenario_v1_anr_treatment_owners' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/treatment-owners',
+                    'constraints' => ['anrid' => '[0-9]+'],
+                    'defaults' => [
+                        'scenarioTreatmentAction' => 'owners',
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioTreatmentController::class,
+                        ),
+                    ],
+                ],
+            ],
+            'scenario_v1_anr_risk_scenario_treatment_history' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/risk-scenarios/:scenarioId/assessments/treatments/:id/history',
+                    'constraints' => [
+                        'anrid' => '[0-9]+',
+                        'scenarioId' => '[a-f0-9-]{36}',
+                        'id' => '[a-f0-9-]{36}',
+                    ],
+                    'defaults' => [
+                        'scenarioTreatmentAction' => 'history',
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioTreatmentController::class,
+                        ),
+                    ],
+                ],
+            ],
+            'scenario_v1_anr_risk_scenario_treatment_recommendation' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/risk-scenarios/:scenarioId/assessments/treatments/:id/recommendations/:implementationId',
+                    'constraints' => [
+                        'anrid' => '[0-9]+',
+                        'scenarioId' => '[a-f0-9-]{36}',
+                        'id' => '[a-f0-9-]{36}',
+                        'implementationId' => '[a-f0-9-]{36}',
+                    ],
+                    'defaults' => [
+                        'scenarioTreatmentAction' => 'recommendation',
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioTreatmentController::class,
+                        ),
+                    ],
+                ],
+            ],
+            'scenario_v1_anr_risk_scenario_treatment' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/risk-scenarios/:scenarioId/assessments/treatments/:id',
+                    'constraints' => [
+                        'anrid' => '[0-9]+',
+                        'scenarioId' => '[a-f0-9-]{36}',
+                        'id' => '[a-f0-9-]{36}',
+                    ],
+                    'defaults' => [
+                        'scenarioTreatmentAction' => 'treatment',
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioTreatmentController::class,
+                        ),
+                    ],
+                ],
+            ],
             'scenario_v1_anr_risk_scenario_assessments' => [
                 'type' => 'segment',
                 'options' => [
@@ -122,7 +253,7 @@ return [
                     'constraints' => [
                         'anrid' => '[0-9]+',
                         'id' => '[a-f0-9-]{36}',
-                        'resource' => 'treatments|monitoring|acceptances',
+                        'resource' => 'treatments|monitoring|acceptances|reduce',
                     ],
                     'defaults' => [
                         'scenarioAssessmentKind' => 'assessments',
@@ -140,7 +271,7 @@ return [
                     'route' => '/api/scenario/v1/anrs/:anrid/decision-authority/:resource[/:id]',
                     'constraints' => [
                         'anrid' => '[0-9]+',
-                        'resource' => 'supervisors|linkable-users',
+                        'resource' => 'supervisors|linkable-users|users',
                         'id' => '[0-9]+',
                     ],
                     'defaults' => [
@@ -159,7 +290,7 @@ return [
                     'constraints' => [
                         'anrid' => '[0-9]+',
                         'id' => '[a-f0-9-]{36}',
-                        'resource' => 'risk-source|cause|events|consequences|edges|event-consequences|subject-links|control-links|completeness',
+                        'resource' => 'risk-source|cause|events|consequences|edges|event-consequences|subject-links|control-links|completeness|status',
                         'resourceid' => '[a-f0-9-]{36}',
                     ],
                     'defaults' => [
@@ -1709,9 +1840,13 @@ return [
             Scenario\Controller\ApiScenarioReadyController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioAuthBridgeController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioAnalysisController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioMethodContextController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioCriteriaDefinitionController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioRiskScenarioController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioInterestedPartyReferenceController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioAssessmentController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioTreatmentController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioReviewController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioDecisionAuthorityController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioRiskScenarioReferenceController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioPublishedTemplateController::class => AutowireFactory::class,
@@ -1894,8 +2029,11 @@ return [
             CronTask\Table\CronTaskTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\LegacyBridgeTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioAnalysisTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioCriteriaDefinitionTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioRiskScenarioTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioAssessmentTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioTreatmentTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioReviewTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioInterestedPartyReferenceTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioReferenceTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioTemplateSnapshotTable::class => ClientEntityManagerFactory::class,
@@ -2008,6 +2146,7 @@ return [
                     $container->get(Scenario\Table\ScenarioAnalysisTable::class),
                     $container->get(Table\AnrTable::class),
                     $container->get(Table\UserAnrTable::class),
+                    $container->get(Table\UserTable::class),
                     $container->get(ConnectedUserService::class),
                     static function (Entity\Anr $anr, Entity\User $user) use ($container) {
                         return $container->get(Service\AnrSupervisorService::class)
@@ -2015,16 +2154,26 @@ return [
                     }
                 );
             },
+            Scenario\Service\ScenarioMethodContextService::class => AutowireFactory::class,
+            Scenario\Service\OperationalRiskCriteriaAdapter::class => AutowireFactory::class,
+            Scenario\Service\ScenarioCriteriaDefinitionService::class => AutowireFactory::class,
             Scenario\Service\ScenarioRiskScenarioService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioTreatmentService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioReviewSchedule::class => AutowireFactory::class,
+            Scenario\Service\ScenarioReviewService::class => AutowireFactory::class,
             Scenario\Service\ScenarioAssessmentService::class => static function ($container) {
                 return new Scenario\Service\ScenarioAssessmentService(
                     $container->get(Scenario\Table\ScenarioAssessmentTable::class),
+                    $container->get(Scenario\Table\ScenarioReferenceTable::class),
+                    $container->get(Scenario\Table\ScenarioTreatmentTable::class),
                     $container->get(Scenario\Service\ScenarioQualitativeCalculationService::class),
+                    $container->get(Table\ReassessmentTriggerTable::class),
                     $container->get(ConnectedUserService::class),
                     static fn (): Service\AnrSupervisorService => $container->get(Service\AnrSupervisorService::class)
                 );
             },
             Scenario\Service\ScenarioQualitativeCalculationService::class => AutowireFactory::class,
+            Scenario\Validator\ScenarioCriteriaDefinitionValidator::class => AutowireFactory::class,
             Scenario\Service\ScenarioDelegatedAuthenticationService::class => AutowireFactory::class,
             Scenario\Service\ScenarioPublishedTemplateService::class => AutowireFactory::class,
             Scenario\Service\ScenarioTemplateInstantiationService::class => AutowireFactory::class,
@@ -2224,6 +2373,7 @@ return [
                 ReflectionBasedAbstractFactory::class,
 
             // Commands
+            Command\OpenScenarioDueReviewsCommand::class => AutowireFactory::class,
             Import\Command\ImportAnalysesCommand::class => static function (ContainerInterface $container) {
                 /** @var ConnectedUserService $connectedUserService */
                 $connectedUserService = $container->get(ConnectedUserService::class);
@@ -2317,6 +2467,9 @@ return [
         // route listener validates both private headers and establishes the
         // delegated MONARC user before dispatch.
         'scenario_v1_anr_analysis',
+        'scenario_v1_anr_method_context',
+        'scenario_v1_anr_reviews',
+        'scenario_v1_anr_criteria_definition',
         'scenario_v1_anr_template',
         'scenario_v1_anr_risk_scenarios',
         'scenario_v1_anr_interested_party_references',
@@ -2324,8 +2477,27 @@ return [
         'scenario_v1_anr_criteria_profiles',
         'scenario_v1_anr_criteria_profiles_assigned',
         'scenario_v1_anr_risk_scenario_assessments',
+        'scenario_v1_anr_treatment_owners',
+        'scenario_v1_anr_risk_scenario_treatment_history',
+        'scenario_v1_anr_risk_scenario_treatment_recommendation',
+        'scenario_v1_anr_risk_scenario_treatment',
         'scenario_v1_anr_decision_authority',
         'scenario_v1_frontoffice_templates',
+        // Narrow Scenario Knowledge-base BFF calls reuse these established
+        // FrontOffice controllers. Delegated identity is validated in Module
+        // before the existing ANR middleware applies user/ANR RWD checks.
+        'monarc_api_global_client_anr/assets',
+        'monarc_api_global_client_anr/objects',
+        'monarc_api_global_client_anr/objects_categories',
+        'monarc_api_global_client_anr/threats',
+        'monarc_api_global_client_anr/vulnerabilities',
+        'monarc_api_global_client_anr/referentials',
+        'monarc_api_global_client_anr/soacategory',
+        'monarc_api_global_client_anr/measures',
+        'monarc_api_global_client_anr/recommendations',
+        'monarc_api_global_client_anr/recommendations_sets',
+        'monarc_api_global_client_anr/risk_sources',
+        'monarc_api_global_client_anr/interested_parties',
     ],
     'roles' => [
         // Super Admin : Management of users (and guides, models, referentials, etc.)

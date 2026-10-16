@@ -34,6 +34,12 @@ final class ScenarioRiskScenarioService
         return $this->riskScenarios->detail((int) $anr->getId(), $uuid);
     }
 
+    /** @return array{uuid: string, revision: int}|null */
+    public function status(Anr $anr, string $uuid): ?array
+    {
+        return $this->riskScenarios->status((int) $anr->getId(), $uuid);
+    }
+
     /** @param array<string, mixed> $data @return array<string, mixed> */
     public function create(Anr $anr, array $data, string $correlationId): array
     {
@@ -102,6 +108,8 @@ final class ScenarioRiskScenarioService
                     'The selected risk source is unavailable in this analysis.'
                 );
             }
+            $data['title'] = (string) ($snapshot['label'] ?? '');
+            $data['description'] = null;
             $data['referenceSnapshot'] = $snapshot;
         }
 
@@ -124,35 +132,47 @@ final class ScenarioRiskScenarioService
         string $correlationId
     ): ?array {
         $anrId = (int) $anr->getId();
-        if (isset($data['threatReferenceUuid'])) {
-            if (!$this->references->hasThreat($anrId, (string) $data['threatReferenceUuid'])) {
+        if (array_key_exists('threatReferenceUuid', $data)) {
+            if ($data['threatReferenceUuid'] === null) {
+                $data['threatReferenceSnapshot'] = null;
+            } elseif (!$this->references->hasThreat(
+                $anrId,
+                (string) $data['threatReferenceUuid']
+            )) {
                 throw new ScenarioRiskScenarioException('unavailable_reference', 'The selected threat is unavailable.');
+            } else {
+                $snapshot = $this->references->snapshot($anr, 'threat', (string) $data['threatReferenceUuid']);
+                if ($snapshot === null) {
+                    throw new ScenarioRiskScenarioException(
+                        'unavailable_reference',
+                        'The selected threat is unavailable.'
+                    );
+                }
+                $data['threatReferenceSnapshot'] = $snapshot;
             }
-            $snapshot = $this->references->snapshot($anr, 'threat', (string) $data['threatReferenceUuid']);
-            if ($snapshot === null) {
-                throw new ScenarioRiskScenarioException('unavailable_reference', 'The selected threat is unavailable.');
-            }
-            $data['threatReferenceSnapshot'] = $snapshot;
         }
-        if (isset($data['vulnerabilityReferenceUuid'])) {
-            if (!$this->references->hasVulnerability($anrId, (string) $data['vulnerabilityReferenceUuid'])) {
+        if (array_key_exists('vulnerabilityReferenceUuid', $data)) {
+            if ($data['vulnerabilityReferenceUuid'] === null) {
+                $data['vulnerabilityReferenceSnapshot'] = null;
+            } elseif (!$this->references->hasVulnerability($anrId, (string) $data['vulnerabilityReferenceUuid'])) {
                 throw new ScenarioRiskScenarioException(
                     'unavailable_reference',
                     'The selected vulnerability is unavailable.'
                 );
-            }
-            $snapshot = $this->references->snapshot(
-                $anr,
-                'vulnerability',
-                (string) $data['vulnerabilityReferenceUuid']
-            );
-            if ($snapshot === null) {
-                throw new ScenarioRiskScenarioException(
-                    'unavailable_reference',
-                    'The selected vulnerability is unavailable.'
+            } else {
+                $snapshot = $this->references->snapshot(
+                    $anr,
+                    'vulnerability',
+                    (string) $data['vulnerabilityReferenceUuid']
                 );
+                if ($snapshot === null) {
+                    throw new ScenarioRiskScenarioException(
+                        'unavailable_reference',
+                        'The selected vulnerability is unavailable.'
+                    );
+                }
+                $data['vulnerabilityReferenceSnapshot'] = $snapshot;
             }
-            $data['vulnerabilityReferenceSnapshot'] = $snapshot;
         }
 
         return $this->riskScenarios->saveCause(
@@ -268,9 +288,9 @@ final class ScenarioRiskScenarioService
     }
 
     /** @return array<string, mixed> */
-    public function completeness(Anr $anr): array
+    public function completeness(Anr $anr, ?string $riskScenarioUuid = null): array
     {
-        return $this->riskScenarios->completeness((int) $anr->getId());
+        return $this->riskScenarios->completeness((int) $anr->getId(), $riskScenarioUuid);
     }
 
     /** @param array<string, mixed> $data */

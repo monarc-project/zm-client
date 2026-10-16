@@ -3,7 +3,6 @@
 namespace Monarc\FrontOffice\Scenario\Validator;
 
 use Laminas\Filter\StringTrim;
-use Laminas\Validator\Date;
 use Laminas\Validator\InArray;
 use Laminas\Validator\StringLength;
 use Monarc\Core\Validator\InputValidator\AbstractInputValidator;
@@ -12,7 +11,7 @@ final class ScenarioAnalysisUpdateValidator extends AbstractInputValidator
 {
     protected function getRules(): array
     {
-        return [
+        $rules = [
             [
                 'name' => 'lifecycle',
                 'required' => false,
@@ -25,17 +24,7 @@ final class ScenarioAnalysisUpdateValidator extends AbstractInputValidator
                 ]],
             ],
             [
-                'name' => 'nextReviewAt',
-                'required' => false,
-                'allow_empty' => true,
-                'filters' => [['name' => StringTrim::class]],
-                'validators' => [[
-                    'name' => Date::class,
-                    'options' => ['format' => \DateTimeInterface::ATOM],
-                ]],
-            ],
-            [
-                'name' => 'rationale',
+                'name' => 'justification',
                 'required' => false,
                 'allow_empty' => true,
                 'filters' => [['name' => StringTrim::class]],
@@ -45,5 +34,24 @@ final class ScenarioAnalysisUpdateValidator extends AbstractInputValidator
                 ]],
             ],
         ];
+
+        foreach ([
+            'riskAnalysisContext' => 65535,
+            'trendsSummary' => 65535,
+            'managementOrganisation' => 65535,
+        ] as $name => $max) {
+            $rules[] = [
+                'name' => $name,
+                'required' => false,
+                'allow_empty' => true,
+                'filters' => [['name' => StringTrim::class]],
+                'validators' => [[
+                    'name' => StringLength::class,
+                    'options' => ['max' => $max],
+                ]],
+            ];
+        }
+
+        return $rules;
     }
 }

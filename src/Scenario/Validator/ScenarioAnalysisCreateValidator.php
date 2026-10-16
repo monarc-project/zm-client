@@ -5,7 +5,6 @@ namespace Monarc\FrontOffice\Scenario\Validator;
 use Laminas\Filter\StringTrim;
 use Laminas\Filter\ToInt;
 use Laminas\Validator\Between;
-use Laminas\Validator\Date;
 use Laminas\Validator\Regex;
 use Laminas\Validator\StringLength;
 use Monarc\Core\Validator\InputValidator\AbstractInputValidator;
@@ -22,15 +21,6 @@ final class ScenarioAnalysisCreateValidator extends AbstractInputValidator
                 'validators' => [[
                     'name' => Regex::class,
                     'options' => ['pattern' => '/^[a-z]{2,3}(?:-[A-Z]{2})?$/'],
-                ]],
-            ],
-            [
-                'name' => 'nextReviewAt',
-                'required' => false,
-                'filters' => [['name' => StringTrim::class]],
-                'validators' => [[
-                    'name' => Date::class,
-                    'options' => ['format' => \DateTimeInterface::ATOM],
                 ]],
             ],
             [
