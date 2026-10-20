@@ -2,6 +2,7 @@
 
 namespace Monarc\FrontOffice\Command;
 
+use Monarc\Core\Scenario\Feature\ScenarioCapability;
 use Monarc\FrontOffice\Scenario\Service\ScenarioReviewService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -12,8 +13,10 @@ final class OpenScenarioDueReviewsCommand extends Command
 {
     protected static $defaultName = 'monarc:scenario-open-due-reviews';
 
-    public function __construct(private ScenarioReviewService $reviews)
-    {
+    public function __construct(
+        private ScenarioReviewService $reviews,
+        private ScenarioCapability $scenarioCapability
+    ) {
         parent::__construct();
     }
 
@@ -24,6 +27,12 @@ final class OpenScenarioDueReviewsCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        if (!$this->scenarioCapability->isEnabled()) {
+            $output->writeln('Scenario feature is disabled; review scheduler skipped.');
+
+            return Command::SUCCESS;
+        }
+
         $result = $this->reviews->openDueScheduledCases();
         if ($result['skipped']) {
             $output->writeln('Scenario review scheduler is already running.');

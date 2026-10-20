@@ -57,7 +57,6 @@ final class ScenarioReviewValidator
     {
         $common = ['idempotencyKey'];
         $data = match ($action) {
-            'start' => self::record($data, $common, $common),
             'assign' => self::record($data, [...$common, 'assignedReviewerId'], [...$common, 'assignedReviewerId']),
             'scope' => self::record($data, [...$common, 'analysisWide', 'riskScenarioUuids'], [
                 ...$common, 'analysisWide', 'riskScenarioUuids',

@@ -180,6 +180,7 @@ class Module
             'scenario_v1_anr_analysis',
             'scenario_v1_anr_method_context',
             'scenario_v1_anr_reviews',
+            'scenario_v1_anr_risk_register',
             'scenario_v1_anr_criteria_definition',
             'scenario_v1_anr_template',
             'scenario_v1_anr_risk_scenarios',

@@ -49,7 +49,7 @@ return [
     'router' => [
         'routes' => [
             'scenario_v1_health' => [
-                'type' => 'literal',
+                'type' => 'segment',
                 'options' => [
                     'route' => '/api/scenario/v1/health',
                     'defaults' => [
@@ -103,18 +103,34 @@ return [
             'scenario_v1_anr_reviews' => [
                 'type' => 'segment',
                 'options' => [
-                    'route' => '/api/scenario/v1/anrs/:anrid/reviews/:resource[/:id[/:action]]',
+                    'route' => '/api/scenario/v1/anrs/:anrid/reviews/:resource[/:id[/:operation]]',
                     'constraints' => [
                         'anrid' => '[0-9]+',
                         'resource' => 'schedule|cases|occurrences',
                         'id' => '[a-f0-9-]{36}',
-                        'action' => 'start|assign|scope|dispositions|complete|dismiss',
+                        'operation' => 'assign|scope|dispositions|complete|dismiss',
                     ],
                     'defaults' => [
                         'controller' => PipeSpec::class,
                         'middleware' => new PipeSpec(
                             AnrValidationMiddleware::class,
                             Scenario\Controller\ApiScenarioReviewController::class,
+                        ),
+                    ],
+                ],
+            ],
+            // A fixed register route must precede the generic risk-scenario
+            // route below so it cannot be interpreted as a scenario identifier.
+            'scenario_v1_anr_risk_register' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/risk-register',
+                    'constraints' => ['anrid' => '[0-9]+'],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioRiskRegisterController::class,
                         ),
                     ],
                 ],
@@ -1843,6 +1859,7 @@ return [
             Scenario\Controller\ApiScenarioMethodContextController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioCriteriaDefinitionController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioRiskScenarioController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioRiskRegisterController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioInterestedPartyReferenceController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioAssessmentController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioTreatmentController::class => AutowireFactory::class,
@@ -2031,6 +2048,7 @@ return [
             Scenario\Table\ScenarioAnalysisTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioCriteriaDefinitionTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioRiskScenarioTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioRiskRegisterTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioAssessmentTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioTreatmentTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioReviewTable::class => ClientEntityManagerFactory::class,
@@ -2158,6 +2176,7 @@ return [
             Scenario\Service\OperationalRiskCriteriaAdapter::class => AutowireFactory::class,
             Scenario\Service\ScenarioCriteriaDefinitionService::class => AutowireFactory::class,
             Scenario\Service\ScenarioRiskScenarioService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioRiskRegisterService::class => AutowireFactory::class,
             Scenario\Service\ScenarioTreatmentService::class => AutowireFactory::class,
             Scenario\Service\ScenarioReviewSchedule::class => AutowireFactory::class,
             Scenario\Service\ScenarioReviewService::class => AutowireFactory::class,
@@ -2469,6 +2488,7 @@ return [
         'scenario_v1_anr_analysis',
         'scenario_v1_anr_method_context',
         'scenario_v1_anr_reviews',
+        'scenario_v1_anr_risk_register',
         'scenario_v1_anr_criteria_definition',
         'scenario_v1_anr_template',
         'scenario_v1_anr_risk_scenarios',

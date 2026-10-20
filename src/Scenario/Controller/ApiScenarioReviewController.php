@@ -86,7 +86,10 @@ final class ApiScenarioReviewController extends AbstractRestfulControllerRequest
     {
         $this->capability->assertEnabled();
         $anr = $this->scenarioAnr();
-        $action = (string) $this->params()->fromRoute('action');
+        // "action" is reserved by Laminas' REST dispatcher. A route parameter
+        // with that name would make it try assignAction() before PATCH reaches
+        // this controller.
+        $action = (string) $this->params()->fromRoute('operation');
         $revision = $this->ifMatchRevision();
         if ($anr === null || $this->resource() !== 'cases' || !$this->isUuid((string) $id) || $revision === null) {
             return $this->invalidPayload();

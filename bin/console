@@ -1,7 +1,16 @@
 #!/usr/bin/env php
 <?php
 
-define('PROJECT_ROOT', __DIR__ . '/../../../../');
+// When invoked through Composer's generated bin proxy, use the proxy's
+// autoloader to retain the host application's root. This also supports local
+// path repositories, where __DIR__ resolves to the source checkout instead
+// of vendor/monarc/frontoffice.
+$autoloadPath = $GLOBALS['_composer_autoload_path'] ?? null;
+if (is_string($autoloadPath) && is_file($autoloadPath) && ($projectRoot = realpath(dirname($autoloadPath) . '/..'))) {
+    define('PROJECT_ROOT', rtrim($projectRoot, '/') . '/');
+} else {
+    define('PROJECT_ROOT', __DIR__ . '/../../../../');
+}
 
 require PROJECT_ROOT . 'vendor/autoload.php';
 

@@ -82,4 +82,11 @@ final class ScenarioReviewValidatorTest extends TestCase
 
         self::assertCount(2, $transition['dispositions']);
     }
+
+    public function testRejectsTheRemovedExplicitStartTransition(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        ScenarioReviewValidator::transition('start', ['idempotencyKey' => self::KEY]);
+    }
 }

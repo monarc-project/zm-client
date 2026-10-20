@@ -39,7 +39,8 @@ final class ScenarioReviewTable
             $now
         );
         $activeCases = $this->connection->fetchAllAssociative(
-            "SELECT uuid, reason, status, scope_type, scheduled_for, occurrence_context_at, revision, created_at "
+            'SELECT uuid, reason, status, scope_type, scheduled_for, occurrence_context_at, revision, '
+            . 'created_at, updated_at '
             . "FROM scenario_review_cases WHERE anr_id = ? AND status IN ('open', 'in_progress', 'awaiting_decision') "
             . 'ORDER BY created_at DESC, id DESC',
             [$anrId]
@@ -292,16 +293,14 @@ final class ScenarioReviewTable
             $historyReason = null;
             $historyScope = null;
             $evidenceIds = [];
-            if ($action === 'start') {
-                if ($prior !== 'open') {
-                    throw new \LogicException('Only an open review case can be started.');
-                }
-                $updates['status'] = 'in_progress';
-            } elseif ($action === 'assign') {
+            if ($action === 'assign') {
                 if (!in_array($prior, self::OPEN_STATUSES, true)) {
                     throw new \LogicException('Only an active review case can be assigned.');
                 }
-                $updates['assigned_reviewer_id'] = $data['assignedReviewerId'];
+                $updates = ['assigned_reviewer_id' => $data['assignedReviewerId']];
+                if ($prior === 'open') {
+                    $updates['status'] = 'in_progress';
+                }
                 $historyReason = 'Reviewer assignment updated.';
                 $evidenceIds = ['assignedReviewerId' => (int) $data['assignedReviewerId']];
             } elseif ($action === 'scope') {
@@ -310,6 +309,9 @@ final class ScenarioReviewTable
                 }
                 $riskScenarioUuids = $this->replaceScope($anrId, (int) $case['id'], $data);
                 $updates['scope_type'] = $data['analysisWide'] ? 'analysis_wide' : 'risk_scenarios';
+                if ($prior === 'open') {
+                    $updates['status'] = 'in_progress';
+                }
                 $historyScope = [
                     'scopeType' => $updates['scope_type'],
                     'riskScenarioUuids' => $riskScenarioUuids,
@@ -471,7 +473,7 @@ final class ScenarioReviewTable
             'anr_id' => $anrId,
             'scenario_analysis_id' => (int) $analysis['id'],
             'reason' => $data['reason'],
-            'status' => 'open',
+            'status' => $data['reason'] === 'manual' ? 'in_progress' : 'open',
             'scope_type' => $data['analysisWide'] ? 'analysis_wide' : 'risk_scenarios',
             'scheduled_for' => $projection['nextReviewAt'] === null
                 ? null
@@ -501,7 +503,7 @@ final class ScenarioReviewTable
             $actorId === 0 ? null : $actorId,
             'scenario_review_case_created',
             null,
-            'open',
+            $data['reason'] === 'manual' ? 'in_progress' : 'open',
             null,
             ['scopeType' => $data['analysisWide'] ? 'analysis_wide' : 'risk_scenarios'],
             ['riskScenarioUuids' => array_column($scopeRows, 'uuid')],
@@ -939,7 +941,7 @@ final class ScenarioReviewTable
             [$caseId]
         );
 
-        return array_map(static fn (array $row): array => [
+        return array_map(fn (array $row): array => [
             'uuid' => $row['uuid'],
             'action' => $row['action'],
             'actorId' => $row['actor_id'] === null ? null : (int) $row['actor_id'],

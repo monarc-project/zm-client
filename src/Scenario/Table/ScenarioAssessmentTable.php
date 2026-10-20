@@ -582,7 +582,7 @@ final class ScenarioAssessmentTable
             'revision' => (int) $row['revision'],
             'version' => (int) $row['version'],
             'payload' => $payload,
-            'createdAt' => (string) $row['created_at'],
+            'createdAt' => $this->apiDate((string) $row['created_at']),
         ];
     }
 
@@ -613,7 +613,7 @@ final class ScenarioAssessmentTable
             'legacyComparison' => $row['legacy_comparison_snapshot'] === null
                 ? null
                 : json_decode((string) $row['legacy_comparison_snapshot'], true, 512, JSON_THROW_ON_ERROR),
-            'createdAt' => (string) $row['created_at'],
+            'createdAt' => $this->apiDate((string) $row['created_at']),
             'performedBy' => [
                 'name' => trim((string) ($row['actor_firstname'] ?? '') . ' ' . (string) ($row['actor_lastname'] ?? ''))
                     ?: ((isset($row['actor_email']) && $row['actor_email'] !== null)
@@ -677,8 +677,13 @@ final class ScenarioAssessmentTable
                 512,
                 JSON_THROW_ON_ERROR
             ),
-            'createdAt' => (string) $row['created_at'],
+            'createdAt' => $this->apiDate((string) $row['created_at']),
         ];
+    }
+
+    private function apiDate(string $value): string
+    {
+        return (new \DateTimeImmutable($value, new \DateTimeZone('UTC')))->format('Y-m-d\\TH:i:s\\Z');
     }
 
     private function camel(string $field): string
