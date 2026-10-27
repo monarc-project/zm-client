@@ -53,6 +53,28 @@ final class ScenarioAnalysisTable
     }
 
     /** @param array<string, mixed> $patch */
+    public function auditTemplateEventEvaluation(
+        int $anrId,
+        int $actorId,
+        string $correlationId,
+        string $targetUuid,
+        array $patch
+    ): void {
+        $this->audit($anrId, $actorId, $correlationId, $targetUuid, 'template_event_evaluation_updated', $patch);
+    }
+
+    /** @param array<string, mixed> $patch */
+    public function auditTemplateModelRiskScenarioCreation(
+        int $anrId,
+        int $actorId,
+        string $correlationId,
+        string $targetUuid,
+        array $patch
+    ): void {
+        $this->audit($anrId, $actorId, $correlationId, $targetUuid, 'template_model_risk_scenario_created', $patch);
+    }
+
+    /** @param array<string, mixed> $patch */
     public function auditMethodContext(
         int $anrId,
         int $actorId,

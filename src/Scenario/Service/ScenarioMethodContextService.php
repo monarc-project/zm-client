@@ -61,6 +61,35 @@ final class ScenarioMethodContextService
         throw new \InvalidArgumentException('The trend question was not found.');
     }
 
+    /** @param array<string, mixed> $data @return array<string, mixed> */
+    public function createTrendQuestion(Anr $anr, array $data, string $correlationId): array
+    {
+        if (array_keys($data) !== ['label'] || !is_string($data['label'])) {
+            throw new \InvalidArgumentException('The trend question is invalid.');
+        }
+
+        $label = trim($data['label']);
+        if ($label === '' || mb_strlen($label) > 255) {
+            throw new \InvalidArgumentException('The trend question is invalid.');
+        }
+
+        $question = (new Question())
+            ->setAnr($anr)
+            // A local Scenario question belongs to one analysis. Keep its text
+            // readable if the analysis language is later changed in legacy MONARC.
+            ->setLabels(['label1' => $label, 'label2' => $label, 'label3' => $label, 'label4' => $label])
+            ->setType(1)
+            ->setIsMultiChoice(false)
+            ->setResponse('')
+            ->setMode(0)
+            ->setPosition($this->questionTable->findMaxPositionByAnr($anr) + 1)
+            ->setCreator($this->currentUserEmail());
+        $this->questionTable->saveEntity($question);
+        $this->audit($anr, $correlationId, 'analysis_context_trend_question_created', ['questionId' => $question->getId()]);
+
+        return $this->questionData($question, $anr);
+    }
+
     /** @return array<string, mixed> */
     public function reassessmentStrategy(Anr $anr): array
     {

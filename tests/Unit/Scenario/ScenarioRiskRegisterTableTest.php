@@ -57,6 +57,7 @@ final class ScenarioRiskRegisterTableTest extends TestCase
             'band_medium' => 0,
             'band_high' => 1,
             'band_critical' => 0,
+            'no_current_assessment' => 0,
         ]);
         $entityManager = $this->createMock(EntityManager::class);
         $entityManager->method('getConnection')->willReturn($connection);
@@ -70,7 +71,19 @@ final class ScenarioRiskRegisterTableTest extends TestCase
         self::assertSame('active', $page['items'][0]['review']['state']);
         self::assertTrue($page['items'][0]['review']['triggerOccurred']);
         self::assertSame('decision_required', $page['items'][0]['acceptance']['state']);
-        self::assertSame(1, $page['summary']['bandHigh']);
+        self::assertSame([
+            'total' => 1,
+            'treatmentActionRequired' => 1,
+            'activeReview' => 1,
+            'dueReview' => 0,
+            'overdueReview' => 0,
+            'decisionRequired' => 1,
+            'bandLow' => 0,
+            'bandMedium' => 0,
+            'bandHigh' => 1,
+            'bandCritical' => 0,
+            'noCurrentAssessment' => 0,
+        ], $page['summary']);
     }
 
     public function testProjectionUsesLatestEvidenceAndDoesNotMultiplyHistoricalReviewScopes(): void

@@ -78,6 +78,7 @@ class AnrService
         private CoreTable\ScaleTable $coreScaleTable,
         private CoreTable\AmvTable $coreAmvTable,
         private CoreTable\AssetTable $coreAssetTable,
+        private CoreTable\MonarcObjectTable $coreMonarcObjectTable,
         private CoreTable\ThreatTable $coreThreatTable,
         private CoreTable\VulnerabilityTable $coreVulnerabilityTable,
         private CoreTable\RiskSourceTable $coreRiskSourceTable,
@@ -202,7 +203,8 @@ class AnrService
     }
 
     /**
-     * Creates an analysis with no model data or knowledge-base elements.
+     * Creates an analysis with no model-specific data. Scenario analyses also
+     * receive a local copy of the common generic knowledge base.
      */
     public function createEmpty(array $data): Entity\Anr
     {
@@ -233,6 +235,9 @@ class AnrService
         $this->setCurrentAnrToConnectedUser($anr);
         $this->anrTable->save($anr);
         $this->copyBlankModelScales($anr);
+        if ($anr->getAnalysisType() === Entity\Anr::ANALYSIS_TYPE_SCENARIO) {
+            $this->copyGenericScenarioKnowledgeBase($anr);
+        }
 
         return $anr;
     }
@@ -253,6 +258,39 @@ class AnrService
         $this->duplicateScales($blankModelAnr, $anr, true);
         $this->duplicateOperationalRiskScales($blankModelAnr, $anr, true);
         $this->duplicateSoasAndSoaScaleComments($blankModelAnr, $anr, [], true);
+        $this->anrTable->flush();
+    }
+
+    /**
+     * A Scenario analysis starts with the reusable common knowledge base, not
+     * with legacy risks, instances, or operational-risk tags. The copied
+     * records become local to the analysis and remain editable there.
+     */
+    private function copyGenericScenarioKnowledgeBase(Entity\Anr $anr): void
+    {
+        /** @var CoreEntity\Model $blankModel */
+        $blankModel = $this->modelTable->findById(self::BLANK_MODEL_ID);
+        $blankModelAnr = $blankModel->getAnr();
+        if ($blankModelAnr === null) {
+            throw new \LogicException('The BlankModel does not have an analysis.');
+        }
+
+        $assets = $this->duplicateAssets($blankModelAnr, $anr, true);
+        $this->duplicateThreats($blankModelAnr, $anr, true);
+        $this->duplicateVulnerabilities($blankModelAnr, $anr, true);
+        $this->duplicateGenericObjectsAndCategories($anr, $assets);
+        $this->duplicateRiskSources($blankModelAnr, $anr, true);
+        $this->duplicateQuestions($blankModelAnr, $anr, true);
+
+        $this->updateReferentialsFromSource(
+            $anr,
+            null,
+            array_map(
+                static fn (CoreEntity\Referential $referential): string => $referential->getUuid(),
+                $this->coreReferentialTable->findAll()
+            ),
+            false
+        );
         $this->anrTable->flush();
     }
 
@@ -1543,6 +1581,71 @@ class AnrService
         }
 
         return $monarcObjectsUuidsToNewObjects;
+    }
+
+    /**
+     * Copies the common Asset library entries that are explicitly generic.
+     * Specific model objects, composition outside the generic library, and
+     * ROLF tags are intentionally excluded from a Scenario baseline.
+     *
+     * @param array<string, Entity\Asset> $assetsByUuid
+     */
+    private function duplicateGenericObjectsAndCategories(Entity\Anr $anr, array $assetsByUuid): void
+    {
+        $categoriesBySourceId = [];
+        $objectsByUuid = [];
+        $sourceObjects = $this->coreMonarcObjectTable->findByMode(CoreEntity\ObjectSuperClass::MODE_GENERIC);
+
+        foreach ($sourceObjects as $sourceObject) {
+            $sourceAssetUuid = $sourceObject->getAsset()->getUuid();
+            if (!isset($assetsByUuid[$sourceAssetUuid])) {
+                continue;
+            }
+
+            $category = null;
+            if ($sourceObject->getCategory() !== null) {
+                $sourceCategory = $sourceObject->getCategory();
+                if (!isset($categoriesBySourceId[$sourceCategory->getId()])) {
+                    $categoriesBySourceId = $this->duplicateObjectCategoryAndItsParents(
+                        $anr,
+                        $sourceCategory,
+                        $categoriesBySourceId
+                    );
+                }
+                $category = $categoriesBySourceId[$sourceCategory->getId()];
+            }
+
+            $objectsByUuid[$sourceObject->getUuid()] = $this->anrObjectService->createMonarcObject(
+                $anr,
+                $assetsByUuid[$sourceAssetUuid],
+                $category,
+                null,
+                array_merge([
+                    'uuid' => $sourceObject->getUuid(),
+                    'scope' => $sourceObject->getScope(),
+                    'setOnlyExactPosition' => true,
+                ], $sourceObject->getLabels(), $sourceObject->getNames()),
+                false
+            );
+        }
+
+        foreach ($sourceObjects as $sourceObject) {
+            if (!isset($objectsByUuid[$sourceObject->getUuid()])) {
+                continue;
+            }
+            foreach ($sourceObject->getChildrenLinks() as $sourceLink) {
+                $childUuid = $sourceLink->getChild()->getUuid();
+                if (!isset($objectsByUuid[$childUuid])) {
+                    continue;
+                }
+                $this->objectObjectTable->save((new Entity\ObjectObject())
+                    ->setAnr($anr)
+                    ->setParent($objectsByUuid[$sourceObject->getUuid()])
+                    ->setChild($objectsByUuid[$childUuid])
+                    ->setPosition($sourceLink->getPosition())
+                    ->setCreator($this->connectedUser->getEmail()), false);
+            }
+        }
     }
 
     private function duplicateObjectsCompositions(

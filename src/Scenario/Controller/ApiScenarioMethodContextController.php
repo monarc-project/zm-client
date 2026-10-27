@@ -48,16 +48,19 @@ final class ApiScenarioMethodContextController extends AbstractRestfulController
     public function create($data)
     {
         $anr = $this->scenarioAnr();
-        if ($anr === null || $this->resource() !== 'reassessment-triggers') {
+        if ($anr === null) {
             return $this->notFound();
         }
-        $this->validatePostParams($this->postReassessmentTriggerValidator, $data);
 
-        return $this->getSuccessfulJsonResponse($this->methodContextService->createReassessmentTrigger(
-            $anr,
-            $this->postReassessmentTriggerValidator->getValidData(),
-            $this->correlationId()
-        ));
+        try {
+            return match ($this->resource()) {
+                'trends' => $this->createTrendQuestion($anr, $data),
+                'reassessment-triggers' => $this->createReassessmentTrigger($anr, $data),
+                default => $this->notFound(),
+            };
+        } catch (\InvalidArgumentException $exception) {
+            return $this->invalid($exception->getMessage());
+        }
     }
 
     public function patch($id, $data)
@@ -117,6 +120,30 @@ final class ApiScenarioMethodContextController extends AbstractRestfulController
             $anr,
             (int) $id,
             $data['response'],
+            $this->correlationId()
+        ));
+    }
+
+    private function createTrendQuestion(Anr $anr, mixed $data): JsonResponse
+    {
+        if (!is_array($data)) {
+            return $this->invalid('The trend question is invalid.');
+        }
+
+        return $this->getSuccessfulJsonResponse($this->methodContextService->createTrendQuestion(
+            $anr,
+            $data,
+            $this->correlationId()
+        ));
+    }
+
+    private function createReassessmentTrigger(Anr $anr, mixed $data): JsonResponse
+    {
+        $this->validatePostParams($this->postReassessmentTriggerValidator, $data);
+
+        return $this->getSuccessfulJsonResponse($this->methodContextService->createReassessmentTrigger(
+            $anr,
+            $this->postReassessmentTriggerValidator->getValidData(),
             $this->correlationId()
         ));
     }

@@ -349,6 +349,39 @@ return [
                     ],
                 ],
             ],
+            // This fixed child precedes the generic template route so it is
+            // never interpreted as a browser-supplied template record ID.
+            'scenario_v1_anr_template_event_evaluations' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/template/event-evaluations[/:id]',
+                    'constraints' => ['anrid' => '[0-9]+', 'id' => '[a-f0-9-]{36}'],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioTemplateEventEvaluationController::class,
+                        ),
+                    ],
+                ],
+            ],
+            // Fixed before the generic template route: browser input can only
+            // identify immutable snapshot records, never an arbitrary catalog
+            // version or a generic template child.
+            'scenario_v1_anr_template_risk_scenarios' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/template/risk-scenarios',
+                    'constraints' => ['anrid' => '[0-9]+'],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioTemplateModelRiskScenarioController::class,
+                        ),
+                    ],
+                ],
+            ],
             'scenario_v1_anr_template' => [
                 'type' => 'segment',
                 'options' => [
@@ -1866,6 +1899,8 @@ return [
             Scenario\Controller\ApiScenarioReviewController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioDecisionAuthorityController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioRiskScenarioReferenceController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioTemplateEventEvaluationController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioTemplateModelRiskScenarioController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioPublishedTemplateController::class => AutowireFactory::class,
             Controller\ApiGuidesController::class => AutowireFactory::class,
             Controller\ApiGuidesItemsController::class => AutowireFactory::class,
@@ -2055,6 +2090,8 @@ return [
             Scenario\Table\ScenarioInterestedPartyReferenceTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioReferenceTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioTemplateSnapshotTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioTemplateEventEvaluationTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioTemplateModelRiskScenarioDerivationTable::class => ClientEntityManagerFactory::class,
 
             // TODO: the goal is to remove all of the mapping and create new entity in the code.
             Entity\Interview::class => ModelFactory\InterviewServiceModelEntity::class,
@@ -2196,6 +2233,8 @@ return [
             Scenario\Service\ScenarioDelegatedAuthenticationService::class => AutowireFactory::class,
             Scenario\Service\ScenarioPublishedTemplateService::class => AutowireFactory::class,
             Scenario\Service\ScenarioTemplateInstantiationService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioTemplateEventEvaluationService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioTemplateModelRiskScenarioCreationService::class => AutowireFactory::class,
 
             // Helpers
             Import\Helper\ImportCacheHelper::class => AutowireFactory::class,
@@ -2239,6 +2278,8 @@ return [
             Scenario\Validator\ScenarioInterestedPartyReferenceValidator::class => ReflectionBasedAbstractFactory::class,
             Scenario\Validator\ScenarioTemplateInstantiationValidator::class => ReflectionBasedAbstractFactory::class,
             Scenario\Validator\ScenarioTemplateOverrideValidator::class => ReflectionBasedAbstractFactory::class,
+            Scenario\Validator\ScenarioTemplateEventEvaluationValidator::class => ReflectionBasedAbstractFactory::class,
+            Scenario\Validator\ScenarioTemplateModelRiskScenarioCreationValidator::class => AutowireFactory::class,
             Scenario\Validator\ScenarioDecisionAuthorityWriteValidator::class => static function (
                 ContainerInterface $container
             ) {
@@ -2490,6 +2531,8 @@ return [
         'scenario_v1_anr_reviews',
         'scenario_v1_anr_risk_register',
         'scenario_v1_anr_criteria_definition',
+        'scenario_v1_anr_template_event_evaluations',
+        'scenario_v1_anr_template_risk_scenarios',
         'scenario_v1_anr_template',
         'scenario_v1_anr_risk_scenarios',
         'scenario_v1_anr_interested_party_references',
@@ -2523,6 +2566,7 @@ return [
         // Super Admin : Management of users (and guides, models, referentials, etc.)
         Entity\UserRole::SUPER_ADMIN_FO => [
             'scenario_v1_anr_analysis',
+            'scenario_v1_anr_template_event_evaluations',
             'scenario_v1_anr_template',
             'scenario_v1_frontoffice_templates',
             'monarc_api_doc_models',
@@ -2559,6 +2603,7 @@ return [
         // User : RWD access per analysis
         Entity\UserRole::USER_FO => [
             'scenario_v1_anr_analysis',
+            'scenario_v1_anr_template_event_evaluations',
             'scenario_v1_anr_template',
             'scenario_v1_frontoffice_templates',
             'monarc_api_doc_models',

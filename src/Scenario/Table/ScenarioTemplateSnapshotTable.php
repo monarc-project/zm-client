@@ -197,6 +197,7 @@ final class ScenarioTemplateSnapshotTable
                 'sourceVersion' => $record['source_version'] === null
                     ? null
                     : (int) $record['source_version'],
+                'revision' => (int) $record['revision'],
                 'content' => json_decode($record['content_json'], true, 512, JSON_THROW_ON_ERROR),
                 'localOverrides' => $local[$record['uuid']] ?? [],
             ], $records),
@@ -225,6 +226,31 @@ final class ScenarioTemplateSnapshotTable
                 (int) $event['position'],
                 $event
             );
+        }
+        foreach ($payload['risk_scenario_models'] ?? [] as $model) {
+            $this->insertRecord(
+                $anrId,
+                $snapshotId,
+                'template-risk-scenario-model',
+                $model['stable_uuid'],
+                (int) $payload['version'],
+                (int) $model['position'],
+                $model
+            );
+            foreach ($model['events'] as $event) {
+                $event['modelStableUuid'] = $model['stable_uuid'];
+                $event['modelTitle'] = $model['title'];
+                $event['modelDescription'] = $model['description'];
+                $this->insertRecord(
+                    $anrId,
+                    $snapshotId,
+                    'template-model-event',
+                    $event['stable_uuid'],
+                    (int) $event['event_version'],
+                    (int) $event['position'],
+                    $event
+                );
+            }
         }
         foreach ($payload['suggestions'] as $position => $suggestion) {
             $this->insertRecord($anrId, $snapshotId, 'suggestion', null, null, $position + 1, $suggestion);

@@ -80,7 +80,8 @@ final class ScenarioRiskRegisterTable
             . "COALESCE(SUM(current_band = 'low'), 0) AS band_low, "
             . "COALESCE(SUM(current_band = 'medium'), 0) AS band_medium, "
             . "COALESCE(SUM(current_band = 'high'), 0) AS band_high, "
-            . "COALESCE(SUM(current_band = 'critical'), 0) AS band_critical "
+            . "COALESCE(SUM(current_band = 'critical'), 0) AS band_critical, "
+            . 'COALESCE(SUM(current_band IS NULL), 0) AS no_current_assessment '
             . 'FROM (' . $this->projection() . ') register_row WHERE ' . $where,
             $params
         );
@@ -96,6 +97,7 @@ final class ScenarioRiskRegisterTable
             'bandMedium' => (int) ($row['band_medium'] ?? 0),
             'bandHigh' => (int) ($row['band_high'] ?? 0),
             'bandCritical' => (int) ($row['band_critical'] ?? 0),
+            'noCurrentAssessment' => (int) ($row['no_current_assessment'] ?? 0),
         ];
     }
 

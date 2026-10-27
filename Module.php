@@ -182,6 +182,8 @@ class Module
             'scenario_v1_anr_reviews',
             'scenario_v1_anr_risk_register',
             'scenario_v1_anr_criteria_definition',
+            'scenario_v1_anr_template_event_evaluations',
+            'scenario_v1_anr_template_risk_scenarios',
             'scenario_v1_anr_template',
             'scenario_v1_anr_risk_scenarios',
             'scenario_v1_anr_interested_party_references',

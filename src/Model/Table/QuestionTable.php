@@ -37,6 +37,17 @@ class QuestionTable extends AbstractEntityTable
             ->getResult();
     }
 
+    public function findMaxPositionByAnr(Anr $anr): int
+    {
+        return (int) $this->getRepository()
+            ->createQueryBuilder('question')
+            ->select('COALESCE(MAX(question.position), 0)')
+            ->where('question.anr = :anr')
+            ->setParameter('anr', $anr)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function saveEntity(Question $question, bool $flushAll = true): void
     {
         $em = $this->getDb()->getEntityManager();

@@ -18,7 +18,9 @@ use Monarc\FrontOffice\Import\Command\ImportAnalysesCommand;
 use Monarc\FrontOffice\Stats\Command\CollectStatsCommand;
 use Monarc\FrontOffice\Command\CreateUsersCommand;
 use Monarc\FrontOffice\Command\FixRecommendationsPosition;
+use Monarc\FrontOffice\Command\GenerateDoctrineProxiesCommand;
 use Monarc\FrontOffice\Command\OpenScenarioDueReviewsCommand;
+use Monarc\Core\Service\DoctrineProxyGenerator;
 use Symfony\Component\Console\Application as ConsoleApp;
 use Laminas\Mvc\Application as LaminasApp;
 
@@ -29,6 +31,10 @@ $consoleApp = new ConsoleApp();
 
 $consoleApp->add($laminasApp->getServiceManager()->get(CreateUsersCommand::class));
 $consoleApp->add($laminasApp->getServiceManager()->get(FixRecommendationsPosition::class));
+$consoleApp->add(new GenerateDoctrineProxiesCommand(
+    $laminasApp->getServiceManager()->get('doctrine.entitymanager.orm_default'),
+    new DoctrineProxyGenerator()
+));
 $consoleApp->add($laminasApp->getServiceManager()->get(OpenScenarioDueReviewsCommand::class));
 $consoleApp->add($laminasApp->getServiceManager()->get(CollectStatsCommand::class));
 $consoleApp->add($laminasApp->getServiceManager()->get(ImportAnalysesCommand::class));
