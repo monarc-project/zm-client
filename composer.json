@@ -41,23 +41,22 @@
         }
     ],
     "require": {
-        "php": "^8.0",
+        "php": ">=8.4.27 <8.5.0",
         "ext-intl": "*",
         "ext-imagick": "*",
         "ext-json": "*",
         "ext-bcmath": "*",
         "ext-openssl": "*",
         "ext-posix": "*",
-        "doctrine/doctrine-orm-module": "^5.1",
-        "monarc/core": "^2.13.1",
+        "doctrine/doctrine-orm-module": "^6.3",
+        "monarc/core": "^2.15@dev",
         "robmorgan/phinx": "^0.13.4",
         "laminas/laminas-di": "^3.1",
         "laminas/laminas-mvc": "^3.1",
         "laminas/laminas-permissions-rbac": "^3.0",
         "laminas/laminas-filter": "^2.9",
         "laminas/laminas-inputfilter": "^2.10",
-        "laminas/laminas-dependency-plugin": "^2.0",
-        "symfony/console": "^5.0",
+        "symfony/console": "^6.4",
         "guzzlehttp/guzzle": "^7.11",
         "phpoffice/phpword": "^0.18.1",
         "laminas/laminas-mvc-middleware": "^2.2",
@@ -72,6 +71,11 @@
             "Monarc\\FrontOffice\\": "src/"
         }
     },
+    "extra": {
+        "branch-alias": {
+            "dev-feature/php84": "2.15.x-dev"
+        }
+    },
     "scripts": {
         "phpcs": "phpcs --standard=PSR2 src/"
     },
@@ -79,9 +83,11 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "config": {
+        "platform": {
+            "php": "8.4.27"
+        },
         "allow-plugins": {
-            "ocramius/package-versions": true,
-            "laminas/laminas-dependency-plugin": true
+            "ocramius/package-versions": true
         }
     }
 }

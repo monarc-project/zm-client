@@ -450,7 +450,7 @@ class AnrInstanceRiskOpService
         }
     }
 
-    public function getOperationalRisksInCsv(Entity\Anr $anr, int $instanceId = null, array $params = []): string
+    public function getOperationalRisksInCsv(Entity\Anr $anr, ?int $instanceId = null, array $params = []): string
     {
         $instancesIds = [];
         if ($instanceId !== null) {

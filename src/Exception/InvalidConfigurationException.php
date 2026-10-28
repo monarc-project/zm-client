@@ -7,7 +7,7 @@ use Throwable;
 
 class InvalidConfigurationException extends Exception
 {
-    public function __construct(array $missedConfigurationOptions, $code = 0, Throwable $previous = null)
+    public function __construct(array $missedConfigurationOptions, $code = 0, ?Throwable $previous = null)
     {
         parent::__construct(sprintf(
             'The following configuration options are missed in the config: "%s"',

@@ -31,7 +31,7 @@ class StatsApiProvider
     /**
      * @throws InvalidConfigurationException
      */
-    public function __construct(array $config, callable $handler = null)
+    public function __construct(array $config, ?callable $handler = null)
     {
         if ($handler === null) {
             $this->validateConfig($config);
