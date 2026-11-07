@@ -58,7 +58,7 @@
         "laminas/laminas-inputfilter": "^2.10",
         "symfony/console": "^6.4",
         "guzzlehttp/guzzle": "^7.11",
-        "phpoffice/phpword": "^0.18.1",
+        "phpoffice/phpword": "^1.4",
         "laminas/laminas-mvc-middleware": "^2.2",
         "laminas/laminas-captcha": "^2.18",
         "guzzlehttp/psr7": "^2.11"

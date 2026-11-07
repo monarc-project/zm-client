@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -593,22 +593,6 @@ return [
                                 'middleware' => new PipeSpec(
                                     AnrValidationMiddleware::class,
                                     Controller\ApiAnrQuestionsController::class,
-                                ),
-                            ],
-                        ],
-                    ],
-                    'questions_choices' => [
-                        'type' => 'segment',
-                        'options' => [
-                            'route' => 'questions-choices[/:id]',
-                            'constraints' => [
-                                'id' => '[0-9]+',
-                            ],
-                            'defaults' => [
-                                'controller' => PipeSpec::class,
-                                'middleware' => new PipeSpec(
-                                    AnrValidationMiddleware::class,
-                                    Controller\ApiAnrQuestionsChoicesController::class,
                                 ),
                             ],
                         ],
@@ -1496,7 +1480,6 @@ return [
             Controller\ApiAnrMeasuresController::class => AutowireFactory::class,
             Controller\ApiAnrMeasuresLinksController::class => AutowireFactory::class,
             Controller\ApiAnrQuestionsController::class => AutowireFactory::class,
-            Controller\ApiAnrQuestionsChoicesController::class => AutowireFactory::class,
             Controller\ApiAnrRolfTagsController::class => AutowireFactory::class,
             Controller\ApiAnrRolfRisksController::class => AutowireFactory::class,
             Controller\ApiAnrInterviewsController::class => AutowireFactory::class,
@@ -1615,8 +1598,8 @@ return [
             DeprecatedTable\RecordProcessorTable::class => AutowireFactory::class,
             DeprecatedTable\RecordRecipientTable::class => AutowireFactory::class,
             DeprecatedTable\RecordTable::class => AutowireFactory::class,
-            DeprecatedTable\QuestionTable::class => AutowireFactory::class,
-            DeprecatedTable\QuestionChoiceTable::class => AutowireFactory::class,
+            Table\QuestionTable::class => ClientEntityManagerFactory::class,
+            Table\QuestionChoiceTable::class => ClientEntityManagerFactory::class,
             Table\ActionHistoryTable::class => ClientEntityManagerFactory::class,
             Table\AnrHistoryTable::class => ClientEntityManagerFactory::class,
             Table\AnrTable::class => ClientEntityManagerFactory::class,
@@ -1676,8 +1659,6 @@ return [
             Entity\RecordProcessor::class => ModelFactory\RecordProcessorServiceModelEntity::class,
             Entity\RecordRecipient::class => ModelFactory\RecordRecipientServiceModelEntity::class,
             Entity\Record::class => ModelFactory\RecordServiceModelEntity::class,
-            Entity\Question::class => ModelFactory\QuestionServiceModelEntity::class,
-            Entity\QuestionChoice::class => ModelFactory\QuestionChoiceServiceModelEntity::class,
 
             // TODO: replace to autowiring.
             Service\AnrInterviewService::class => Service\AnrInterviewServiceFactory::class,
@@ -1689,8 +1670,9 @@ return [
             Service\AnrRecordProcessorService::class => Service\AnrRecordProcessorServiceFactory::class,
             Service\AnrRecordRecipientService::class => Service\AnrRecordRecipientServiceFactory::class,
             Service\AnrRecordService::class => Service\AnrRecordServiceFactory::class,
-            Service\AnrQuestionService::class => Service\AnrQuestionServiceFactory::class,
-            Service\AnrQuestionChoiceService::class => Service\AnrQuestionChoiceServiceFactory::class,
+            
+            Service\QuestionSnapshotService::class => AutowireFactory::class,
+            Service\AnrQuestionService::class => AutowireFactory::class,
             Service\AnrMeasureService::class => AutowireFactory::class,
             Service\AnrMeasureLinkService::class => AutowireFactory::class,
             Service\AnrReferentialService::class => AutowireFactory::class,
@@ -1782,6 +1764,7 @@ return [
             Stats\Provider\StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
 
             // Validators
+            InputValidator\Question\QuestionDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\User\PostUserDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             Stats\Validator\GetStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
             Stats\Validator\GetProcessedStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
@@ -1982,19 +1965,15 @@ return [
 
     'doctrine' => [
         'driver' => [
-            'Monarc_cli_driver' => [
+            'Monarc_frontoffice_driver' => [
                 'class' => AnnotationDriver::class,
                 'cache' => 'array',
-                'paths' => [
-                    __DIR__ . '/../src/Model/Entity',
-                    __DIR__ . '/../../core/src/Model/Entity',
-                    __DIR__ . '/../../frontoffice/src/Model/Entity',
-                ],
+                'paths' => [__DIR__ . '/../src/Entity'],
             ],
             'orm_cli' => [
                 'class' => MappingDriverChain::class,
                 'drivers' => [
-                    'Monarc\FrontOffice\Entity' => 'Monarc_cli_driver',
+                    'Monarc\FrontOffice\Entity' => 'Monarc_frontoffice_driver',
                 ],
             ],
         ],
@@ -2071,7 +2050,6 @@ return [
             'monarc_api_guides',
             'monarc_api_guides_items',
             'monarc_api_global_client_anr/questions',
-            'monarc_api_global_client_anr/questions_choices',
             'monarc_api_global_client_anr/soa',
             'monarc_api_global_client_anr/soa_scale_comment',
             'monarc_api_global_client_anr/soacategory',

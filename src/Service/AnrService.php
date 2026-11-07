@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -58,8 +58,7 @@ class AnrService
         private Table\RolfRiskTable $rolfRiskTable,
         private Table\RolfTagTable $rolfTagTable,
         private Table\SoaTable $soaTable,
-        private DeprecatedTable\QuestionTable $questionTable,
-        private DeprecatedTable\QuestionChoiceTable $questionChoiceTable,
+        private Table\QuestionTable $questionTable,
         private DeprecatedTable\InterviewTable $interviewTable,
         private DeprecatedTable\RecordActorTable $recordActorTable,
         private DeprecatedTable\RecordDataCategoryTable $recordDataCategoryTable,
@@ -81,8 +80,8 @@ class AnrService
         private CoreTable\ReferentialTable $coreReferentialTable,
         private CoreTable\RolfRiskTable $coreRolfRiskTable,
         private CoreTable\RolfTagTable $coreRolfTagTable,
-        private CoreDeprecatedTable\QuestionTable $coreQuestionTable,
-        private CoreDeprecatedTable\QuestionChoiceTable $coreQuestionChoiceTable,
+        private CoreTable\QuestionTable $coreQuestionTable,
+        private QuestionSnapshotService $questionSnapshotService,
         private AnrModelService $anrModelService,
         private AnrAmvService $anrAmvService,
         private AnrAssetService $anrAssetService,
@@ -361,7 +360,7 @@ class AnrService
         );
 
         /* Recreate questions & choices. */
-        $this->duplicateQuestions($sourceAnr, $newAnr, $isSourceCommon);
+        $questionCopies = $this->duplicateQuestions($sourceAnr, $newAnr, $isSourceCommon);
 
         if (!$isSourceCommon) {
             /* Recreate interviews. */
@@ -376,6 +375,7 @@ class AnrService
         }
 
         $this->anrTable->save($newAnr);
+        $this->questionSnapshotService->completeCopy($questionCopies);
 
         return $newAnr;
     }
@@ -1902,30 +1902,12 @@ class AnrService
         CoreEntity\AnrSuperClass $sourceAnr,
         Entity\Anr $newAnr,
         bool $isSourceCommon
-    ): void {
+    ): array {
         /** @var CoreEntity\QuestionSuperClass[] $questions */
         $questions = $isSourceCommon
-            ? $this->coreQuestionTable->fetchAllObject()
-            : $this->questionTable->findByAnr($sourceAnr);
-        $questionsNewIds = [];
-        foreach ($questions as $q) {
-            $newQuestion = new Entity\Question($q);
-            $newQuestion->setId(null);
-            $newQuestion->setAnr($newAnr);
-            $this->questionTable->save($newQuestion, false);
-            $questionsNewIds[$q->getId()] = $newQuestion;
-        }
-        /** @var CoreEntity\QuestionChoiceSuperClass[] $questionChoices */
-        $questionChoices = $isSourceCommon
-            ? $this->coreQuestionChoiceTable->fetchAllObject()
-            : $this->questionChoiceTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
-        foreach ($questionChoices as $qc) {
-            $newQuestionChoice = new Entity\QuestionChoice($qc);
-            $newQuestionChoice->setId(null);
-            $newQuestionChoice->setAnr($newAnr);
-            $newQuestionChoice->setQuestion($questionsNewIds[$qc->getQuestion()->getId()]);
-            $this->questionChoiceTable->save($newQuestionChoice, false);
-        }
+            ? $this->coreQuestionTable->findAll()
+            : $this->questionTable->findOrderedQuestions($sourceAnr);
+        return $this->questionSnapshotService->copy($questions, $newAnr);
     }
 
     private function duplicateInterviews(Entity\Anr $sourceAnr, Entity\Anr $newAnr): void

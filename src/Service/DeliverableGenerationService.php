@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -174,7 +174,6 @@ class DeliverableGenerationService
         private DeliveriesModelsTable $deliveriesModelsTable,
         private OperationalRiskScaleService $operationalRiskScaleService,
         private AnrQuestionService $anrQuestionService,
-        private AnrQuestionChoiceService $anrQuestionChoiceService,
         private AnrInterviewService $interviewService,
         private AnrCartoRiskService $cartoRiskService,
         private AnrInstanceRiskOpService $anrInstanceRiskOpService,
@@ -1222,8 +1221,8 @@ class DeliverableGenerationService
      */
     private function generateTrendAssessmentTable(): PhpWord\Element\Table
     {
-        $questions = $this->anrQuestionService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
-        $questionsChoices = $this->anrQuestionChoiceService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
+        $questionParams = (new \Monarc\Core\InputFormatter\Question\GetQuestionsInputFormatter())->format([]);
+        $questions = $this->anrQuestionService->getList($questionParams, $this->anr);
 
         $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
@@ -1242,7 +1241,7 @@ class DeliverableGenerationService
                     $responses = [];
 
                     if (!empty($responseIds)) {
-                        foreach ($questionsChoices as $choice) {
+                        foreach ($question['choices'] as $choice) {
                             if (in_array($choice['id'], $responseIds, true)) {
                                 $responses[] = '- ' . $choice['label' . $this->currentLangAnrIndex];
                             }
@@ -1250,8 +1249,8 @@ class DeliverableGenerationService
                         $response = implode("\n", $responses);
                     }
                 } else {
-                    foreach ($questionsChoices as $choice) {
-                        if ($choice['id'] === $question['response']) {
+                    foreach ($question['choices'] as $choice) {
+                        if ((string)$choice['id'] === $question['response']) {
                             $response = $choice['label' . $this->currentLangAnrIndex];
                             break;
                         }

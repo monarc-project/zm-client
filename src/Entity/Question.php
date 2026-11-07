@@ -1,7 +1,7 @@
 <?php
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -40,7 +40,7 @@ class Question extends QuestionSuperClass
      */
     protected $mode = 0;
 
-    public function getAnr(): Anr
+    public function getAnr(): ?Anr
     {
         return $this->anr;
     }
@@ -48,7 +48,7 @@ class Question extends QuestionSuperClass
     /**
      * @param Anr $anr
      */
-    public function setAnr($anr): self
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
 
@@ -63,7 +63,7 @@ class Question extends QuestionSuperClass
         return $this->response;
     }
 
-    public function setResponse(string $response): self
+    public function setResponse(?string $response): self
     {
         $this->response = $response;
 
@@ -81,11 +81,4 @@ class Question extends QuestionSuperClass
 
         return $this;
     }
-
-    /**
-     * @var array
-     */
-    protected $parameters = [
-        'implicitPosition' => ['field' => 'anr']
-    ];
 }

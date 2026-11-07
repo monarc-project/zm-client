@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -52,7 +52,7 @@ class AnrExportService
         private Table\SoaScaleCommentTable $soaScaleCommentTable,
         private Table\DeliveryTable $deliveryTable,
         private Table\SoaTable $soaTable,
-        private DeprecatedTable\QuestionTable $questionTable,
+        private Table\QuestionTable $questionTable,
         private DeprecatedTable\InterviewTable $interviewTable,
         private DeprecatedTable\RecordTable $recordTable,
         private AnrRecordService $anrRecordService,
@@ -538,7 +538,7 @@ class AnrExportService
         }
 
         $questionsData = [];
-        foreach ($this->questionTable->findByAnr($anr) as $question) {
+        foreach ($this->questionTable->findOrderedQuestions($anr) as $question) {
             $questionChoicesData = [];
             foreach ($question->getQuestionChoices() as $questionChoice) {
                 $questionChoicesData[] = [
