@@ -2,12 +2,14 @@
 
 namespace Monarc\FrontOffice\Scenario\Service;
 
-use Closure;
 use Monarc\Core\Exception\ActionForbiddenException;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Entity\User;
 use Monarc\FrontOffice\Scenario\Table\ScenarioAnalysisTable;
+use Monarc\FrontOffice\Scenario\Table\ScenarioKnowledgeBaseTable;
+use Monarc\FrontOffice\Service\AnrService;
+use Monarc\FrontOffice\Service\AnrSupervisorService;
 use Monarc\FrontOffice\Table\AnrTable;
 use Monarc\FrontOffice\Table\UserAnrTable;
 use Monarc\FrontOffice\Table\UserTable;
@@ -21,7 +23,9 @@ final class ScenarioAnalysisService
         private UserAnrTable $userAnrTable,
         private UserTable $userTable,
         private ConnectedUserService $connectedUserService,
-        private Closure $findLinkedSupervisor
+        private AnrSupervisorService $anrSupervisorService,
+        private AnrService $anrService,
+        private ScenarioKnowledgeBaseTable $knowledgeBaseTable
     ) {
     }
 
@@ -32,8 +36,13 @@ final class ScenarioAnalysisService
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed> */
-    public function create(Anr $anr, array $data, string $correlationId, ?User $actor = null): array
-    {
+    public function create(
+        Anr $anr,
+        array $data,
+        string $correlationId,
+        ?User $actor = null,
+        ?array $knowledgeBasePackage = null
+    ): array {
         $user = $actor ?? $this->connectedUser();
         $this->assertSourceAnrReadable($data, $user);
 
@@ -41,8 +50,19 @@ final class ScenarioAnalysisService
             (int) $anr->getId(),
             (int) $user->getId(),
             $data,
-            $correlationId
+            $correlationId,
+            fn () => $this->initializeKnowledgeBase($anr, $knowledgeBasePackage)
         ));
+    }
+
+    /** @param array<int, array<string, mixed>>|null $package */
+    private function initializeKnowledgeBase(Anr $anr, ?array $package): void
+    {
+        if ($package !== null) {
+            $this->knowledgeBaseTable->seedPackage($anr, $package);
+        } elseif (!$this->knowledgeBaseTable->hasLocalEntries($anr)) {
+            $this->anrService->copyGenericScenarioKnowledgeBase($anr);
+        }
     }
 
     /** @param array<string, mixed> $data @return array<string, mixed>|null */
@@ -110,7 +130,7 @@ final class ScenarioAnalysisService
         }
 
         $hasDirectAccess = $this->userAnrTable->findByAnrAndUser($sourceAnr, $user) !== null;
-        $hasSupervisorAccess = ($this->findLinkedSupervisor)($sourceAnr, $user) !== null;
+        $hasSupervisorAccess = $this->anrSupervisorService->findLinkedSupervisor($sourceAnr, $user) !== null;
         if (!$hasDirectAccess && !$hasSupervisorAccess) {
             throw new ActionForbiddenException('The selected source analysis is not accessible.');
         }

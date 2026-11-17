@@ -95,13 +95,19 @@ final class ScenarioAnalysisTable
      *
      * @return array<string, mixed>
      */
-    public function create(int $anrId, int $actorId, array $data, string $correlationId): array
-    {
+    public function create(
+        int $anrId,
+        int $actorId,
+        array $data,
+        string $correlationId,
+        ?callable $initializeKnowledgeBase = null
+    ): array {
         return $this->connection->transactional(function () use (
             $anrId,
             $actorId,
             $data,
-            $correlationId
+            $correlationId,
+            $initializeKnowledgeBase
         ): array {
             $uuid = Uuid::uuid4()->toString();
             $row = [
@@ -115,6 +121,9 @@ final class ScenarioAnalysisTable
                 'source_anr_id' => $data['sourceAnrId'] ?? null,
             ];
             $this->connection->insert('scenario_analyses', $row);
+            if ($initializeKnowledgeBase !== null) {
+                $initializeKnowledgeBase();
+            }
             $this->audit($anrId, $actorId, $correlationId, $uuid, 'created', $row);
 
             return $this->findByAnr($anrId);

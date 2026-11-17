@@ -203,8 +203,8 @@ class AnrService
     }
 
     /**
-     * Creates an analysis with no model-specific data. Scenario analyses also
-     * receive a local copy of the common generic knowledge base.
+     * Creates an analysis with no model-specific data. The Scenario starting
+     * point initializes its Knowledge Base after Blank or a template is chosen.
      */
     public function createEmpty(array $data): Entity\Anr
     {
@@ -235,9 +235,6 @@ class AnrService
         $this->setCurrentAnrToConnectedUser($anr);
         $this->anrTable->save($anr);
         $this->copyBlankModelScales($anr);
-        if ($anr->getAnalysisType() === Entity\Anr::ANALYSIS_TYPE_SCENARIO) {
-            $this->copyGenericScenarioKnowledgeBase($anr);
-        }
 
         return $anr;
     }
@@ -266,7 +263,7 @@ class AnrService
      * with legacy risks, instances, or operational-risk tags. The copied
      * records become local to the analysis and remain editable there.
      */
-    private function copyGenericScenarioKnowledgeBase(Entity\Anr $anr): void
+    public function copyGenericScenarioKnowledgeBase(Entity\Anr $anr): void
     {
         /** @var CoreEntity\Model $blankModel */
         $blankModel = $this->modelTable->findById(self::BLANK_MODEL_ID);

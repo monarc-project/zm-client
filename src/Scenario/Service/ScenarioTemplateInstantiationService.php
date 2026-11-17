@@ -62,7 +62,7 @@ final class ScenarioTemplateInstantiationService
                     $translation = $catalog['translations'][0] ?? [];
                     $analysis = $this->analysisService->create($anr, [
                         'languageCode' => $translation['locale'] ?? 'en',
-                    ], $correlationId, $user);
+                    ], $correlationId, $user, $catalog['knowledgeBasePackage'] ?? null);
                 } elseif ($revision === null || (int) $analysis['revision'] !== $revision) {
                     return null;
                 }

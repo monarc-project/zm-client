@@ -23,7 +23,7 @@ final class ScenarioAssessmentService
         private ScenarioQualitativeCalculationService $calculator,
         private ReassessmentTriggerTable $reassessmentTriggers,
         private ConnectedUserService $users,
-        private \Closure $supervisorService
+        private AnrSupervisorService $supervisorService
     ) {
     }
 
@@ -315,9 +315,11 @@ final class ScenarioAssessmentService
         string $correlationId
     ): ?array {
         $actor = $this->connectedUser();
-        $supervisors = ($this->supervisorService)();
-        $assigned = $supervisors->getResidualRiskApproverSupervisor($anr, $data['assignedSupervisorId'] ?? null);
-        $linked = $supervisors->findLinkedSupervisor($anr, $actor);
+        $assigned = $this->supervisorService->getResidualRiskApproverSupervisor(
+            $anr,
+            $data['assignedSupervisorId'] ?? null
+        );
+        $linked = $this->supervisorService->findLinkedSupervisor($anr, $actor);
         if ($linked === null
             || !$linked->isActive()
             || !$linked->hasRole(AnrSupervisorRole::ROLE_RESIDUAL_RISK_APPROVER)

@@ -7,7 +7,7 @@
 
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Laminas\Di\Container\AutowireFactory;
 use Laminas\Http\PhpEnvironment\Request;
 use Laminas\Mvc\Middleware\PipeSpec;
@@ -35,7 +35,8 @@ use Monarc\FrontOffice\Stats;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Validator\InputValidator;
 use Monarc\Core\Scenario\Feature\ScenarioCapability;
-use Monarc\Core\Scenario\Service\ScenarioAuthenticationService;
+use Monarc\Core\Scenario\Service\ScenarioAuthenticationService as ScenarioAuthenticationServiceContract;
+use Monarc\FrontOffice\Command\OpenScenarioDueReviewsCommand;
 
 $env = getenv('APPLICATION_ENV') ?: 'production';
 $appConfigDir = getenv('APP_CONF_DIR') ?? '';
@@ -351,6 +352,20 @@ return [
             ],
             // This fixed child precedes the generic template route so it is
             // never interpreted as a browser-supplied template record ID.
+            'scenario_v1_anr_template_package' => [
+                'type' => 'segment',
+                'options' => [
+                    'route' => '/api/scenario/v1/anrs/:anrid/template/package',
+                    'constraints' => ['anrid' => '[0-9]+'],
+                    'defaults' => [
+                        'controller' => PipeSpec::class,
+                        'middleware' => new PipeSpec(
+                            AnrValidationMiddleware::class,
+                            Scenario\Controller\ApiScenarioTemplatePackageController::class,
+                        ),
+                    ],
+                ],
+            ],
             'scenario_v1_anr_template_event_evaluations' => [
                 'type' => 'segment',
                 'options' => [
@@ -1883,7 +1898,7 @@ return [
 
     'controllers' => [
         'factories' => [
-            Scenario\Controller\ApiScenarioHealthController::class => static function ($container) {
+            Scenario\Controller\ApiScenarioHealthController::class => static function (ContainerInterface $container) {
                 return new Scenario\Controller\ApiScenarioHealthController($container->get(ScenarioCapability::class));
             },
             Scenario\Controller\ApiScenarioReadyController::class => AutowireFactory::class,
@@ -1900,6 +1915,7 @@ return [
             Scenario\Controller\ApiScenarioDecisionAuthorityController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioRiskScenarioReferenceController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioTemplateEventEvaluationController::class => AutowireFactory::class,
+            Scenario\Controller\ApiScenarioTemplatePackageController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioTemplateModelRiskScenarioController::class => AutowireFactory::class,
             Scenario\Controller\ApiScenarioPublishedTemplateController::class => AutowireFactory::class,
             Controller\ApiGuidesController::class => AutowireFactory::class,
@@ -2013,6 +2029,13 @@ return [
     ],
 
     'service_manager' => [
+        /**
+         * Inject the FrontOffice Scenario implementation into Core's AuthenticationService
+         * so logout revokes Scenario sessions through the shared authentication contract.
+         */
+        'aliases' => [
+            ScenarioAuthenticationServiceContract::class => Scenario\Service\ScenarioAuthenticationService::class,
+        ],
         'invokables' => [
             Entity\UserAnr::class => Entity\UserAnr::class,
         ],
@@ -2089,6 +2112,7 @@ return [
             Scenario\Table\ScenarioReviewTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioInterestedPartyReferenceTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioReferenceTable::class => ClientEntityManagerFactory::class,
+            Scenario\Table\ScenarioKnowledgeBaseTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioTemplateSnapshotTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioTemplateEventEvaluationTable::class => ClientEntityManagerFactory::class,
             Scenario\Table\ScenarioTemplateModelRiskScenarioDerivationTable::class => ClientEntityManagerFactory::class,
@@ -2175,40 +2199,11 @@ return [
             Import\Processor\RiskSourceImportProcessor::class => AutowireFactory::class,
 
             /* Scenario services. */
-            Scenario\Service\LegacyBridgeService::class => static function ($container) {
-                $config = $container->get('config');
-                $scenarioConfig = $config['scenario'] ?? [];
-
-                return new Scenario\Service\LegacyBridgeService(
-                    $container->get(Scenario\Table\LegacyBridgeTable::class),
-                    $container->get(Table\UserTokenTable::class),
-                    $container->get(ScenarioCapability::class),
-                    $container->get(Scenario\Service\ScenarioLaunchAccessService::class),
-                    $scenarioConfig,
-                    (int) ($config['monarc']['ttl'] ?? 20)
-                );
-            },
-            ScenarioAuthenticationService::class => static function ($container) {
-                return new Scenario\Service\ScenarioAuthenticationService(
-                    $container->get(Scenario\Service\LegacyBridgeService::class),
-                    $container->get(ScenarioCapability::class)
-                );
-            },
+            Scenario\Service\LegacyBridgeService::class => ReflectionBasedAbstractFactory::class,
+            Scenario\Service\ScenarioAuthenticationService::class => AutowireFactory::class,
             Scenario\Service\ScenarioReadinessService::class => AutowireFactory::class,
             Scenario\Service\ScenarioLaunchAccessService::class => ReflectionBasedAbstractFactory::class,
-            Scenario\Service\ScenarioAnalysisService::class => static function ($container) {
-                return new Scenario\Service\ScenarioAnalysisService(
-                    $container->get(Scenario\Table\ScenarioAnalysisTable::class),
-                    $container->get(Table\AnrTable::class),
-                    $container->get(Table\UserAnrTable::class),
-                    $container->get(Table\UserTable::class),
-                    $container->get(ConnectedUserService::class),
-                    static function (Entity\Anr $anr, Entity\User $user) use ($container) {
-                        return $container->get(Service\AnrSupervisorService::class)
-                            ->findLinkedSupervisor($anr, $user);
-                    }
-                );
-            },
+            Scenario\Service\ScenarioAnalysisService::class => AutowireFactory::class,
             Scenario\Service\ScenarioMethodContextService::class => AutowireFactory::class,
             Scenario\Service\OperationalRiskCriteriaAdapter::class => AutowireFactory::class,
             Scenario\Service\ScenarioCriteriaDefinitionService::class => AutowireFactory::class,
@@ -2217,23 +2212,14 @@ return [
             Scenario\Service\ScenarioTreatmentService::class => AutowireFactory::class,
             Scenario\Service\ScenarioReviewSchedule::class => AutowireFactory::class,
             Scenario\Service\ScenarioReviewService::class => AutowireFactory::class,
-            Scenario\Service\ScenarioAssessmentService::class => static function ($container) {
-                return new Scenario\Service\ScenarioAssessmentService(
-                    $container->get(Scenario\Table\ScenarioAssessmentTable::class),
-                    $container->get(Scenario\Table\ScenarioReferenceTable::class),
-                    $container->get(Scenario\Table\ScenarioTreatmentTable::class),
-                    $container->get(Scenario\Service\ScenarioQualitativeCalculationService::class),
-                    $container->get(Table\ReassessmentTriggerTable::class),
-                    $container->get(ConnectedUserService::class),
-                    static fn (): Service\AnrSupervisorService => $container->get(Service\AnrSupervisorService::class)
-                );
-            },
+            Scenario\Service\ScenarioAssessmentService::class => AutowireFactory::class,
             Scenario\Service\ScenarioQualitativeCalculationService::class => AutowireFactory::class,
             Scenario\Validator\ScenarioCriteriaDefinitionValidator::class => AutowireFactory::class,
             Scenario\Service\ScenarioDelegatedAuthenticationService::class => AutowireFactory::class,
             Scenario\Service\ScenarioPublishedTemplateService::class => AutowireFactory::class,
             Scenario\Service\ScenarioTemplateInstantiationService::class => AutowireFactory::class,
             Scenario\Service\ScenarioTemplateEventEvaluationService::class => AutowireFactory::class,
+            Scenario\Service\ScenarioTemplatePackageService::class => AutowireFactory::class,
             Scenario\Service\ScenarioTemplateModelRiskScenarioCreationService::class => AutowireFactory::class,
 
             // Helpers
@@ -2295,7 +2281,7 @@ return [
             InputValidator\Anr\CreateAnrDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Anr\CreateEmptyAnrDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\AnrSupervisor\PostAnrSupervisorDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new InputValidator\AnrSupervisor\PostAnrSupervisorDataInputValidator(
                     $container->get('config'),
@@ -2304,7 +2290,7 @@ return [
                 );
             },
             InputValidator\AnrSupervisor\PatchAnrSupervisorStatusInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new InputValidator\AnrSupervisor\PatchAnrSupervisorStatusInputValidator(
                     $container->get('config'),
@@ -2312,7 +2298,7 @@ return [
                 );
             },
             InputValidator\AnrSupervisor\UpdateAnrSupervisorDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new InputValidator\AnrSupervisor\UpdateAnrSupervisorDataInputValidator(
                     $container->get('config'),
@@ -2323,7 +2309,7 @@ return [
             InputValidator\Object\PostObjectDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Object\DuplicateObjectDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Recommendation\PostRecommendationDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new InputValidator\Recommendation\PostRecommendationDataInputValidator(
                     $container->get('config'),
@@ -2332,7 +2318,7 @@ return [
                 );
             },
             InputValidator\Recommendation\PatchRecommendationDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new InputValidator\Recommendation\PatchRecommendationDataInputValidator(
                     $container->get('config'),
@@ -2361,7 +2347,7 @@ return [
             InputValidator\InstanceRiskOp\PatchDelegatedInstanceRiskOpDataInputValidator::class =>
                 ReflectionBasedAbstractFactory::class,
             InputValidator\Threat\PostThreatDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new InputValidator\Threat\PostThreatDataInputValidator(
                     $container->get('config'),
@@ -2370,7 +2356,7 @@ return [
                 );
             },
             CoreInputValidator\Asset\PostAssetDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new CoreInputValidator\Asset\PostAssetDataInputValidator(
                     $container->get('config'),
@@ -2379,7 +2365,7 @@ return [
                 );
             },
             CoreInputValidator\Vulnerability\PostVulnerabilityDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new CoreInputValidator\Vulnerability\PostVulnerabilityDataInputValidator(
                     $container->get('config'),
@@ -2388,7 +2374,7 @@ return [
                 );
             },
             CoreInputValidator\RolfRisk\PostRolfRiskDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new CoreInputValidator\RolfRisk\PostRolfRiskDataInputValidator(
                     $container->get('config'),
@@ -2397,7 +2383,7 @@ return [
                 );
             },
             CoreInputValidator\RolfTag\PostRolfTagDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new CoreInputValidator\RolfTag\PostRolfTagDataInputValidator(
                     $container->get('config'),
@@ -2406,7 +2392,7 @@ return [
                 );
             },
             InputValidator\Measure\PostMeasureDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new InputValidator\Measure\PostMeasureDataInputValidator(
                     $container->get('config'),
@@ -2415,7 +2401,7 @@ return [
                 );
             },
             InputValidator\Measure\UpdateMeasureDataInputValidator::class => static function (
-                Containerinterface $container
+                ContainerInterface $container
             ) {
                 return new InputValidator\Measure\UpdateMeasureDataInputValidator(
                     $container->get('config'),
@@ -2433,7 +2419,7 @@ return [
                 ReflectionBasedAbstractFactory::class,
 
             // Commands
-            Command\OpenScenarioDueReviewsCommand::class => AutowireFactory::class,
+            OpenScenarioDueReviewsCommand::class => AutowireFactory::class,
             Import\Command\ImportAnalysesCommand::class => static function (ContainerInterface $container) {
                 /** @var ConnectedUserService $connectedUserService */
                 $connectedUserService = $container->get(ConnectedUserService::class);
@@ -2458,6 +2444,7 @@ return [
         'lazy_services' => [
             'class_map' => [
                 Table\UserTokenTable::class => Table\UserTokenTable::class,
+                Service\AnrService::class => Service\AnrService::class,
                 Service\AnrInstanceService::class => Service\AnrInstanceService::class,
                 Import\Processor\ObjectCategoryImportProcessor::class =>
                     Import\Processor\ObjectCategoryImportProcessor::class,
@@ -2471,6 +2458,9 @@ return [
         ],
         'delegators' => [
             Table\UserTokenTable::class => [
+                LazyServiceFactory::class,
+            ],
+            Service\AnrService::class => [
                 LazyServiceFactory::class,
             ],
             Service\AnrInstanceService::class => [
@@ -2532,6 +2522,7 @@ return [
         'scenario_v1_anr_risk_register',
         'scenario_v1_anr_criteria_definition',
         'scenario_v1_anr_template_event_evaluations',
+        'scenario_v1_anr_template_package',
         'scenario_v1_anr_template_risk_scenarios',
         'scenario_v1_anr_template',
         'scenario_v1_anr_risk_scenarios',
@@ -2567,6 +2558,7 @@ return [
         Entity\UserRole::SUPER_ADMIN_FO => [
             'scenario_v1_anr_analysis',
             'scenario_v1_anr_template_event_evaluations',
+            'scenario_v1_anr_template_package',
             'scenario_v1_anr_template',
             'scenario_v1_frontoffice_templates',
             'monarc_api_doc_models',
@@ -2604,6 +2596,7 @@ return [
         Entity\UserRole::USER_FO => [
             'scenario_v1_anr_analysis',
             'scenario_v1_anr_template_event_evaluations',
+            'scenario_v1_anr_template_package',
             'scenario_v1_anr_template',
             'scenario_v1_frontoffice_templates',
             'monarc_api_doc_models',

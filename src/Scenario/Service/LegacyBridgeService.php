@@ -19,15 +19,19 @@ final class LegacyBridgeService
 
     private int $sessionTtlMinutes;
 
+    private array $scenarioConfig;
+
+    private int $authTtlMinutes;
+
     public function __construct(
         private LegacyBridgeTable $legacyBridgeTable,
         private UserTokenTable $userTokenTable,
         private ScenarioCapability $scenarioCapability,
         private ScenarioLaunchAccessService $scenarioLaunchAccessService,
-        private array $scenarioConfig,
-        private int $authTtlMinutes
+        array $config
     ) {
-        $this->authTtlMinutes = max(1, $this->authTtlMinutes);
+        $this->scenarioConfig = $config['scenario'] ?? [];
+        $this->authTtlMinutes = max(1, (int) ($config['monarc']['ttl'] ?? 20));
         $this->sessionTtlMinutes = $this->configuredSessionTtl();
     }
 
