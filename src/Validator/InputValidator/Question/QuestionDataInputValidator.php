@@ -7,28 +7,16 @@
 
 namespace Monarc\FrontOffice\Validator\InputValidator\Question;
 
+use Laminas\Filter\ToString;
 use Monarc\Core\Validator\InputValidator\AbstractInputValidator;
 
 class QuestionDataInputValidator extends AbstractInputValidator
 {
-    protected array $defaultValues = ['label1' => null, 'label2' => null, 'label3' => null, 'label4' => null];
-
-    public function validate(array $data, bool $partial = false): array
-    {
-        if (isset($data['response']) && is_int($data['response'])) {
-            $data['response'] = (string)$data['response'];
-        }
-
-        return parent::validate($data, $partial);
-    }
-
     protected function getRules(): array
     {
-        $rules = [$this->getTextRule('response', self::MAX_STRING_LENGTH)];
-        foreach ($this->systemLanguageIndexes as $index) {
-            $rules[] = $this->getTextRule('label' . $index, self::MAX_STRING_LENGTH);
-        }
-
-        return $rules;
+        return [
+            $this->getLabelRule($this->defaultLanguageIndex),
+            $this->getTextRule('response', self::MAX_STRING_LENGTH) + ['filters' => [['name' => ToString::class]]],
+        ];
     }
 }

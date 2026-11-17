@@ -67,7 +67,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_admin_users' => [
                 'type' => 'segment',
                 'options' => [
@@ -80,7 +79,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_admin_user_reset_password' => [
                 'type' => 'segment',
                 'options' => [
@@ -94,7 +92,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_client' => [
                 'type' => 'segment',
                 'options' => [
@@ -107,7 +104,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_system_messages' => [
                 'type' => 'segment',
                 'options' => [
@@ -120,7 +116,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_models' => [
                 'type' => 'segment',
                 'options' => [
@@ -133,7 +128,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_referentials' => [
                 'type' => 'segment',
                 'options' => [
@@ -143,7 +137,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_duplicate_client_anr' => [
                 'type' => 'literal',
                 'options' => [
@@ -157,7 +150,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_config' => [
                 'type' => 'literal',
                 'options' => [
@@ -167,7 +159,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_user_profile' => [
                 'type' => 'literal',
                 'options' => [
@@ -177,7 +168,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_admin_passwords' => [
                 'type' => 'segment',
                 'options' => [
@@ -188,7 +178,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_client_anr' => [
                 'type' => 'segment',
                 'options' => [
@@ -205,7 +194,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_guides' => [
                 'type' => 'segment',
                 'options' => [
@@ -219,7 +207,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_guides_items' => [
                 'type' => 'segment',
                 'options' => [
@@ -233,7 +220,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_global_client_anr' => [
                 'type' => 'segment',
                 'options' => [
@@ -257,7 +243,6 @@ return [
                             ],
                         ],
                     ],
-
                     'assets' => [
                         'type' => 'segment',
                         'options' => [
@@ -1289,7 +1274,6 @@ return [
                             ],
                         ],
                     ],
-
                     'risk_sources' => [
                         'type' => 'segment',
                         'options' => [
@@ -1306,7 +1290,6 @@ return [
                             ],
                         ],
                     ],
-
                     'interested_parties' => [
                         'type' => 'segment',
                         'options' => [
@@ -1323,7 +1306,6 @@ return [
                             ],
                         ],
                     ],
-
                     'reassessment_triggers' => [
                         'type' => 'segment',
                         'options' => [
@@ -1405,7 +1387,6 @@ return [
                     ],
                 ],
             ],
-
             'monarc_api_stats' => [
                 'type' => 'segment',
                 'options' => [
@@ -1469,7 +1450,6 @@ return [
             ],
         ],
     ],
-
     'controllers' => [
         'factories' => [
             Controller\ApiGuidesController::class => AutowireFactory::class,
@@ -1562,7 +1542,6 @@ return [
             Stats\Controller\StatsGeneralSettingsController::class => AutowireFactory::class,
         ],
     ],
-
     'view_manager' => [
         'display_not_found_reason' => true,
         'display_exceptions' => true,
@@ -1580,24 +1559,10 @@ return [
             __DIR__ . '/../view',
         ],
     ],
-
     'service_manager' => [
-        'invokables' => [
-            Entity\UserAnr::class => Entity\UserAnr::class,
-        ],
         'factories' => [
             AnrValidationMiddleware::class => AutowireFactory::class,
-
             DbCli::class => Service\Model\DbCliFactory::class,
-
-            DeprecatedTable\InterviewTable::class => AutowireFactory::class,
-            DeprecatedTable\RecordActorTable::class => AutowireFactory::class,
-            DeprecatedTable\RecordDataCategoryTable::class => AutowireFactory::class,
-            DeprecatedTable\RecordInternationalTransferTable::class => AutowireFactory::class,
-            DeprecatedTable\RecordPersonalDataTable::class => AutowireFactory::class,
-            DeprecatedTable\RecordProcessorTable::class => AutowireFactory::class,
-            DeprecatedTable\RecordRecipientTable::class => AutowireFactory::class,
-            DeprecatedTable\RecordTable::class => AutowireFactory::class,
             Table\QuestionTable::class => ClientEntityManagerFactory::class,
             Table\QuestionChoiceTable::class => ClientEntityManagerFactory::class,
             Table\ActionHistoryTable::class => ClientEntityManagerFactory::class,
@@ -1628,6 +1593,7 @@ return [
             Table\OperationalInstanceRiskScaleTable::class => ClientEntityManagerFactory::class,
             Table\RiskSourceTable::class => ClientEntityManagerFactory::class,
             Table\InterestedPartyTable::class => ClientEntityManagerFactory::class,
+            Table\InterviewTable::class => ClientEntityManagerFactory::class,
             Table\ReassessmentTriggerTable::class => ClientEntityManagerFactory::class,
             Table\RecommendationTable::class => ClientEntityManagerFactory::class,
             Table\RecommendationHistoryTable::class => ClientEntityManagerFactory::class,
@@ -1648,29 +1614,17 @@ return [
             Table\UserTokenTable::class => ClientEntityManagerFactory::class,
             Table\VulnerabilityTable::class => ClientEntityManagerFactory::class,
             CronTask\Table\CronTaskTable::class => ClientEntityManagerFactory::class,
+            /* ROPA */
+            Table\RecordActorTable::class => ClientEntityManagerFactory::class,
+            Table\RecordDataCategoryTable::class => ClientEntityManagerFactory::class,
+            Table\RecordInternationalTransferTable::class => ClientEntityManagerFactory::class,
+            Table\RecordPersonalDataTable::class => ClientEntityManagerFactory::class,
+            Table\RecordProcessorTable::class => ClientEntityManagerFactory::class,
+            Table\RecordRecipientTable::class => ClientEntityManagerFactory::class,
+            Table\RecordTable::class => ClientEntityManagerFactory::class,
 
-            // TODO: the goal is to remove all of the mapping and create new entity in the code.
-            Entity\Interview::class => ModelFactory\InterviewServiceModelEntity::class,
-            Entity\RecordActor::class => ModelFactory\RecordActorServiceModelEntity::class,
-            Entity\RecordDataCategory::class => ModelFactory\RecordDataCategoryServiceModelEntity::class,
-            Entity\RecordInternationalTransfer::class
-                => ModelFactory\RecordInternationalTransferServiceModelEntity::class,
-            Entity\RecordPersonalData::class => ModelFactory\RecordPersonalDataServiceModelEntity::class,
-            Entity\RecordProcessor::class => ModelFactory\RecordProcessorServiceModelEntity::class,
-            Entity\RecordRecipient::class => ModelFactory\RecordRecipientServiceModelEntity::class,
-            Entity\Record::class => ModelFactory\RecordServiceModelEntity::class,
-
-            // TODO: replace to autowiring.
-            Service\AnrInterviewService::class => Service\AnrInterviewServiceFactory::class,
-            Service\AnrRecordActorService::class => Service\AnrRecordActorServiceFactory::class,
-            Service\AnrRecordDataCategoryService::class => Service\AnrRecordDataCategoryServiceFactory::class,
-            Service\AnrRecordInternationalTransferService::class
-                => Service\AnrRecordInternationalTransferServiceFactory::class,
-            Service\AnrRecordPersonalDataService::class => Service\AnrRecordPersonalDataServiceFactory::class,
-            Service\AnrRecordProcessorService::class => Service\AnrRecordProcessorServiceFactory::class,
-            Service\AnrRecordRecipientService::class => Service\AnrRecordRecipientServiceFactory::class,
-            Service\AnrRecordService::class => Service\AnrRecordServiceFactory::class,
-            
+            /* Services */
+            Service\AnrInterviewService::class => AutowireFactory::class,
             Service\QuestionSnapshotService::class => AutowireFactory::class,
             Service\AnrQuestionService::class => AutowireFactory::class,
             Service\AnrMeasureService::class => AutowireFactory::class,
@@ -1720,13 +1674,26 @@ return [
             Stats\Service\StatsAnrService::class => ReflectionBasedAbstractFactory::class,
             Stats\Service\StatsSettingsService::class => AutowireFactory::class,
             CronTask\Service\CronTaskService::class => AutowireFactory::class,
-            /* Export services. */
+            /* ROPA */
+            Service\AnrRecordActorService::class => AutowireFactory::class,
+            Service\AnrRecordDataCategoryService::class => AutowireFactory::class,
+            Service\AnrRecordInternationalTransferService::class => AutowireFactory::class,
+            Service\AnrRecordPersonalDataService::class => AutowireFactory::class,
+            Service\AnrRecordProcessorService::class => AutowireFactory::class,
+            Service\AnrRecordRecipientService::class => AutowireFactory::class,
+            Service\AnrRecordService::class => AutowireFactory::class,
+            /* Export services */
             Export\Service\AnrExportService::class => AutowireFactory::class,
+            Export\Service\RecordExportService::class => AutowireFactory::class,
             Export\Service\ObjectExportService::class => AutowireFactory::class,
             Export\Service\InstanceExportService::class => AutowireFactory::class,
-            /* Import services. */
+            /* Import services */
             Import\Service\ObjectImportService::class => AutowireFactory::class,
             Import\Service\InstanceImportService::class => AutowireFactory::class,
+            Import\Service\RecordImportService::class => AutowireFactory::class,
+            Import\Processor\QuestionImportProcessor::class => AutowireFactory::class,
+            Import\Processor\InterviewImportProcessor::class => AutowireFactory::class,
+            Import\Processor\RecordImportProcessor::class => AutowireFactory::class,
             Import\Processor\RiskSourceImportProcessor::class => AutowireFactory::class,
 
             // Helpers
@@ -1764,7 +1731,17 @@ return [
             Stats\Provider\StatsApiProvider::class => ReflectionBasedAbstractFactory::class,
 
             // Validators
+            InputValidator\Interview\InterviewDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\Question\QuestionDataInputValidator::class => ReflectionBasedAbstractFactory::class,
+            InputValidator\Record\RecordRecipientDataInputValidator::class => ReflectionBasedAbstractFactory::class,
+            InputValidator\Record\RecordProcessorDataInputValidator::class => ReflectionBasedAbstractFactory::class,
+            InputValidator\Record\RecordPersonalDataDataInputValidator::class => ReflectionBasedAbstractFactory::class,
+            InputValidator\Record\RecordInternationalTransferDataInputValidator::class
+                => ReflectionBasedAbstractFactory::class,
+            InputValidator\Record\RecordDataCategoryDataInputValidator::class => ReflectionBasedAbstractFactory::class,
+            InputValidator\Record\RecordActorDataInputValidator::class => ReflectionBasedAbstractFactory::class,
+            InputValidator\Record\RecordDataInputValidator::class => ReflectionBasedAbstractFactory::class,
+            InputValidator\Record\RecordDuplicateInputValidator::class => ReflectionBasedAbstractFactory::class,
             InputValidator\User\PostUserDataInputValidator::class => ReflectionBasedAbstractFactory::class,
             Stats\Validator\GetStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
             Stats\Validator\GetProcessedStatsQueryParamsValidator::class => ReflectionBasedAbstractFactory::class,
@@ -1962,7 +1939,6 @@ return [
             ],
         ],
     ],
-
     'doctrine' => [
         'driver' => [
             'Monarc_frontoffice_driver' => [

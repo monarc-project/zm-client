@@ -1,14 +1,13 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Entity;
 
 use Doctrine\Common\Collections\Collection;
-use Monarc\Core\Entity\AbstractEntity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
@@ -23,71 +22,61 @@ use Monarc\Core\Entity\Traits\UpdateEntityTrait;
  * @ORM\Entity
  * @ORM\HasLifecycleCallbacks()
  */
-class Record extends AbstractEntity
+class Record
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
     /**
-     * @var integer
-     *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
-    protected $id;
+    protected int $id;
 
     /**
-     * @var Anr
-     *
      * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
      */
-    protected $anr;
+    protected Anr $anr;
 
     /**
-     * @var string
-     *
      * @ORM\Column(name="label", type="string", length=255, nullable=true)
      */
-    protected $label;
+    protected ?string $label = null;
 
     /**
-     * @var string
-     *
      * @ORM\Column(name="purposes", type="text", nullable=true)
      */
-    protected $purposes;
+    protected ?string $purposes = null;
 
     /**
-     * @var string
-     *
      * @ORM\Column(name="sec_measures", type="text", nullable=true)
      */
-    protected $secMeasures;
+    protected ?string $secMeasures = null;
 
     /**
      * @var RecordActor
      * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
      * @ORM\JoinColumn(name="controller_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
-    protected $controller;
+    protected ?RecordActor $controller = null;
 
     /**
      * @var RecordActor
      * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
      * @ORM\JoinColumn(name="representative_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
-    protected $representative;
+    protected ?RecordActor $representative = null;
 
     /**
      * @var RecordActor
      * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
      * @ORM\JoinColumn(name="dpo_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
-    protected $dpo;
+    protected ?RecordActor $dpo = null;
 
     /**
      * @var Collection|RecordActor[]
@@ -97,13 +86,16 @@ class Record extends AbstractEntity
      *  inverseJoinColumns={@ORM\JoinColumn(name="controller_id", referencedColumnName="id")}
      * )
      */
-    protected $jointControllers;
+    protected Collection $jointControllers;
 
     /**
      * @var Collection|RecordPersonalData[]
-     * @ORM\OneToMany(targetEntity="RecordPersonalData", mappedBy="record", cascade={"persist"})
+     * @ORM\OneToMany(
+     *     targetEntity="RecordPersonalData", mappedBy="record",
+     *     cascade={"persist", "remove"}, orphanRemoval=true
+     * )
      */
-    protected $personalData;
+    protected Collection $personalData;
 
     /**
      * @var Collection|RecordRecipient[]
@@ -113,13 +105,16 @@ class Record extends AbstractEntity
      *  inverseJoinColumns={@ORM\JoinColumn(name="recipient_id", referencedColumnName="id")}
      * )
      */
-    protected $recipients;
+    protected Collection $recipients;
 
     /**
      * @var Collection|RecordInternationalTransfer[]
-     * @ORM\OneToMany(targetEntity="RecordInternationalTransfer", mappedBy="record", cascade={"persist", "remove"})
+     * @ORM\OneToMany(
+     *     targetEntity="RecordInternationalTransfer", mappedBy="record",
+     *     cascade={"persist", "remove"}, orphanRemoval=true
+     * )
      */
-    protected $internationalTransfers;
+    protected Collection $internationalTransfers;
 
     /**
      * @var Collection|RecordProcessor[]
@@ -129,248 +124,233 @@ class Record extends AbstractEntity
      *  inverseJoinColumns={@ORM\JoinColumn(name="processor_id", referencedColumnName="id")}
      * )
      */
-    protected $processors;
+    protected Collection $processors;
 
-    public function __construct($obj = null)
+    public function __construct()
     {
         $this->jointControllers = new ArrayCollection();
         $this->personalData = new ArrayCollection();
         $this->recipients = new ArrayCollection();
         $this->internationalTransfers = new ArrayCollection();
         $this->processors = new ArrayCollection();
-
-        parent::__construct($obj);
     }
 
-    /**
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * @param int $id
-     * @return Record
-     */
-    public function setId($id)
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * @return Anr
-     */
-    public function getAnr()
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
-    /**
-     * @param int|Anr $anr
-     * @return Record
-     */
-    public function setAnr($anr)
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 
-    /**
-     * @param string $label
-     *
-     */
-    public function setlabel($label)
+    public function getLabel(): ?string
+    {
+        return $this->label;
+    }
+
+    public function setLabel(?string $label): self
     {
         $this->label = $label;
+
+        return $this;
     }
 
-    public function getlabel(): string
+    public function getPurposes(): ?string
     {
-        return (string)$this->label;
+        return $this->purposes;
     }
 
-    public function getPurposes(): string
-    {
-        return (string)$this->purposes;
-    }
-
-    public function setPurposes(string $purposes)
+    public function setPurposes(?string $purposes): self
     {
         $this->purposes = $purposes;
 
         return $this;
     }
 
-    public function getSecMeasures(): string
+    public function getSecMeasures(): ?string
     {
-        return (string)$this->secMeasures;
+        return $this->secMeasures;
     }
 
-    public function setSecMeasures(string $secMeasures): self
+    public function setSecMeasures(?string $secMeasures): self
     {
         $this->secMeasures = $secMeasures;
 
         return $this;
     }
 
-    /**
-     * @return RecordActor
-     */
-    public function getController()
+    public function getController(): ?RecordActor
     {
         return $this->controller;
     }
 
-    /**
-     * @param int|RecordActor $controller
-     * @return Record
-     */
-    public function setController($controller)
+    public function setController(?RecordActor $controller): self
     {
         $this->controller = $controller;
+
         return $this;
     }
 
-    /**
-     * @return RecordActor
-     */
-    public function getRepresentative()
+    public function getRepresentative(): ?RecordActor
     {
         return $this->representative;
     }
-    /**
-     * @param string $representative
-     * @return Record
-     */
-    public function setRepresentative($representative)
+
+    public function setRepresentative(?RecordActor $representative): self
     {
         $this->representative = $representative;
+
         return $this;
     }
 
-    /**
-     * @return RecordActor
-     */
-    public function getDpo()
+    public function getDpo(): ?RecordActor
     {
         return $this->dpo;
     }
-    /**
-     * @param string $dpo
-     * @return Record
-     */
-    public function setDpo($dpo)
+
+    public function setDpo(?RecordActor $dpo): self
     {
         $this->dpo = $dpo;
+
         return $this;
     }
 
-    public function getJointControllers()
+    public function getJointControllers(): Collection
     {
         return $this->jointControllers;
     }
 
-    /**
-     * @param int $jointControllers
-     * @return Record
-     */
-    public function setJointControllers($jointControllers)
+    public function setJointControllers(iterable $jointControllers): self
     {
-        $this->jointControllers = $jointControllers;
+        $this->jointControllers->clear();
+        foreach ($jointControllers as $entity) {
+            if (!$this->jointControllers->contains($entity)) {
+                $this->jointControllers->add($entity);
+            }
+        }
+
         return $this;
     }
 
-    /**
-     * @return RecordPersonalData[]
-     */
-    public function getPersonalData()
+    public function getPersonalData(): Collection
     {
         return $this->personalData;
     }
 
-    /**
-     * @param int $personalData
-     * @return Record
-     */
-    public function setPersonalData($personalData)
+    public function setPersonalData(iterable $personalData): self
     {
-        $this->personalData = $personalData;
+        $personalData = [...$personalData];
+        foreach ($this->personalData->toArray() as $existingRecordPersonalData) {
+            if (!in_array($existingRecordPersonalData, $personalData, true)) {
+                $this->personalData->removeElement($existingRecordPersonalData);
+            }
+        }
+        foreach ($personalData as $recordPersonalData) {
+            $recordPersonalData->setRecord($this);
+            if (!$this->personalData->contains($recordPersonalData)) {
+                $this->personalData->add($recordPersonalData);
+            }
+        }
+
         return $this;
     }
 
-    public function getInternationalTransfers()
-    {
-        return $this->internationalTransfers;
-    }
-
-    /**
-     * @param RecordInternationalTransfer[] $internationalTransfers
-     * @return Record
-     */
-    public function setInternationalTransfers($internationalTransfers)
-    {
-        $this->internationalTransfers = $internationalTransfers;
-        return $this;
-    }
-
-    public function getProcessors()
-    {
-        return $this->processors;
-    }
-
-    /**
-     * @param int $processors
-     * @return Record
-     */
-    public function setProcessors($processors)
-    {
-        $this->processors = $processors;
-        return $this;
-    }
-
-    public function getRecipients()
+    public function getRecipients(): Collection
     {
         return $this->recipients;
     }
 
-    /**
-     * @param int $recipients
-     * @return Record
-     */
-    public function setRecipients($recipients)
+    public function setRecipients(iterable $recipients): self
     {
-        $this->recipients = $recipients;
+        $this->recipients->clear();
+        foreach ($recipients as $entity) {
+            if (!$this->recipients->contains($entity)) {
+                $this->recipients->add($entity);
+            }
+        }
+
         return $this;
     }
 
-    /**
-     * Add joint controller
-     *
-     * @param int $jointController
-     */
-    public function addJointController($jointController)
+    public function getInternationalTransfers(): Collection
     {
-        $this->jointControllers->add($jointController);
+        return $this->internationalTransfers;
     }
-    /**
-     * Add recipient category
-     *
-     * @param int $recipient
-     */
-    public function addRecipientCategory($recipient)
+
+    public function setInternationalTransfers(iterable $internationalTransfers): self
     {
-        $this->recipients->add($recipient);
+        $internationalTransfers = [...$internationalTransfers];
+        foreach ($this->internationalTransfers->toArray() as $existingRecordInternationalTransfer) {
+            if (!in_array($existingRecordInternationalTransfer, $internationalTransfers, true)) {
+                $this->internationalTransfers->removeElement($existingRecordInternationalTransfer);
+            }
+        }
+        foreach ($internationalTransfers as $recordInternationalTransfer) {
+            $recordInternationalTransfer->setRecord($this);
+            if (!$this->internationalTransfers->contains($recordInternationalTransfer)) {
+                $this->internationalTransfers->add($recordInternationalTransfer);
+            }
+        }
+
+        return $this;
     }
-    /**
-     * Add processor
-     *
-     * @param int $processor
-     */
-    public function addProcessor($processor)
+
+    public function getProcessors(): Collection
     {
-        $this->processors->add($processor);
+        return $this->processors;
+    }
+
+    public function setProcessors(iterable $processors): self
+    {
+        $this->processors->clear();
+        foreach ($processors as $entity) {
+            if (!$this->processors->contains($entity)) {
+                $this->processors->add($entity);
+            }
+        }
+
+        return $this;
+    }
+
+    public function addJointController(RecordActor $entity): self
+    {
+        if (!$this->jointControllers->contains($entity)) {
+            if (!$this->jointControllers->contains($entity)) {
+                $this->jointControllers->add($entity);
+            }
+        }
+
+        return $this;
+    }
+
+    public function addRecipientCategory(RecordRecipient $entity): self
+    {
+        if (!$this->recipients->contains($entity)) {
+            if (!$this->recipients->contains($entity)) {
+                $this->recipients->add($entity);
+            }
+        }
+
+        return $this;
+    }
+
+    public function addProcessor(RecordProcessor $entity): self
+    {
+        if (!$this->processors->contains($entity)) {
+            if (!$this->processors->contains($entity)) {
+                $this->processors->add($entity);
+            }
+        }
+
+        return $this;
     }
 }

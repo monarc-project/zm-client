@@ -13,7 +13,6 @@ use Monarc\Core\Model\Table as CoreDeprecatedTable;
 use Monarc\Core\Table as CoreTable;
 use Monarc\Core\Service as CoreService;
 use Monarc\FrontOffice\Entity;
-use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Stats\Service\StatsAnrService;
 use Monarc\FrontOffice\Table;
 use Monarc\Core\Exception\Exception;
@@ -59,14 +58,8 @@ class AnrService
         private Table\RolfTagTable $rolfTagTable,
         private Table\SoaTable $soaTable,
         private Table\QuestionTable $questionTable,
-        private DeprecatedTable\InterviewTable $interviewTable,
-        private DeprecatedTable\RecordActorTable $recordActorTable,
-        private DeprecatedTable\RecordDataCategoryTable $recordDataCategoryTable,
-        private DeprecatedTable\RecordProcessorTable $recordProcessorTable,
-        private DeprecatedTable\RecordRecipientTable $recordRecipientTable,
-        private DeprecatedTable\RecordTable $recordTable,
-        private DeprecatedTable\RecordPersonalDataTable $recordPersonalDataTable,
-        private DeprecatedTable\RecordInternationalTransferTable $recordInternationalTransferTable,
+        private AnrInterviewService $anrInterviewService,
+        private AnrRecordService $anrRecordService,
         private CoreTable\ModelTable $modelTable,
         private CoreTable\ScaleTable $coreScaleTable,
         private CoreTable\AmvTable $coreAmvTable,
@@ -101,7 +94,6 @@ class AnrService
         private SoaScaleCommentService $soaScaleCommentService,
         private CronTaskService $cronTaskService,
         private StatsAnrService $statsAnrService,
-        private AnrRecordProcessorService $anrRecordProcessorService,
         private CoreService\ConfigService $configService,
         CoreService\ConnectedUserService $connectedUserService,
     ) {
@@ -360,14 +352,14 @@ class AnrService
         );
 
         /* Recreate questions & choices. */
-        $questionCopies = $this->duplicateQuestions($sourceAnr, $newAnr, $isSourceCommon);
+        $this->duplicateQuestions($sourceAnr, $newAnr, $isSourceCommon);
 
         if (!$isSourceCommon) {
             /* Recreate interviews. */
-            $this->duplicateInterviews($sourceAnr, $newAnr);
+            $this->anrInterviewService->copy($sourceAnr, $newAnr);
 
             /* Recreate all the ROPA's related entities. */
-            $this->duplicateRopa($sourceAnr, $newAnr);
+            $this->anrRecordService->copy($sourceAnr, $newAnr);
         }
 
         if (!$isSnapshotMode) {
@@ -375,7 +367,6 @@ class AnrService
         }
 
         $this->anrTable->save($newAnr);
-        $this->questionSnapshotService->completeCopy($questionCopies);
 
         return $newAnr;
     }
@@ -1252,7 +1243,6 @@ class AnrService
                     'status' => $sourceAmv->getStatus(),
                     'setOnlyExactPosition' => true,
                     'position' => $sourceAmv->getPosition(),
-
                 ],
                 false,
                 false
@@ -1898,155 +1888,16 @@ class AnrService
         }
     }
 
+    /** Queue fresh questions and linked choices; the analysis caller owns the final flush. */
     private function duplicateQuestions(
         CoreEntity\AnrSuperClass $sourceAnr,
         Entity\Anr $newAnr,
         bool $isSourceCommon
-    ): array {
+    ): void {
         /** @var CoreEntity\QuestionSuperClass[] $questions */
         $questions = $isSourceCommon
             ? $this->coreQuestionTable->findAll()
             : $this->questionTable->findOrderedQuestions($sourceAnr);
-        return $this->questionSnapshotService->copy($questions, $newAnr);
-    }
-
-    private function duplicateInterviews(Entity\Anr $sourceAnr, Entity\Anr $newAnr): void
-    {
-        $interviews = $this->interviewTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
-        foreach ($interviews as $interview) {
-            $newInterview = new Entity\Interview($interview);
-            $newInterview->set('id', null);
-            $newInterview->setAnr($newAnr);
-            $this->interviewTable->save($newInterview, false);
-        }
-    }
-
-    private function duplicateRopa(Entity\Anr $sourceAnr, Entity\Anr $newAnr): void
-    {
-        /* Recreate record actors. */
-        /** @var Entity\RecordActor[] $recordActors */
-        $recordActors = $this->recordActorTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
-        $actorNewIds = [];
-        foreach ($recordActors as $a) {
-            $newActor = new Entity\RecordActor($a);
-            $newActor->set('id', null);
-            $newActor->setAnr($newAnr);
-            $this->recordActorTable->save($newActor, false);
-            $actorNewIds[$a->getId()] = $newActor;
-        }
-
-        /* Recreate record data categories. */
-        /** @var Entity\RecordDataCategory[] $recordDataCategories */
-        $recordDataCategories = $this->recordDataCategoryTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
-        $dataCategoryNewIds = [];
-        foreach ($recordDataCategories as $dc) {
-            $newDataCategory = new Entity\RecordDataCategory($dc);
-            $newDataCategory->set('id', null);
-            $newDataCategory->setAnr($newAnr);
-            $this->recordDataCategoryTable->save($newDataCategory, false);
-            $dataCategoryNewIds[$dc->getId()] = $newDataCategory;
-        }
-
-        /* Recreate record processors. */
-        /** @var Entity\RecordProcessor[] $recordProcessors */
-        $recordProcessors = $this->recordProcessorTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
-        $processorNewIds = [];
-        foreach ($recordProcessors as $p) {
-            $newProcessor = new Entity\RecordProcessor($p);
-            $newProcessor->set('id', null);
-            $newProcessor->setAnr($newAnr);
-            if ($p->getRepresentative() !== null) {
-                $newProcessor->setRepresentative($actorNewIds[$p->getRepresentative()->getId()]);
-            }
-            if ($p->getDpo() !== null) {
-                $newProcessor->setDpo($actorNewIds[$p->getDpo()->getId()]);
-            }
-            $this->recordProcessorTable->save($newProcessor, false);
-            $processorNewIds[$p->getId()] = $newProcessor;
-        }
-
-        /* Recreate record recipients. */
-        /** @var Entity\RecordRecipient[] $recordRecipients */
-        $recordRecipients = $this->recordRecipientTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
-        $recipientNewIds = [];
-        foreach ($recordRecipients as $r) {
-            $newRecipient = new Entity\RecordRecipient($r);
-            $newRecipient->set('id', null);
-            $newRecipient->setAnr($newAnr);
-            $this->recordRecipientTable->save($newRecipient, false);
-            $recipientNewIds[$r->getId()] = $newRecipient;
-        }
-
-        /* Recreate record. */
-        /** @var Entity\Record[] $records */
-        $records = $this->recordTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
-        $recordNewIds = [];
-        foreach ($records as $record) {
-            $newRecord = new Entity\Record($record);
-            $newRecord->set('id', null);
-            $newRecord->setAnr($newAnr);
-            if ($record->getController() !== null) {
-                $newRecord->setController($actorNewIds[$record->getController()->getId()]);
-            }
-            if ($record->getRepresentative() !== null) {
-                $newRecord->setRepresentative($actorNewIds[$record->getRepresentative()->getId()]);
-            }
-            if ($record->getDpo() !== null) {
-                $newRecord->setDpo($actorNewIds[$record->getDpo()->getId()]);
-            }
-
-            $jointControllerNewIds = [];
-            $jointControllers = $record->getJointControllers();
-            foreach ($jointControllers as $jc) {
-                $jointControllerNewIds[] = $actorNewIds[$jc->getId()];
-            }
-            $newRecord->setJointControllers($jointControllerNewIds);
-
-            $processorIds = [];
-            $processors = $record->getProcessors();
-            foreach ($processors as $p) {
-                $processorIds[$p->getId()] = $processorNewIds[$p->getId()];
-            }
-            $newRecord->setProcessors($processorIds);
-
-            $recipientIds = [];
-            $recipients = $record->getRecipients();
-            foreach ($recipients as $r) {
-                $recipientIds[$r->getId()] = $recipientNewIds[$r->getId()];
-            }
-            $newRecord->setRecipients($recipientIds);
-
-            $this->recordTable->save($newRecord, false);
-            $recordNewIds[$record->getId()] = $newRecord;
-        }
-
-        //duplicate record personal data
-        /** @var Entity\RecordPersonalData[] $recordPersonalData */
-        $recordPersonalData = $this->recordPersonalDataTable->getEntityByFields(['anr' => $sourceAnr->getId()]);
-        foreach ($recordPersonalData as $pd) {
-            $newPersonalData = new Entity\RecordPersonalData($pd);
-            $newPersonalData->set('id', null);
-            $newPersonalData->setAnr($newAnr);
-            $newPersonalData->setRecord($recordNewIds[$pd->getRecord()->getId()]);
-            $newDataCategoryIds = [];
-            $dataCategories = $pd->getDataCategories();
-            foreach ($dataCategories as $dc) {
-                $newDataCategoryIds[] = $dataCategoryNewIds[$dc->getId()];
-            }
-            $newPersonalData->setDataCategories($newDataCategoryIds);
-            $this->recordPersonalDataTable->save($newPersonalData, false);
-        }
-
-        /* Recreate record international transfers. */
-        /** @var Entity\RecordInternationalTransfer[] $recordInternationalTransfers */
-        $recordInternationalTransfers = $this->recordInternationalTransferTable
-            ->getEntityByFields(['anr' => $sourceAnr->getId()]);
-        foreach ($recordInternationalTransfers as $it) {
-            $newInternationalTransfer = new Entity\RecordInternationalTransfer($it);
-            $newInternationalTransfer->set('id', null);
-            $newInternationalTransfer->setAnr($newAnr);
-            $newInternationalTransfer->setRecord($recordNewIds[$it->getRecord()->getId()]);
-            $this->recordInternationalTransferTable->save($newInternationalTransfer, false);
-        }
+        $this->questionSnapshotService->copy($questions, $newAnr);
     }
 }

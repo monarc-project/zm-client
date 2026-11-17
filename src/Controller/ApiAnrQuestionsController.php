@@ -9,7 +9,7 @@ namespace Monarc\FrontOffice\Controller;
 
 use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
-use Monarc\Core\InputFormatter\Question\GetQuestionsInputFormatter;
+use Monarc\FrontOffice\InputFormatter\Question\GetQuestionsInputFormatter;
 use Monarc\FrontOffice\Validator\InputValidator\Question\QuestionDataInputValidator;
 use Monarc\FrontOffice\Entity\Anr;
 use Monarc\FrontOffice\Service\AnrQuestionService;
@@ -27,14 +27,11 @@ class ApiAnrQuestionsController extends AbstractRestfulControllerRequestHandler
 
     public function getList()
     {
-        /** @var Anr $anr */
-        $anr = $this->getRequest()->getAttribute('anr');
-
         $formattedParams = $this->getFormattedInputParams($this->getQuestionsInputFormatter);
 
         return $this->getPreparedJsonResponse([
-            'count' => $this->anrQuestionService->getCount($formattedParams, $anr),
-            'questions' => $this->anrQuestionService->getList($formattedParams, $anr),
+            'count' => $this->anrQuestionService->getCount($formattedParams),
+            'questions' => $this->anrQuestionService->getList($formattedParams),
         ]);
     }
 
@@ -43,30 +40,27 @@ class ApiAnrQuestionsController extends AbstractRestfulControllerRequestHandler
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
 
-        $id = $this->questionDataInputValidator->validateIds([$id])[0];
-
-        return $this->getPreparedJsonResponse($this->anrQuestionService->getEntity($id, $anr));
+        return $this->getPreparedJsonResponse($this->anrQuestionService->getQuestionData($anr, (int)$id));
     }
 
     public function create($data)
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
+        $this->validatePostParams($this->questionDataInputValidator, $data);
+        $validData = $this->questionDataInputValidator->getValidData();
 
-        $validData = $this->questionDataInputValidator->validate($data);
-        $id = $this->anrQuestionService->create($validData, $anr);
-
-        return $this->getSuccessfulJsonResponse(['id' => $id]);
+        return $this->getSuccessfulJsonResponse([
+            'id' => $this->anrQuestionService->create($anr, $validData)->getId(),
+        ]);
     }
 
     public function update($id, $data)
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
-
-        $id = $this->questionDataInputValidator->validateIds([$id])[0];
-        $validData = $this->questionDataInputValidator->validate($data);
-        $this->anrQuestionService->update($id, $validData, $anr);
+        $this->validatePostParams($this->questionDataInputValidator, $data);
+        $this->anrQuestionService->update($anr, (int)$id, $this->questionDataInputValidator->getValidData());
 
         return $this->getSuccessfulJsonResponse();
     }
@@ -75,10 +69,8 @@ class ApiAnrQuestionsController extends AbstractRestfulControllerRequestHandler
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
-
-        $id = $this->questionDataInputValidator->validateIds([$id])[0];
-        $validData = $this->questionDataInputValidator->validate($data, true);
-        $this->anrQuestionService->update($id, $validData, $anr);
+        $this->validatePostParams($this->questionDataInputValidator, $data, partial: true);
+        $this->anrQuestionService->update($anr, (int)$id, $this->questionDataInputValidator->getValidData());
 
         return $this->getSuccessfulJsonResponse();
     }
@@ -87,20 +79,7 @@ class ApiAnrQuestionsController extends AbstractRestfulControllerRequestHandler
     {
         /** @var Anr $anr */
         $anr = $this->getRequest()->getAttribute('anr');
-
-        $id = $this->questionDataInputValidator->validateIds([$id])[0];
-        $this->anrQuestionService->delete($id, $anr);
-
-        return $this->getSuccessfulJsonResponse();
-    }
-
-    public function deleteList($data)
-    {
-        /** @var Anr $anr */
-        $anr = $this->getRequest()->getAttribute('anr');
-
-        $ids = $this->questionDataInputValidator->validateIds($data);
-        $this->anrQuestionService->deleteList($ids, $anr);
+        $this->anrQuestionService->delete($anr, (int)$id);
 
         return $this->getSuccessfulJsonResponse();
     }

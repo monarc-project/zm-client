@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
  * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
@@ -24,12 +24,12 @@ class QuestionChoice extends QuestionChoiceSuperClass
      *
      * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
      */
-    protected $anr;
+    protected Anr $anr;
 
-    public function getAnr(): ?Anr
+    public function getAnr(): Anr
     {
         return $this->anr;
     }

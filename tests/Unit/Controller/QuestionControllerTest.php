@@ -12,10 +12,10 @@ use Doctrine\ORM\EntityNotFoundException;
 use Laminas\Diactoros\ServerRequest;
 use Laminas\Router\RouteMatch;
 use Monarc\Core\Exception\Exception;
-use Monarc\Core\InputFormatter\Question\GetQuestionsInputFormatter;
+use Monarc\FrontOffice\InputFormatter\Question\GetQuestionsInputFormatter;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Tests\Fixture\GuideTestEnvironment;
-use Monarc\Core\Tests\Fixture\QuestionTestEnvironment;
+use MonarcFrontOfficeTests\Fixture\QuestionTestEnvironment;
 use Monarc\FrontOffice\Controller\ApiAnrQuestionsController;
 use Monarc\FrontOffice\Entity\Question;
 use Monarc\FrontOffice\Entity\QuestionChoice;
@@ -31,14 +31,14 @@ class QuestionControllerTest extends TestCase
 
     protected function setUp(): void
     {
-        require_once __DIR__ . '/../../../../zm-core/tests/Fixture/QuestionTestEnvironment.php';
+        require_once __DIR__ . '/../../Fixture/QuestionTestEnvironment.php';
         require_once __DIR__ . '/../../../../zm-core/tests/Fixture/GuideTestEnvironment.php';
         if (!Type::hasType('uuid')) {
             Type::addType('uuid', \Ramsey\Uuid\Doctrine\UuidType::class);
         }
         $connectedUserService = $this->createMock(ConnectedUserService::class);
         $connectedUserService->method('getConnectedUser')->willReturn(GuideTestEnvironment::user());
-        $this->env = new QuestionTestEnvironment($connectedUserService, true);
+        $this->env = new QuestionTestEnvironment($connectedUserService);
         $this->anr = $this->env->analysis(1);
         $this->other = $this->env->analysis(2);
     }
@@ -51,28 +51,35 @@ class QuestionControllerTest extends TestCase
     public function testCustomQuestionsAreTextOnlyAndIgnoreDefinitionAndOrderingFields(): void
     {
         $id = $this->request('POST', null, [
-            'label1' => '  Custom question  ', 'label2' => '', 'response' => '',
-            'type' => 2, 'multichoice' => 1, 'mode' => 0, 'anr' => 2,
-            'position' => 100, 'implicitPosition' => 3, 'previous' => 999,
+            'label3' => '  Custom question  ',
+            'label2' => 'Ignore inactive language',
+            'response' => '',
+            'type' => 2,
+            'multichoice' => 1,
+            'mode' => 0,
+            'anr' => 2,
+            'position' => 100,
+            'implicitPosition' => 3,
+            'previous' => 999,
             'questionChoices' => [['label1' => 'Unwanted choice']],
         ])['id'];
         $data = $this->request('GET', $id);
-        self::assertSame(1, $data['type']);
+        self::assertSame(Question::TYPE_SINGLE, $data['type']);
         self::assertSame(0, $data['multichoice']);
         self::assertSame(1, $data['mode']);
         self::assertSame(1, $data['position']);
-        self::assertSame('  Custom question  ', $data['label1']);
+        self::assertSame('Custom question', $data['label3']);
         self::assertSame('', $data['label2']);
         self::assertSame(1, $this->env->questions->findById($id)->getAnr()->getId());
         self::assertSame(0, $this->env->choices->countAll());
         $this->request('PATCH', $id, ['response' => '0']);
         self::assertSame('0', $this->request('GET', $id)['response']);
-        self::assertSame('  Custom question  ', $this->request('GET', $id)['label1']);
+        self::assertSame('Custom question', $this->request('GET', $id)['label3']);
         $this->request('PUT', $id, ['label3' => 'Edited', 'response' => null, 'position' => 3, 'type' => 2]);
         $data = $this->request('GET', $id);
         self::assertNull($data['response']);
         self::assertSame('Edited', $data['label3']);
-        self::assertSame(1, $data['type']);
+        self::assertSame(Question::TYPE_SINGLE, $data['type']);
         self::assertSame(1, $data['position']);
         self::assertSame('guide@example.invalid', $data['creator']);
         self::assertSame('guide@example.invalid', $data['updater']);
@@ -90,7 +97,10 @@ class QuestionControllerTest extends TestCase
             ->setPosition(1)->setLabels(['label1' => 'Answer']);
         $this->env->choices->save($choice);
         $this->request('PATCH', $question->getId(), [
-            'response' => $choice->getId(), 'label1' => 'Changed', 'type' => 1, 'multichoice' => 1,
+            'response' => (string)$choice->getId(),
+            'label1' => 'Changed',
+            'type' => Question::TYPE_SINGLE,
+            'multichoice' => 1,
         ]);
         $data = $this->request('GET', $question->getId());
         self::assertSame('Imported definition', $data['label1']);
@@ -98,7 +108,7 @@ class QuestionControllerTest extends TestCase
         self::assertSame(0, $data['multichoice']);
         self::assertSame((string)$choice->getId(), $data['response']);
         self::assertSame(
-            [null, $choice->getId()],
+            [$choice->getId()],
             array_column($this->request('GET')['questions'][0]['choices'], 'id')
         );
         $this->expectException(Exception::class);
@@ -108,17 +118,36 @@ class QuestionControllerTest extends TestCase
 
     public function testQuestionActionsKeepTheMiddlewareAnalysisBoundary(): void
     {
-        $foreign = (new Question())->setAnr($this->other)->setType(1)->setMode(1)->setPosition(1);
+        $foreign = (new Question())->setAnr($this->other)->setType(Question::TYPE_SINGLE)->setMode(1)->setPosition(1);
         $this->env->questions->save($foreign);
         foreach (['GET', 'PUT', 'PATCH', 'DELETE'] as $method) {
             try {
-                $this->request($method, $foreign->getId(), ['label1' => 'Changed', 'anr' => 2]);
+                $this->request($method, $foreign->getId(), ['label3' => 'Changed', 'anr' => 2]);
                 self::fail('A record from another analysis must remain inaccessible.');
             } catch (EntityNotFoundException $error) {
                 self::assertStringContainsString('analysis ID 1', $error->getMessage());
             }
         }
         self::assertSame(1, $this->env->questions->countAll());
+    }
+
+    public function testPatchValidatesAnalysisLanguageAndResponseWithoutRequiringAbsentFields(): void
+    {
+        $id = $this->env->service->create($this->anr, ['label3' => 'Original'])->getId();
+        $this->request('PATCH', $id, ['response' => 0]);
+        $this->request('PATCH', $id, ['label3' => '  Updated  ']);
+        $updated = $this->request('GET', $id);
+        self::assertSame('0', $updated['response']);
+        self::assertSame('Updated', $updated['label3']);
+        try {
+            $this->request('PATCH', $id, ['response' => [], 'label3' => 'Invalid']);
+            self::fail('Invalid PATCH must fail before mutation.');
+        } catch (Exception $error) {
+            self::assertSame(400, $error->getCode());
+        }
+        $unchanged = $this->request('GET', $id);
+        self::assertSame('0', $unchanged['response']);
+        self::assertSame('Updated', $unchanged['label3']);
     }
 
     public function testOnlyTheQuestionRouteRemainsRegisteredAndAuthorized(): void
@@ -135,10 +164,12 @@ class QuestionControllerTest extends TestCase
 
     public function testCreateValidatesTheSimplePayloadOnce(): void
     {
-        $data = ['label1' => 'Question', 'type' => 1];
+        $data = ['label3' => 'Question', 'type' => Question::TYPE_SINGLE];
         $questionDataInputValidator = $this->createMock(QuestionDataInputValidator::class);
-        $questionDataInputValidator->expects(self::once())->method('validate')->with($data)
-            ->willReturn(['label1' => 'Question']);
+        $questionDataInputValidator->expects(self::once())->method('setDefaultLanguageIndex')->with(3);
+        $questionDataInputValidator->expects(self::once())->method('isValid')->with($data)->willReturn(true);
+        $questionDataInputValidator->expects(self::never())->method('validate');
+        $questionDataInputValidator->method('getValidData')->willReturn(['label3' => 'Question']);
         $controller = new ApiAnrQuestionsController(
             new GetQuestionsInputFormatter(),
             $questionDataInputValidator,
@@ -149,15 +180,25 @@ class QuestionControllerTest extends TestCase
         self::assertSame(1, $this->env->questions->countAll());
     }
 
-    public function testInvalidContentIsRejectedBeforePersistence(): void
+    /** @dataProvider invalidLabels */
+    public function testInvalidContentIsRejectedBeforePersistence(array $data): void
     {
         $this->expectException(Exception::class);
-        $this->expectExceptionCode(412);
+        $this->expectExceptionCode(400);
         try {
-            $this->request('POST', null, ['label1' => []]);
+            $this->request('POST', null, $data);
         } finally {
             self::assertSame(0, $this->env->questions->countAll());
         }
+    }
+
+    public static function invalidLabels(): array
+    {
+        return [
+            [['label3' => []]],
+            [['label1' => 'A translation does not replace the analysis-language label']],
+            [['label3' => '   ']],
+        ];
     }
 
     /** @dataProvider unsupportedMethods */
@@ -165,6 +206,15 @@ class QuestionControllerTest extends TestCase
     {
         $response = $this->controller()->handle($this->serverRequest($method));
         self::assertSame(405, $response->getStatusCode());
+    }
+
+    public function testCollectionDeleteReturns405AndKeepsTheQuestion(): void
+    {
+        $question = $this->env->service->create($this->anr, ['label3' => 'Retained']);
+        $response = $this->controller()->handle($this->serverRequest('DELETE', data: [$question->getId()]));
+
+        self::assertSame(405, $response->getStatusCode());
+        self::assertSame($question, $this->env->questions->findByIdAndAnr($question->getId(), $this->anr));
     }
 
     public static function unsupportedMethods(): array

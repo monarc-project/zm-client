@@ -34,6 +34,6 @@ class ApiGuidesItemsController extends AbstractRestfulControllerRequestHandler
 
     public function get($id)
     {
-        return $this->getPreparedJsonResponse($this->guideItemService->getEntity((int)$id));
+        return $this->getPreparedJsonResponse($this->guideItemService->getGuideItemData((int)$id));
     }
 }

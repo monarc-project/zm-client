@@ -1,92 +1,65 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Exception\Exception;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Service\AnrRecordPersonalDataService;
+use Monarc\FrontOffice\InputFormatter\Record\GetRecordPersonalDataInputFormatter;
+use Monarc\FrontOffice\Validator\InputValidator\Record\RecordPersonalDataDataInputValidator;
 
-class ApiAnrRecordPersonalDataController extends ApiAnrAbstractController
+class ApiAnrRecordPersonalDataController extends AbstractRestfulControllerRequestHandler
 {
-    protected $name = 'record-personal-data';
-    protected $dependencies = ['anr', 'record', 'dataCategories'];
+    use ControllerRequestResponseHandlerTrait;
 
-    public function __construct(AnrRecordPersonalDataService $anrRecordPersonalDataService)
-    {
-        parent::__construct($anrRecordPersonalDataService);
+    public function __construct(
+        private GetRecordPersonalDataInputFormatter $getRecordPersonalDataInputFormatter,
+        private RecordPersonalDataDataInputValidator $recordPersonalDataDataInputValidator,
+        private AnrRecordPersonalDataService $anrRecordPersonalDataService
+    ) {
     }
 
     public function getList()
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-        $filterAnd = ['anr' => $anrId];
-
-        $service = $this->getService();
-
-        $entities = $service->getList($page, $limit, $order, $filter, $filterAnd);
-        foreach ($entities as $key => $entity) {
-            $this->formatDependencies($entities[$key], $this->dependencies);
-        }
+        $params = $this->getFormattedInputParams($this->getRecordPersonalDataInputFormatter);
 
         return $this->getPreparedJsonResponse([
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            $this->name => $entities,
+            'count' => $this->anrRecordPersonalDataService->getCount($params),
+            'record-personal-data' => $this->anrRecordPersonalDataService->getList($params),
         ]);
     }
 
     public function get($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $entity = $this->getService()->getEntity(['anr' => $anrId, 'id' => $id]);
-
-        $this->formatDependencies($entity, $this->dependencies);
-
-        return $this->getPreparedJsonResponse($entity);
+        return $this->getPreparedJsonResponse($this->anrRecordPersonalDataService->getRecordPersonalDataData(
+            $this->getRequest()->getAttribute('anr'),
+            (int)$id
+        ));
     }
 
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-        $id = $this->getService()->createPersonalData($data);
+        $this->validatePostParams($this->recordPersonalDataDataInputValidator, $data);
+        $data = $this->recordPersonalDataDataInputValidator->getValidData();
+        $recordPersonalData = $this->anrRecordPersonalDataService->create(
+            $this->getRequest()->getAttribute('anr'),
+            $data
+        );
 
-        return $this->getPreparedJsonResponse(['id' => $id]);
+        return $this->getPreparedJsonResponse(['id' => $recordPersonalData->getId()]);
     }
 
     public function update($id, $data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-
-        $this->getService()->updatePersonalData($id, $data);
+        $this->validatePostParams($this->recordPersonalDataDataInputValidator, $data);
+        $data = $this->recordPersonalDataDataInputValidator->getValidData();
+        $this->anrRecordPersonalDataService->update($this->getRequest()->getAttribute('anr'), (int)$id, $data);
 
         return $this->getSuccessfulJsonResponse();
-    }
-
-    public function patch($id, $data)
-    {
-        return $this->methodNotAllowed();
-    }
-
-    public function delete($id)
-    {
-        return $this->methodNotAllowed();
     }
 }

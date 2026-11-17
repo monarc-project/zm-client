@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -46,7 +46,9 @@ class InstanceImportService
         private Processor\OperationalRiskScaleImportProcessor $operationalRiskScaleImportProcessor,
         private Processor\SoaImportProcessor $soaImportProcessor,
         private ImportCacheHelper $importCacheHelper,
-        private Service\AnrRecordService $anrRecordService,
+        private Processor\QuestionImportProcessor $questionImportProcessor,
+        private Processor\InterviewImportProcessor $interviewImportProcessor,
+        private Processor\RecordImportProcessor $recordImportProcessor,
         private Service\AnrSupervisorService $anrSupervisorService,
         private Service\InterestedPartyService $interestedPartyService,
         private Service\ReassessmentTriggerService $reassessmentTriggerService,
@@ -137,6 +139,10 @@ class InstanceImportService
         }
 
         $this->anrTable->flush();
+        // Choice IDs now exist: finalize answers at the same end-of-import boundary.
+        if ($this->questionImportProcessor->completeImport()) {
+            $this->anrTable->flush();
+        }
 
         $result = [];
         foreach ($createdInstances as $instance) {
@@ -154,6 +160,7 @@ class InstanceImportService
         string $importMode
     ): array {
         if ($data['withMethodSteps']) {
+            $this->questionImportProcessor->processQuestionsData($anr, $data['method']);
             /* Process all the method's steps. */
             $this->anrMethodStepImportProcessor->processAnrMethodStepsData($anr, $data['method']);
         }
@@ -170,7 +177,7 @@ class InstanceImportService
         }
         if (!empty($data['interviews'])) {
             /* Process the interviews' data. */
-            $this->anrMethodStepImportProcessor->processInterviewsData($anr, $data['interviews']);
+            $this->interviewImportProcessor->processInterviewsData($anr, $data['interviews']);
         }
         if (!empty($data['interestedParties'])) {
             $this->interestedPartyService->processForImport($anr, $data['interestedParties'], $importMode === 'merge');
@@ -211,12 +218,7 @@ class InstanceImportService
         }
 
         /* import the GDPR records. */
-        foreach ($data['gdprRecords'] ?? [] as $gdprRecordData) {
-            try {
-                $this->anrRecordService->importFromArray($gdprRecordData, $anr->getId());
-            } catch (\Throwable) {
-            }
-        }
+        $this->recordImportProcessor->processRecordsData($anr, $data['gdprRecords'] ?? []);
 
         // TODO: add recommendationHistory to the export and process them.
 
@@ -265,6 +267,11 @@ class InstanceImportService
     ): array {
         /* Import the method steps. */
         if (!empty($data['method'])) {
+            $this->questionImportProcessor->processQuestionsData($anr, $data['method']);
+            $this->interviewImportProcessor->processInterviewsData(
+                $anr,
+                is_array($data['method']['interviews'] ?? null) ? $data['method']['interviews'] : []
+            );
             $this->anrMethodStepImportProcessor->processAnrMethodStepsData($anr, $data['method']);
         }
 
@@ -310,11 +317,7 @@ class InstanceImportService
         }
 
         /* Import the GDPR records. */
-        if (!empty($data['records'])) {
-            foreach ($data['records'] as $v) {
-                $this->anrRecordService->importFromArray($v, $anr->getId());
-            }
-        }
+        $this->recordImportProcessor->processRecordsData($anr, $data['records'] ?? []);
 
         /* Import AnrInstanceMetadataFields. */
         if (!empty($data['anrMetadatasOnInstances'])) {

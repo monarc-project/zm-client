@@ -7,11 +7,13 @@
 
 namespace Monarc\FrontOffice\Service;
 
+use LogicException;
 use Monarc\Core\Entity\UserSuperClass;
-use Monarc\Core\Entity\AnrSuperClass;
+use Monarc\FrontOffice\Entity\Anr;
 use Monarc\Core\Exception\Exception;
 use Monarc\Core\InputFormatter\FormattedInputParams;
 use Monarc\Core\Service\ConnectedUserService;
+use Monarc\Core\Service\Traits\PositionUpdateTrait;
 use Monarc\FrontOffice\Entity\Question;
 use Monarc\FrontOffice\Entity\QuestionChoice;
 use Monarc\FrontOffice\Table\QuestionChoiceTable;
@@ -19,6 +21,8 @@ use Monarc\FrontOffice\Table\QuestionTable;
 
 class AnrQuestionService
 {
+    use PositionUpdateTrait;
+
     private UserSuperClass $connectedUser;
 
     public function __construct(
@@ -29,161 +33,106 @@ class AnrQuestionService
         $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function getList(FormattedInputParams $params, ?AnrSuperClass $anr = null): array
+    public function getList(FormattedInputParams $params): array
     {
+        if (!$params->hasFilterFor('anr')) {
+            throw new LogicException('Analysis filter is required');
+        }
+
         return array_map(
             fn ($question): array => $this->serialize($question, true),
-            $this->questionTable->findByParams($this->scopedParams($params, $anr))
+            $this->questionTable->findByParams($params)
         );
     }
 
-    public function getCount(FormattedInputParams $params, ?AnrSuperClass $anr = null): int
+    public function getCount(FormattedInputParams $params): int
     {
-        return $this->questionTable->countByParams($this->scopedParams($params, $anr));
+        if (!$params->hasFilterFor('anr')) {
+            throw new LogicException('Analysis filter is required');
+        }
+
+        return $this->questionTable->countByParams($params);
     }
 
-    public function getEntity(int $id, ?AnrSuperClass $anr = null): array
+    public function getQuestionData(Anr $anr, int $id): array
     {
         return $this->serialize($this->questionTable->findByIdAndAnr($id, $anr));
     }
 
     public function serialize(Question $question, bool $withChoices = false): array
     {
-        $data = array_merge($this->content($question), [
-            'type' => $question->getType(), 'multichoice' => (int)$question->isMultiChoice(),
+        $questionData = array_merge($this->content($question), [
+            'type' => $question->getType(),
+            'multichoice' => (int)$question->isMultiChoice(),
             // Legacy JSON represented the collection as an object; choices is the populated list field.
             'questionChoices' => new \stdClass(),
         ]);
-        $data += ['mode' => $question->getMode(), 'response' => $question->getResponse()];
+        $questionData += ['mode' => $question->getMode(), 'response' => $question->getResponse()];
 
-        if ($withChoices && $question->getType() === 2) {
-            $data['choices'] = array_map(function ($choice): array {
+        if ($withChoices && $question->getType() === Question::TYPE_CHOICE) {
+            $questionData['choices'] = array_map(function ($choice): array {
                 return array_merge($this->content($choice), ['question' => new \stdClass()]);
             }, $this->questionChoiceTable->findChoicesOfQuestion($question));
-            if (!$question->isMultiChoice()) {
-                $data['choices'] = array_merge([[
-                    'id' => null, 'label1' => null, 'label2' => null, 'label3' => null, 'label4' => null,
-                    'position' => null, 'question' => null, 'anr' => null,
-                    'creator' => null, 'createdAt' => null, 'updater' => null, 'updatedAt' => null,
-                ]], $data['choices']);
-            }
         }
 
-        return $data;
+        return $questionData;
     }
 
-    public function create(array $data, ?AnrSuperClass $anr = null): int
+    public function create(Anr $anr, array $data): Question
     {
-        $position = count($this->questionTable->findOrderedQuestions($anr)) + 1;
-        if ($position > 65535) {
-            throw new Exception('Too many records', 412);
-        }
-        $question = (new Question())->setAnr($anr)->setType(1)->setIsMultiChoice(false)->setMode(1)
-            ->setPosition($position);
-
-        $this->applyData($question, $data);
-        $question->setCreator($this->connectedUser->getEmail());
+        $question = (new Question())
+            ->setAnr($anr)
+            ->setMode(Question::MODE_LOCALLY_CREATED)
+            ->setResponse($data['response'] ?? null)
+            ->setType(Question::TYPE_SINGLE)
+            ->setIsMultiChoice(false)
+            ->setLabels($data)
+            ->setCreator($this->connectedUser->getEmail());
+        $this->updatePositions($question, $this->questionTable);
         $this->questionTable->save($question);
 
-        return $question->getId();
+        return $question;
     }
 
-    public function update(int $id, array $data, ?AnrSuperClass $anr = null): void
+    public function update(Anr $anr, int $id, array $data): void
     {
         $question = $this->questionTable->findByIdAndAnr($id, $anr);
-        if ($question->getMode() === 0) {
-            $data = array_intersect_key($data, ['response' => true]);
-        } else {
-            $data = array_intersect_key($data, array_flip(['label1', 'label2', 'label3', 'label4', 'response']));
+        if ($question->getMode() === Question::MODE_LOCALLY_CREATED) {
+            $question->setLabels($data);
         }
-
-        $this->validateResponse($question, $data);
-        $this->applyData($question, $data);
+        if (array_key_exists('response', $data)) {
+            $question->setResponse($data['response']);
+        }
         $question->setUpdater($this->connectedUser->getEmail());
 
         $this->questionTable->save($question);
     }
 
-    public function delete(int $id, ?AnrSuperClass $anr = null): void
+    public function delete(Anr $anr, int $id): void
     {
-        $this->deleteList([$id], $anr);
+        $question = $this->questionTable->findByIdAndAnr($id, $anr);
+        if ($question->getMode() !== Question::MODE_LOCALLY_CREATED) {
+            throw new Exception('Delete question is not possible', 412);
+        }
+        foreach ($this->questionChoiceTable->findChoicesOfQuestion($question) as $questionChoice) {
+            $question->removeQuestionChoice($questionChoice);
+            $this->questionChoiceTable->remove($questionChoice, false);
+        }
+        $this->shiftPositionsForRemovingEntity($question, $this->questionTable);
+        $this->questionTable->remove($question);
     }
 
-    public function deleteList(array $ids, ?AnrSuperClass $anr = null): void
+    private function content(Question|QuestionChoice $questionOrChoice): array
     {
-        $questions = array_map(fn ($id) => $this->questionTable->findByIdAndAnr($id, $anr), $ids);
-        foreach ($questions as $question) {
-            if ($question->getMode() === 0) {
-                throw new Exception('Delete question is not possible', 412);
-            }
-        }
-        foreach ($questions as $question) {
-            foreach ($this->questionChoiceTable->findChoicesOfQuestion($question) as $choice) {
-                $question->removeQuestionChoice($choice);
-                $this->questionChoiceTable->remove($choice, false);
-            }
-            $this->questionTable->remove($question, false);
-        }
-        $this->numberQuestions(array_values(array_filter(
-            $this->questionTable->findOrderedQuestions($anr),
-            fn ($question): bool => !in_array($question->getId(), $ids, true)
-        )));
-        $this->questionTable->flush();
-    }
-
-    private function applyData(Question $question, array $data): void
-    {
-        $question->setLabels($data);
-        if (array_key_exists('response', $data)) {
-            $question->setResponse($data['response']);
-        }
-    }
-
-    private function validateResponse(Question $question, array $data): void
-    {
-        if ($question->getType() !== 2 || !isset($data['response']) || $data['response'] === '') {
-            return;
-        }
-        $ids = $question->isMultiChoice() ? json_decode($data['response'], true) : [$data['response']];
-        if (!is_array($ids) || !array_is_list($ids)) {
-            throw new Exception('Invalid response', 412);
-        }
-        // A null selection is represented as the string "null" by the existing client.
-        if (!$question->isMultiChoice() && $data['response'] === 'null') {
-            return;
-        }
-        $ids = array_map('intval', $ids);
-        $choices = $this->questionChoiceTable->findChoicesOfQuestion($question);
-        $allowed = array_map(fn ($choice): int => $choice->getId(), $choices);
-        if (array_diff($ids, $allowed) !== []) {
-            throw new Exception('Response must belong to the same question', 412);
-        }
-    }
-
-    private function scopedParams(FormattedInputParams $params, ?AnrSuperClass $anr): FormattedInputParams
-    {
-        $params = clone $params;
-        $params->addFilter('anr', ['value' => $anr->getId(), 'operator' => '=']);
-
-        return $params;
-    }
-
-    private function content(Question|QuestionChoice $entity): array
-    {
-        $data = array_merge(['id' => $entity->getId()], $entity->getLabels(), [
-            'position' => $entity->getPosition(), 'creator' => $entity->getCreator(),
-            'createdAt' => $entity->getCreatedAt(), 'updater' => $entity->getUpdater(),
-            'updatedAt' => $entity->getUpdatedAt(),
+        $questionOrChoiceData = array_merge(['id' => $questionOrChoice->getId()], $questionOrChoice->getLabels(), [
+            'position' => $questionOrChoice->getPosition(),
+            'creator' => $questionOrChoice->getCreator(),
+            'createdAt' => $questionOrChoice->getCreatedAt(),
+            'updater' => $questionOrChoice->getUpdater(),
+            'updatedAt' => $questionOrChoice->getUpdatedAt(),
         ]);
-        $data['anr'] = $entity->getAnr() === null ? null : new \stdClass();
+        $questionOrChoiceData['anr'] = new \stdClass();
 
-        return $data;
-    }
-
-    private function numberQuestions(array $records): void
-    {
-        foreach ($records as $index => $record) {
-            $record->setPosition($index + 1);
-        }
+        return $questionOrChoiceData;
     }
 }

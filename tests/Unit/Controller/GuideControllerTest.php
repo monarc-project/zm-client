@@ -31,9 +31,14 @@ class GuideControllerTest extends TestCase
         $connectedUserService->method('getConnectedUser')->willReturn(GuideTestEnvironment::user());
         $this->env = new GuideTestEnvironment($connectedUserService);
         $this->guide = $this->env->guideService->create([
-            'type' => 1, 'isWithItems' => 1, 'description3' => 'Context guide',
-        ]);
-        $this->item = $this->env->itemService->create(['guide' => $this->guide, 'description3' => 'Guide item']);
+            'type' => 1,
+            'isWithItems' => 1,
+            'description3' => 'Context guide',
+        ])->getId();
+        $this->item = $this->env->itemService->create([
+            'guide' => $this->guide,
+            'description3' => 'Guide item',
+        ])->getId();
     }
 
     protected function tearDown(): void
@@ -60,13 +65,16 @@ class GuideControllerTest extends TestCase
     {
         $id = $single ? ($items ? $this->item : $this->guide) : null;
         $response = $this->controller($items)->handle($this->serverRequest($items, $method, $id)->withParsedBody([
-            'type' => 2, 'isWithItems' => 0, 'guide' => $this->guide, 'description3' => 'Changed',
+            'type' => 2,
+            'isWithItems' => 0,
+            'guide' => $this->guide,
+            'description3' => 'Changed',
         ]));
         self::assertSame(405, $response->getStatusCode());
         self::assertSame(1, $this->env->guides->countAll());
         self::assertSame(1, $this->env->items->countAll());
-        self::assertSame('Context guide', $this->env->guideService->getEntity($this->guide)['description3']);
-        self::assertSame('Guide item', $this->env->itemService->getEntity($this->item)['description3']);
+        self::assertSame('Context guide', $this->env->guideService->getGuideData($this->guide)['description3']);
+        self::assertSame('Guide item', $this->env->itemService->getGuideItemData($this->item)['description3']);
     }
 
     public static function writeCases(): array

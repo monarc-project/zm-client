@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
  * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
@@ -16,15 +16,17 @@ use Monarc\Core\Entity\QuestionSuperClass;
  */
 class Question extends QuestionSuperClass
 {
+    public const MODE_LOCALLY_CREATED = 1;
+
     /**
      * @var Anr
      *
      * @ORM\ManyToOne(targetEntity="Anr")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
+     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
      */
-    protected $anr;
+    protected Anr $anr;
 
     /**
      * @var string
@@ -40,7 +42,12 @@ class Question extends QuestionSuperClass
      */
     protected $mode = 0;
 
-    public function getAnr(): ?Anr
+    public function getImplicitPositionRelationsValues(): array
+    {
+        return ['anr' => $this->anr];
+    }
+
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
