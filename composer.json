@@ -49,7 +49,7 @@
         "ext-openssl": "*",
         "ext-posix": "*",
         "doctrine/doctrine-orm-module": "^6.3",
-        "monarc/core": "^2.15@dev",
+        "monarc/core": "^2.14",
         "robmorgan/phinx": "^0.13.4",
         "laminas/laminas-di": "^3.1",
         "laminas/laminas-mvc": "^3.1",
