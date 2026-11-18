@@ -50,7 +50,6 @@ class InterviewWorkflowTest extends TestCase
 
     public function testEntityMappingAndInheritedLookupContracts(): void
     {
-        self::assertFalse(is_subclass_of(Interview::class, \Monarc\Core\Entity\AbstractEntity::class));
         self::assertFalse(method_exists(Interview::class, 'setId'));
         self::assertFalse(method_exists(Interview::class, 'getInputFilter'));
         $metadata = $this->env->manager->getClassMetadata(Interview::class);

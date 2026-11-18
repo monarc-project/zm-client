@@ -52,7 +52,7 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     /**
      * @var RolfRisk
      *
-     * @ORM\ManyToOne(targetEntity="RolfRisk")
+     * @ORM\ManyToOne(targetEntity="RolfRisk", inversedBy="operationalInstanceRisks")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id", nullable=true)
      * })
@@ -69,7 +69,7 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     /**
      * @var InstanceRiskOwner|null
      *
-     * @ORM\ManyToOne(targetEntity="InstanceRiskOwner")
+     * @ORM\ManyToOne(targetEntity="InstanceRiskOwner", inversedBy="operationalInstanceRisks")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="risk_owner_id", referencedColumnName="id", nullable=true)
      * })

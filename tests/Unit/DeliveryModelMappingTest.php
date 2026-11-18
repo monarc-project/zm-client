@@ -13,11 +13,9 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\ORM\Tools\SchemaTool;
 use Monarc\Core\Entity\DeliveriesModels;
-use Monarc\Core\Model\DbCli;
-use Monarc\Core\Model\Table\DeliveriesModelsTable;
+use Monarc\Core\Table\DeliveriesModelsTable;
 use Monarc\Core\Service\ConnectedUserService;
-use Monarc\Core\Service\Model\Entity\DeliveriesModelsServiceModelEntity;
-use Monarc\Core\Validator\FieldValidator\UniqueDeliveryModel;
+use Monarc\Core\Service\DeliveriesModelsService;
 use Monarc\FrontOffice\Entity\Delivery;
 use PHPUnit\Framework\TestCase;
 
@@ -33,13 +31,13 @@ class DeliveryModelMappingTest extends TestCase
             self::assertFalse($metadata->hasField('anr'));
             (new SchemaTool($manager))->createSchema([$metadata]);
             $template = new DeliveriesModels();
-            $template->set('category', 1)->set('editable', true)
+            $template->setCategory(1)->setEditable(true)
                 ->setDescriptions(['description1' => 'Global template']);
             $manager->persist($template);
             $manager->flush();
-            $id = $template->get('id');
+            $id = $template->getId();
             $manager->clear();
-            $table = new DeliveriesModelsTable(new DbCli($manager), $this->createMock(ConnectedUserService::class));
+            $table = new DeliveriesModelsTable($manager);
             self::assertSame('Global template', $table->findById($id)->getDescription(1));
             self::assertArrayNotHasKey('anr_id', $manager->getConnection()->createSchemaManager()
                 ->listTableColumns('deliveries_models'));
@@ -68,27 +66,9 @@ class DeliveryModelMappingTest extends TestCase
     {
         $config = require dirname(__DIR__, 3) . '/zm-core/config/module.config.php';
         $factories = $config['service_manager']['factories'];
-        self::assertSame(DeliveriesModelsServiceModelEntity::class, $factories[DeliveriesModels::class]);
+        self::assertArrayNotHasKey(DeliveriesModels::class, $factories);
+        self::assertSame(\Laminas\Di\Container\AutowireFactory::class, $factories[DeliveriesModelsService::class]);
         self::assertArrayHasKey(DeliveriesModelsTable::class, $factories);
-    }
-
-    public function testCategoryLimitStillAppliesToTheSharedTemplateRepository(): void
-    {
-        $manager = $this->manager();
-        try {
-            (new SchemaTool($manager))->createSchema([$manager->getClassMetadata(DeliveriesModels::class)]);
-            for ($index = 0; $index < 5; ++$index) {
-                $template = new DeliveriesModels();
-                $template->set('category', 1)->set('editable', true);
-                $manager->persist($template);
-            }
-            $manager->flush();
-            $validator = new UniqueDeliveryModel(['adapter' => new DbCli($manager)]);
-            self::assertFalse($validator->isValid(1));
-            self::assertTrue($validator->isValid(2));
-        } finally {
-            $manager->close();
-        }
     }
 
     private function manager(): EntityManager

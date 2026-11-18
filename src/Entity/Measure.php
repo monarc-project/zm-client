@@ -66,7 +66,7 @@ class Measure extends MeasureSuperClass
     /**
      * @var Referential
      *
-     * @ORM\ManyToOne(targetEntity="Referential")
+     * @ORM\ManyToOne(targetEntity="Referential", inversedBy="measures")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="referential_uuid", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -77,7 +77,7 @@ class Measure extends MeasureSuperClass
     /**
      * @var ArrayCollection|Measure[]
      *
-     * @ORM\ManyToMany(targetEntity="Measure", inversedBy="measures", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="Measure", cascade={"persist"})
      * @ORM\JoinTable(name="measures_measures",
      *   joinColumns={@ORM\JoinColumn(name="master_measure_id", referencedColumnName="id")},
      *   inverseJoinColumns={@ORM\JoinColumn(name="linked_measure_id", referencedColumnName="id")}

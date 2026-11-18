@@ -203,7 +203,7 @@ class AnrRecordService
 
     public function duplicate(Anr $anr, int $id, ?string $label): int
     {
-        $source = $this->recordTable->findByIdAndAnr($id, $anr);
+        $sourceRecord = $this->recordTable->findByIdAndAnr($id, $anr);
         $actors = $categories = $processors = $recipients = [];
         foreach ($this->recordActorTable->findByAnr($anr) as $recordActor) {
             $actors[$recordActor->getId()] = $recordActor;
@@ -217,38 +217,39 @@ class AnrRecordService
         foreach ($this->recordRecipientTable->findByAnr($anr) as $recordRecipient) {
             $recipients[$recordRecipient->getId()] = $recordRecipient;
         }
-        $copy = $this->copyRecord($source, $anr, $actors, $categories, $processors, $recipients)->setLabel($label);
-        $this->recordTable->save($copy);
+        $recordCopy = $this->copyRecord($sourceRecord, $anr, $actors, $categories, $processors, $recipients)
+            ->setLabel($label);
+        $this->recordTable->save($recordCopy);
 
-        return $copy->getId();
+        return $recordCopy->getId();
     }
 
     /** Build new identities and associations; the analysis service keeps its existing flush boundary. */
-    public function copy(Anr $source, Anr $target): void
+    public function copy(Anr $sourceAnr, Anr $targetAnr): void
     {
         $actors = $categories = $processors = $recipients = [];
-        foreach ($this->recordActorTable->findByAnr($source) as $recordActor) {
-            $copy = (new RecordActor())
-                ->setAnr($target)
+        foreach ($this->recordActorTable->findByAnr($sourceAnr) as $recordActor) {
+            $recordActorCopy = (new RecordActor())
+                ->setAnr($targetAnr)
                 ->setCreator($recordActor->getCreator())
                 ->setUpdater($recordActor->getUpdater())
                 ->setLabel($recordActor->getLabel())
                 ->setContact($recordActor->getContact());
-            $this->recordActorTable->save($copy, false);
-            $actors[$recordActor->getId()] = $copy;
+            $this->recordActorTable->save($recordActorCopy, false);
+            $actors[$recordActor->getId()] = $recordActorCopy;
         }
-        foreach ($this->recordDataCategoryTable->findByAnr($source) as $recordDataCategory) {
-            $copy = (new RecordDataCategory())
-                ->setAnr($target)
+        foreach ($this->recordDataCategoryTable->findByAnr($sourceAnr) as $recordDataCategory) {
+            $recordDataCategoryCopy = (new RecordDataCategory())
+                ->setAnr($targetAnr)
                 ->setCreator($recordDataCategory->getCreator())
                 ->setUpdater($recordDataCategory->getUpdater())
                 ->setLabel($recordDataCategory->getLabel());
-            $this->recordDataCategoryTable->save($copy, false);
-            $categories[$recordDataCategory->getId()] = $copy;
+            $this->recordDataCategoryTable->save($recordDataCategoryCopy, false);
+            $categories[$recordDataCategory->getId()] = $recordDataCategoryCopy;
         }
-        foreach ($this->recordProcessorTable->findByAnr($source) as $recordProcessor) {
-            $copy = (new RecordProcessor())
-                ->setAnr($target)
+        foreach ($this->recordProcessorTable->findByAnr($sourceAnr) as $recordProcessor) {
+            $recordProcessorCopy = (new RecordProcessor())
+                ->setAnr($targetAnr)
                 ->setCreator($recordProcessor->getCreator())
                 ->setUpdater($recordProcessor->getUpdater())
                 ->setLabel($recordProcessor->getLabel())
@@ -256,29 +257,31 @@ class AnrRecordService
                 ->setActivities($recordProcessor->getActivities())
                 ->setSecMeasures($recordProcessor->getSecMeasures());
             if ($recordProcessor->getRepresentative() !== null) {
-                $copy->setRepresentative($actors[$recordProcessor->getRepresentative()->getId()] ?? null);
+                $recordProcessorCopy->setRepresentative(
+                    $actors[$recordProcessor->getRepresentative()->getId()] ?? null
+                );
             }
             if ($recordProcessor->getDpo() !== null) {
-                $copy->setDpo($actors[$recordProcessor->getDpo()->getId()] ?? null);
+                $recordProcessorCopy->setDpo($actors[$recordProcessor->getDpo()->getId()] ?? null);
             }
-            $this->recordProcessorTable->save($copy, false);
-            $processors[$recordProcessor->getId()] = $copy;
+            $this->recordProcessorTable->save($recordProcessorCopy, false);
+            $processors[$recordProcessor->getId()] = $recordProcessorCopy;
         }
-        foreach ($this->recordRecipientTable->findByAnr($source) as $recordRecipient) {
-            $copy = (new RecordRecipient())
-                ->setAnr($target)
+        foreach ($this->recordRecipientTable->findByAnr($sourceAnr) as $recordRecipient) {
+            $recordRecipientCopy = (new RecordRecipient())
+                ->setAnr($targetAnr)
                 ->setCreator($recordRecipient->getCreator())
                 ->setUpdater($recordRecipient->getUpdater())
                 ->setLabel($recordRecipient->getLabel())
                 ->setType($recordRecipient->getType())
                 ->setDescription($recordRecipient->getDescription());
-            $this->recordRecipientTable->save($copy, false);
-            $recipients[$recordRecipient->getId()] = $copy;
+            $this->recordRecipientTable->save($recordRecipientCopy, false);
+            $recipients[$recordRecipient->getId()] = $recordRecipientCopy;
         }
-        foreach ($this->recordTable->findByAnr($source) as $record) {
+        foreach ($this->recordTable->findByAnr($sourceAnr) as $record) {
             $this->copyRecord(
                 $record,
-                $target,
+                $targetAnr,
                 $actors,
                 $categories,
                 $processors,
@@ -288,56 +291,56 @@ class AnrRecordService
     }
 
     private function copyRecord(
-        Record $source,
-        Anr $target,
+        Record $sourceRecord,
+        Anr $targetAnr,
         array $actors,
         array $categories,
         array $processorMap,
         array $recipientMap
     ): Record {
-        $copy = (new Record())
-            ->setAnr($target)
-            ->setLabel($source->getLabel())
-            ->setPurposes($source->getPurposes())
-            ->setSecMeasures($source->getSecMeasures())
-            ->setCreator($source->getCreator())
-            ->setUpdater($source->getUpdater());
-        if ($source->getController() !== null) {
-            $copy->setController($actors[$source->getController()->getId()] ?? null);
+        $recordCopy = (new Record())
+            ->setAnr($targetAnr)
+            ->setLabel($sourceRecord->getLabel())
+            ->setPurposes($sourceRecord->getPurposes())
+            ->setSecMeasures($sourceRecord->getSecMeasures())
+            ->setCreator($sourceRecord->getCreator())
+            ->setUpdater($sourceRecord->getUpdater());
+        if ($sourceRecord->getController() !== null) {
+            $recordCopy->setController($actors[$sourceRecord->getController()->getId()] ?? null);
         }
-        if ($source->getRepresentative() !== null) {
-            $copy->setRepresentative($actors[$source->getRepresentative()->getId()] ?? null);
+        if ($sourceRecord->getRepresentative() !== null) {
+            $recordCopy->setRepresentative($actors[$sourceRecord->getRepresentative()->getId()] ?? null);
         }
-        if ($source->getDpo() !== null) {
-            $copy->setDpo($actors[$source->getDpo()->getId()] ?? null);
+        if ($sourceRecord->getDpo() !== null) {
+            $recordCopy->setDpo($actors[$sourceRecord->getDpo()->getId()] ?? null);
         }
         $jointControllers = [];
-        foreach ($source->getJointControllers() as $jointController) {
+        foreach ($sourceRecord->getJointControllers() as $jointController) {
             if (isset($actors[$jointController->getId()])) {
                 $jointControllers[] = $actors[$jointController->getId()];
             }
         }
-        $copy->setJointControllers($jointControllers);
+        $recordCopy->setJointControllers($jointControllers);
         $processors = [];
-        foreach ($source->getProcessors() as $recordProcessor) {
+        foreach ($sourceRecord->getProcessors() as $recordProcessor) {
             if (isset($processorMap[$recordProcessor->getId()])) {
                 $processors[] = $processorMap[$recordProcessor->getId()];
             }
         }
-        $copy->setProcessors($processors);
+        $recordCopy->setProcessors($processors);
         $recipients = [];
-        foreach ($source->getRecipients() as $recordRecipient) {
+        foreach ($sourceRecord->getRecipients() as $recordRecipient) {
             if (isset($recipientMap[$recordRecipient->getId()])) {
                 $recipients[] = $recipientMap[$recordRecipient->getId()];
             }
         }
-        $copy->setRecipients($recipients);
-        $this->recordTable->save($copy, false);
+        $recordCopy->setRecipients($recipients);
+        $this->recordTable->save($recordCopy, false);
         $personalData = [];
-        foreach ($source->getPersonalData() as $recordPersonalData) {
-            $child = (new RecordPersonalData())
-                ->setAnr($target)
-                ->setRecord($copy)
+        foreach ($sourceRecord->getPersonalData() as $recordPersonalData) {
+            $recordPersonalDataCopy = (new RecordPersonalData())
+                ->setAnr($targetAnr)
+                ->setRecord($recordCopy)
                 ->setCreator($recordPersonalData->getCreator())
                 ->setUpdater($recordPersonalData->getUpdater())
                 ->setDataSubject($recordPersonalData->getDataSubject())
@@ -351,27 +354,27 @@ class AnrRecordService
                     $links[] = $categories[$category->getId()];
                 }
             }
-            $child->setDataCategories($links);
-            $personalData[] = $child;
-            $this->recordPersonalDataTable->save($child, false);
+            $recordPersonalDataCopy->setDataCategories($links);
+            $personalData[] = $recordPersonalDataCopy;
+            $this->recordPersonalDataTable->save($recordPersonalDataCopy, false);
         }
-        $copy->setPersonalData($personalData);
+        $recordCopy->setPersonalData($personalData);
         $transfers = [];
-        foreach ($source->getInternationalTransfers() as $recordInternationalTransfer) {
-            $child = (new RecordInternationalTransfer())
-                ->setAnr($target)
-                ->setRecord($copy)
+        foreach ($sourceRecord->getInternationalTransfers() as $recordInternationalTransfer) {
+            $recordInternationalTransferCopy = (new RecordInternationalTransfer())
+                ->setAnr($targetAnr)
+                ->setRecord($recordCopy)
                 ->setCreator($recordInternationalTransfer->getCreator())
                 ->setUpdater($recordInternationalTransfer->getUpdater())
                 ->setOrganisation($recordInternationalTransfer->getOrganisation())
                 ->setDescription($recordInternationalTransfer->getDescription())
                 ->setCountry($recordInternationalTransfer->getCountry())
                 ->setDocuments($recordInternationalTransfer->getDocuments());
-            $transfers[] = $child;
-            $this->recordInternationalTransferTable->save($child, false);
+            $transfers[] = $recordInternationalTransferCopy;
+            $this->recordInternationalTransferTable->save($recordInternationalTransferCopy, false);
         }
-        $copy->setInternationalTransfers($transfers);
+        $recordCopy->setInternationalTransfers($transfers);
 
-        return $copy;
+        return $recordCopy;
     }
 }

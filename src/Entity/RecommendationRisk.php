@@ -33,7 +33,7 @@ class RecommendationRisk
     /**
      * @var Recommendation
      *
-     * @ORM\ManyToOne(targetEntity="Recommendation")
+     * @ORM\ManyToOne(targetEntity="Recommendation", inversedBy="recommendationRisks")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="recommandation_id", referencedColumnName="uuid"),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
@@ -44,7 +44,7 @@ class RecommendationRisk
     /**
      * @var InstanceRisk
      *
-     * @ORM\ManyToOne(targetEntity="InstanceRisk")
+     * @ORM\ManyToOne(targetEntity="InstanceRisk", inversedBy="recommendationRisks")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_risk_id", referencedColumnName="id", nullable=true)
      * })
@@ -54,7 +54,7 @@ class RecommendationRisk
     /**
      * @var InstanceRiskOp
      *
-     * @ORM\ManyToOne(targetEntity="InstanceRiskOp")
+     * @ORM\ManyToOne(targetEntity="InstanceRiskOp", inversedBy="recommendationRisks")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_risk_op_id", referencedColumnName="id", nullable=true)
      * })

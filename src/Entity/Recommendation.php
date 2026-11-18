@@ -67,7 +67,8 @@ class Recommendation implements PositionedEntityInterface, PropertyStateEntityIn
     /**
      * @var RecommendationSet
      *
-     * @ORM\ManyToOne(targetEntity="RecommendationSet", cascade={"persist"}, fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="RecommendationSet",
+     *     inversedBy="recommendations", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="recommandation_set_uuid", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)

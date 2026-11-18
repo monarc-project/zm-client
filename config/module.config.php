@@ -25,11 +25,8 @@ use Monarc\FrontOffice\CronTask;
 use Monarc\FrontOffice\Export;
 use Monarc\FrontOffice\Import;
 use Monarc\FrontOffice\Middleware\AnrValidationMiddleware;
-use Monarc\FrontOffice\Model\DbCli;
 use Monarc\FrontOffice\Entity;
-use Monarc\FrontOffice\Model\Table as DeprecatedTable;
 use Monarc\FrontOffice\Service;
-use Monarc\FrontOffice\Service\Model\Entity as ModelFactory;
 use Monarc\FrontOffice\Stats;
 use Monarc\FrontOffice\Table;
 use Monarc\FrontOffice\Validator\InputValidator;
@@ -1562,7 +1559,6 @@ return [
     'service_manager' => [
         'factories' => [
             AnrValidationMiddleware::class => AutowireFactory::class,
-            DbCli::class => Service\Model\DbCliFactory::class,
             Table\QuestionTable::class => ClientEntityManagerFactory::class,
             Table\QuestionChoiceTable::class => ClientEntityManagerFactory::class,
             Table\ActionHistoryTable::class => ClientEntityManagerFactory::class,

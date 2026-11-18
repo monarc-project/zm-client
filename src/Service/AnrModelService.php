@@ -8,7 +8,6 @@
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Table as CoreTable;
-use Monarc\Core\Model\Table as CoreDeprecatedTable;
 use Monarc\Core\Entity as CoreEntity;
 use Monarc\FrontOffice\Table;
 

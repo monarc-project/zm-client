@@ -70,8 +70,8 @@ class AnrQuestionService
         $questionData += ['mode' => $question->getMode(), 'response' => $question->getResponse()];
 
         if ($withChoices && $question->getType() === Question::TYPE_CHOICE) {
-            $questionData['choices'] = array_map(function ($choice): array {
-                return array_merge($this->content($choice), ['question' => new \stdClass()]);
+            $questionData['choices'] = array_map(function ($questionChoice): array {
+                return array_merge($this->content($questionChoice), ['question' => new \stdClass()]);
             }, $this->questionChoiceTable->findChoicesOfQuestion($question));
         }
 

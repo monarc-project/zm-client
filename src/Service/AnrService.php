@@ -9,7 +9,6 @@ namespace Monarc\FrontOffice\Service;
 
 use DateTime;
 use Monarc\Core\Entity as CoreEntity;
-use Monarc\Core\Model\Table as CoreDeprecatedTable;
 use Monarc\Core\Table as CoreTable;
 use Monarc\Core\Service as CoreService;
 use Monarc\FrontOffice\Entity;

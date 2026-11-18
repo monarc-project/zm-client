@@ -29,7 +29,7 @@ class Referential extends ReferentialSuperClass
      * @var Anr
      *
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\ManyToOne(targetEntity="Anr", inversedBy="referentials")
      * @ORM\JoinColumns({@ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)})
      */
     protected $anr;

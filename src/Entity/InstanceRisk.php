@@ -95,7 +95,7 @@ class InstanceRisk extends InstanceRiskSuperClass
     /**
      * @var InstanceRiskOwner|null
      *
-     * @ORM\ManyToOne(targetEntity="InstanceRiskOwner")
+     * @ORM\ManyToOne(targetEntity="InstanceRiskOwner", inversedBy="instanceRisks")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="risk_owner_id", referencedColumnName="id", nullable=true)
      * })

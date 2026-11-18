@@ -39,7 +39,7 @@ class RecommendationSet
      /**
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr", fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Anr", inversedBy="recommendationSets", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })

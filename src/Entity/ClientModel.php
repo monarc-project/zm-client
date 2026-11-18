@@ -39,7 +39,7 @@ class ClientModel
     /**
      * @var Client
      *
-     * @ORM\ManyToOne(targetEntity="Client")
+     * @ORM\ManyToOne(targetEntity="Client", inversedBy="clientModels")
      * @ORM\JoinColumns({
      *     @ORM\JoinColumn(name="client_id", referencedColumnName="id")
      * })

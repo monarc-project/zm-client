@@ -27,6 +27,7 @@ class QuestionTable extends AbstractTable implements PositionUpdatableTableInter
     {
         return $this->getRepository()->findBy(['anr' => $anr->getId()], ['position' => 'ASC', 'id' => 'ASC']);
     }
+
     public function findWithChoicesByAnr(Anr $anr): array
     {
         return $this->getRepository()->createQueryBuilder('question')

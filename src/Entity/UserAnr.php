@@ -42,7 +42,7 @@ class UserAnr
     /**
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\ManyToOne(targetEntity="Anr", inversedBy="usersAnrsPermissions")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })

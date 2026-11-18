@@ -101,14 +101,14 @@ class AnrInterviewService
 
     public function copy(Anr $sourceAnr, Anr $targetAnr): void
     {
-        foreach ($this->interviewTable->findByAnr($sourceAnr) as $source) {
+        foreach ($this->interviewTable->findByAnr($sourceAnr) as $sourceInterview) {
             $interview = (new Interview())
                 ->setAnr($targetAnr)
-                ->setDate($source->getDate())
-                ->setService($source->getService())
-                ->setContent($source->getContent())
-                ->setCreator($source->getCreator())
-                ->setUpdater($source->getUpdater());
+                ->setDate($sourceInterview->getDate())
+                ->setService($sourceInterview->getService())
+                ->setContent($sourceInterview->getContent())
+                ->setCreator($sourceInterview->getCreator())
+                ->setUpdater($sourceInterview->getUpdater());
             $this->interviewTable->save($interview, false);
         }
     }

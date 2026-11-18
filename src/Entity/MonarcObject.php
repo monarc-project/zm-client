@@ -35,7 +35,7 @@ class MonarcObject extends ObjectSuperClass
      * @var Anr
      *
      * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\ManyToOne(targetEntity="Anr", inversedBy="objects")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
@@ -45,7 +45,7 @@ class MonarcObject extends ObjectSuperClass
     /**
      * @var Asset
      *
-     * @ORM\ManyToOne(targetEntity="Asset")
+     * @ORM\ManyToOne(targetEntity="Asset", inversedBy="objects")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -59,7 +59,7 @@ class MonarcObject extends ObjectSuperClass
      *
      * @var ArrayCollection|ObjectSuperClass[]
      *
-     * @ORM\ManyToMany(targetEntity="MonarcObject")
+     * @ORM\ManyToMany(targetEntity="MonarcObject", inversedBy="parents")
      * @ORM\JoinTable(name="objects_objects",
      *  joinColumns={
      *     @ORM\JoinColumn(name="father_id", referencedColumnName="uuid"),

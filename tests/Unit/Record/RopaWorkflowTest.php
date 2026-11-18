@@ -46,7 +46,6 @@ class RopaWorkflowTest extends TestCase
         foreach (['Record', 'RecordActor', 'RecordDataCategory', 'RecordPersonalData', 'RecordProcessor',
             'RecordRecipient', 'RecordInternationalTransfer'] as $name) {
             $class = 'Monarc\\FrontOffice\\Entity\\' . $name;
-            self::assertFalse(is_subclass_of($class, \Monarc\Core\Entity\AbstractEntity::class));
             self::assertFalse(method_exists($class, 'setId'));
             self::assertFalse(method_exists($class, 'getInputFilter'));
             self::assertSame([], (new SchemaValidator($this->env->manager))

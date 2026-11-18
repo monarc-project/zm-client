@@ -24,7 +24,7 @@ class ObjectCategory extends ObjectCategorySuperClass
     /**
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\ManyToOne(targetEntity="Anr", inversedBy="objectCategories")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
      * })

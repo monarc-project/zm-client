@@ -35,7 +35,7 @@ class InstanceMetadata
     /**
      * @var Instance
      *
-     * @ORM\ManyToOne(targetEntity="Instance")
+     * @ORM\ManyToOne(targetEntity="Instance", inversedBy="instanceMetadata")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=false)
      * })
@@ -45,7 +45,7 @@ class InstanceMetadata
     /**
      * @var AnrInstanceMetadataField
      *
-     * @ORM\ManyToOne(targetEntity="AnrInstanceMetadataField")
+     * @ORM\ManyToOne(targetEntity="AnrInstanceMetadataField", inversedBy="instancesMetadata")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="metadata_id", referencedColumnName="id", nullable=false)
      * })

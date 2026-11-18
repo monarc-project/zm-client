@@ -232,9 +232,9 @@ class Record
     public function setJointControllers(iterable $jointControllers): self
     {
         $this->jointControllers->clear();
-        foreach ($jointControllers as $entity) {
-            if (!$this->jointControllers->contains($entity)) {
-                $this->jointControllers->add($entity);
+        foreach ($jointControllers as $recordActor) {
+            if (!$this->jointControllers->contains($recordActor)) {
+                $this->jointControllers->add($recordActor);
             }
         }
 
@@ -272,9 +272,9 @@ class Record
     public function setRecipients(iterable $recipients): self
     {
         $this->recipients->clear();
-        foreach ($recipients as $entity) {
-            if (!$this->recipients->contains($entity)) {
-                $this->recipients->add($entity);
+        foreach ($recipients as $recordRecipient) {
+            if (!$this->recipients->contains($recordRecipient)) {
+                $this->recipients->add($recordRecipient);
             }
         }
 
@@ -312,43 +312,37 @@ class Record
     public function setProcessors(iterable $processors): self
     {
         $this->processors->clear();
-        foreach ($processors as $entity) {
-            if (!$this->processors->contains($entity)) {
-                $this->processors->add($entity);
+        foreach ($processors as $recordProcessor) {
+            if (!$this->processors->contains($recordProcessor)) {
+                $this->processors->add($recordProcessor);
             }
         }
 
         return $this;
     }
 
-    public function addJointController(RecordActor $entity): self
+    public function addJointController(RecordActor $recordActor): self
     {
-        if (!$this->jointControllers->contains($entity)) {
-            if (!$this->jointControllers->contains($entity)) {
-                $this->jointControllers->add($entity);
-            }
+        if (!$this->jointControllers->contains($recordActor)) {
+            $this->jointControllers->add($recordActor);
         }
 
         return $this;
     }
 
-    public function addRecipientCategory(RecordRecipient $entity): self
+    public function addRecipientCategory(RecordRecipient $recordRecipient): self
     {
-        if (!$this->recipients->contains($entity)) {
-            if (!$this->recipients->contains($entity)) {
-                $this->recipients->add($entity);
-            }
+        if (!$this->recipients->contains($recordRecipient)) {
+            $this->recipients->add($recordRecipient);
         }
 
         return $this;
     }
 
-    public function addProcessor(RecordProcessor $entity): self
+    public function addProcessor(RecordProcessor $recordProcessor): self
     {
-        if (!$this->processors->contains($entity)) {
-            if (!$this->processors->contains($entity)) {
-                $this->processors->add($entity);
-            }
+        if (!$this->processors->contains($recordProcessor)) {
+            $this->processors->add($recordProcessor);
         }
 
         return $this;

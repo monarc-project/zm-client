@@ -143,9 +143,9 @@ class RecordPersonalData
     public function setDataCategories(iterable $dataCategories): self
     {
         $this->dataCategories->clear();
-        foreach ($dataCategories as $entity) {
-            if (!$this->dataCategories->contains($entity)) {
-                $this->dataCategories->add($entity);
+        foreach ($dataCategories as $recordDataCategory) {
+            if (!$this->dataCategories->contains($recordDataCategory)) {
+                $this->dataCategories->add($recordDataCategory);
             }
         }
 

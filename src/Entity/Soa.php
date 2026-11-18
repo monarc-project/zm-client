@@ -40,7 +40,7 @@ class Soa
     /**
      * @var Measure
      *
-     * @ORM\OneToOne(targetEntity="Measure")
+     * @ORM\OneToOne(targetEntity="Measure", inversedBy="soa")
      * @ORM\JoinColumns({@ORM\JoinColumn(name="measure_id", referencedColumnName="id", nullable=true)})
      */
     protected $measure;
@@ -118,7 +118,7 @@ class Soa
     /**
      * @var SoaScaleComment
      *
-     * @ORM\ManyToOne(targetEntity="SoaScaleComment")
+     * @ORM\ManyToOne(targetEntity="SoaScaleComment", inversedBy="soas")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="soa_scale_comment_id", referencedColumnName="id", nullable=true)
      * })

@@ -15,7 +15,7 @@ use Monarc\Core\Entity\OperationalRiskScaleSuperClass;
 use Monarc\Core\Entity\ScaleImpactTypeSuperClass;
 use Monarc\Core\Entity\ScaleSuperClass;
 use Monarc\Core\Entity\UserSuperClass;
-use Monarc\Core\Model\Table\DeliveriesModelsTable;
+use Monarc\Core\Service\DeliveriesModelsService;
 use Monarc\Core\Service as CoreService;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Table\RecordTable;
@@ -171,7 +171,7 @@ class DeliverableGenerationService
         private Table\ClientTable $clientTable,
         private Table\MeasureTable $measureTable,
         private RecordTable $recordTable,
-        private DeliveriesModelsTable $deliveriesModelsTable,
+        private DeliveriesModelsService $deliveriesModelsService,
         private OperationalRiskScaleService $operationalRiskScaleService,
         private AnrQuestionService $anrQuestionService,
         private AnrInterviewService $anrInterviewService,
@@ -236,8 +236,6 @@ class DeliverableGenerationService
         $this->currentOutputFormat = $outputFormat;
         $this->setStyles();
 
-        $deliveryModel = $this->deliveriesModelsTable->findById((int)$data['template']);
-
         $values = [
             'txt' => [
                 self::VERSION => htmlspecialchars($delivery->getVersion()),
@@ -258,21 +256,11 @@ class DeliverableGenerationService
             ],
         ];
 
-        $pathModel = (getenv('APP_CONF_DIR') ?: '') . $deliveryModel->getPath($this->currentLangAnrIndex);
-        if (!file_exists($pathModel)) {
-            /* if template not available in the language of the ANR, use the default template of the category. */
-            $pathModel = getenv('APP_CONF_DIR') ?? '';
-            $deliveryModel = current(
-                $this->deliveriesModelsTable->getEntityByFields([
-                    'category' => $docType,
-                    'path2' => ['op' => 'IS NOT', 'value' => null],
-                ])
-            );
-            $pathModel .= $deliveryModel->path2;
-            if (!file_exists($pathModel)) {
-                throw new Exception('Model not found "' . $pathModel . '"');
-            }
-        }
+        $pathModel = $this->deliveriesModelsService->getGenerationPath(
+            (int)$data['template'],
+            $this->currentLangAnrIndex,
+            $docType
+        );
 
         $referentialUuid = $data['referential'] ?? null;
         $risksByControl = $data['risksByControl'] ?? false;
@@ -1608,7 +1596,7 @@ class DeliverableGenerationService
                     }
                 }
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip($size), $style)
-                    ->addText($result, $this->boldFont, $this->centerParagraph);
+                    ->addText($result ?? '', $this->boldFont, $this->centerParagraph);
             }
         }
 
@@ -2024,15 +2012,15 @@ class DeliverableGenerationService
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($riskSourceWidth), $this->vAlignCenterCell)
                             ->addText(_WT($r['riskSource']), $auditInfoNormalFont, $riskSourceParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($impactWidth), $this->vAlignCenterCell)
-                            ->addText($r['impactC'], $auditInfoNormalFont, $auditInfoCenterParagraph);
+                            ->addText($r['impactC'] ?? '', $auditInfoNormalFont, $auditInfoCenterParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($impactWidth), $this->vAlignCenterCell)
-                            ->addText($r['impactI'], $auditInfoNormalFont, $auditInfoCenterParagraph);
+                            ->addText($r['impactI'] ?? '', $auditInfoNormalFont, $auditInfoCenterParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($impactWidth), $this->vAlignCenterCell)
-                            ->addText($r['impactA'], $auditInfoNormalFont, $auditInfoCenterParagraph);
+                            ->addText($r['impactA'] ?? '', $auditInfoNormalFont, $auditInfoCenterParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($threatLabelWidth), $this->vAlignCenterCell)
                             ->addText(_WT($r['threat']), $auditInfoNormalFont, $threatParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($threatRateWidth), $this->vAlignCenterCell)
-                            ->addText($r['threatRate'], $auditInfoNormalFont, $auditInfoCenterParagraph);
+                            ->addText($r['threatRate'] ?? '', $auditInfoNormalFont, $auditInfoCenterParagraph);
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($vulnerabilityLabelWidth),
                             $this->vAlignCenterCell
@@ -2042,19 +2030,19 @@ class DeliverableGenerationService
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($vulnerabilityRateWidth),
                             $this->vAlignCenterCell
-                        )->addText($r['vulRate'], $auditInfoNormalFont, $auditInfoCenterParagraph);
+                        )->addText($r['vulRate'] ?? '', $auditInfoNormalFont, $auditInfoCenterParagraph);
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($currentRiskWidth),
                             $this->setBgColorCell($r['riskC'])
-                        )->addText($r['riskC'], $auditInfoBoldFont, $auditInfoCenterParagraph);
+                        )->addText($r['riskC'] ?? '', $auditInfoBoldFont, $auditInfoCenterParagraph);
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($currentRiskWidth),
                             $this->setBgColorCell($r['riskI'])
-                        )->addText($r['riskI'], $auditInfoBoldFont, $auditInfoCenterParagraph);
+                        )->addText($r['riskI'] ?? '', $auditInfoBoldFont, $auditInfoCenterParagraph);
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($currentRiskWidth),
                             $this->setBgColorCell($r['riskA'])
-                        )->addText($r['riskA'], $auditInfoBoldFont, $auditInfoCenterParagraph);
+                        )->addText($r['riskA'] ?? '', $auditInfoBoldFont, $auditInfoCenterParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($treatmentWidth), $this->vAlignCenterCell)
                             ->addText($this->anrTranslate(
                                 $r['treatmentName']
@@ -2062,7 +2050,7 @@ class DeliverableGenerationService
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($targetRiskWidth),
                             $this->setBgColorCell($r['targetRisk'])
-                        )->addText($r['targetRisk'], $auditInfoBoldFont, $auditInfoCenterParagraph);
+                        )->addText($r['targetRisk'] ?? '', $auditInfoBoldFont, $auditInfoCenterParagraph);
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($lastReviewDateWidth),
                             $this->vAlignCenterCell
@@ -2439,7 +2427,7 @@ class DeliverableGenerationService
                             ->addText(_WT($r['label']), $this->normalFont, $this->leftParagraph);
                         if ($this->anr->showRolfBrut()) {
                             $table->addCell(PhpWord\Shared\Converter::cmToTwip($opRiskProbabilityWidth), $this->vAlignCenterCell)
-                                ->addText($r['brutProb'], $this->normalFont, $this->centerParagraph);
+                                ->addText($r['brutProb'] ?? '', $this->normalFont, $this->centerParagraph);
                             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                 $table->addCell(
                                     PhpWord\Shared\Converter::cmToTwip($opRiskScaleCellWidth),
@@ -2454,10 +2442,10 @@ class DeliverableGenerationService
                             $table->addCell(
                                 PhpWord\Shared\Converter::cmToTwip($opRiskCurrentWidth),
                                 $this->setBgColorCell($r['brutRisk'], false)
-                            )->addText($r['brutRisk'], $this->boldFont, $this->centerParagraph);
+                            )->addText($r['brutRisk'] ?? '', $this->boldFont, $this->centerParagraph);
                         }
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($opRiskProbabilityWidth), $this->vAlignCenterCell)
-                            ->addText($r['netProb'], $this->normalFont, $this->centerParagraph);
+                            ->addText($r['netProb'] ?? '', $this->normalFont, $this->centerParagraph);
                         foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                             $table->addCell(
                                 PhpWord\Shared\Converter::cmToTwip($opRiskScaleCellWidth),
@@ -2472,7 +2460,7 @@ class DeliverableGenerationService
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($opRiskCurrentWidth),
                             $this->setBgColorCell($r['netRisk'], false)
-                        )->addText($r['netRisk'], $this->boldFont, $this->centerParagraph);
+                        )->addText($r['netRisk'] ?? '', $this->boldFont, $this->centerParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($opExistingControlsWidth), $this->vAlignCenterCell)
                             ->addText(_WT($r['comment']), $this->normalFont, $this->leftParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($opTreatmentWidth), $this->vAlignCenterCell)

@@ -33,7 +33,7 @@ class ObjectObject extends ObjectObjectSuperClass
     /**
      * @var MonarcObject
      *
-     * @ORM\ManyToOne(targetEntity="MonarcObject", fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="MonarcObject", inversedBy="childrenLinks", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="father_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -44,7 +44,7 @@ class ObjectObject extends ObjectObjectSuperClass
     /**
      * @var MonarcObject
      *
-     * @ORM\ManyToOne(targetEntity="MonarcObject", fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="MonarcObject", inversedBy="parentsLinks", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="child_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)

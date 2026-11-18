@@ -26,7 +26,7 @@ class Instance extends InstanceSuperClass
     /**
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\ManyToOne(targetEntity="Anr", inversedBy="instances")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
      * })
@@ -36,7 +36,7 @@ class Instance extends InstanceSuperClass
     /**
      * @var Asset
      *
-     * @ORM\ManyToOne(targetEntity="Asset")
+     * @ORM\ManyToOne(targetEntity="Asset", inversedBy="instances")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
@@ -47,7 +47,7 @@ class Instance extends InstanceSuperClass
     /**
      * @var MonarcObject
      *
-     * @ORM\ManyToOne(targetEntity="MonarcObject", fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="MonarcObject", inversedBy="instances", fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="object_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)

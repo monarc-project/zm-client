@@ -22,13 +22,13 @@ class QuestionSnapshotService
     }
 
     /** Copy questions and linked choices without flushing; only text answers are copied. */
-    public function copy(array $questions, Anr $target): void
+    public function copy(array $questions, Anr $targetAnr): void
     {
         foreach ($questions as $sourceQuestion) {
             $response = $sourceQuestion instanceof Question && $sourceQuestion->getType() === Question::TYPE_SINGLE
                 ? $sourceQuestion->getResponse() : null;
             $question = (new Question())
-                ->setAnr($target)
+                ->setAnr($targetAnr)
                 ->setMode($sourceQuestion instanceof Question ? $sourceQuestion->getMode() : 0)
                 ->setResponse($response)
                 ->setLabels($sourceQuestion->getLabels())
@@ -42,7 +42,7 @@ class QuestionSnapshotService
             if ($sourceQuestion->getType() === Question::TYPE_CHOICE) {
                 foreach ($sourceQuestion->getQuestionChoices() as $sourceChoice) {
                     $questionChoice = (new QuestionChoice())
-                        ->setAnr($target)
+                        ->setAnr($targetAnr)
                         ->setQuestion($question)
                         ->setLabels($sourceChoice->getLabels())
                         ->setPosition($sourceChoice->getPosition())

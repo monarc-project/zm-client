@@ -44,7 +44,7 @@ class Amv extends AmvSuperClass
     /**
      * @var Asset
      *
-     * @ORM\ManyToOne(targetEntity="Asset", cascade={"persist"}, fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="Asset", inversedBy="amvs", cascade={"persist"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)

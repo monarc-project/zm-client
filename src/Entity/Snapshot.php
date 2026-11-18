@@ -34,7 +34,7 @@ class Snapshot
      *
      * @var Anr
      *
-     * @ORM\OneToOne(targetEntity="Anr", cascade={"remove"})
+     * @ORM\OneToOne(targetEntity="Anr", inversedBy="snapshot", cascade={"remove"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })
@@ -47,7 +47,7 @@ class Snapshot
      *
      * @var Anr
      *
-     * @ORM\ManyToOne(targetEntity="Anr")
+     * @ORM\ManyToOne(targetEntity="Anr", inversedBy="referencedSnapshots")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="anr_reference_id", referencedColumnName="id", nullable=false)
      * })
