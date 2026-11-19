@@ -31,7 +31,7 @@ class MappingConfigurationTest extends TestCase
         $drivers = ArrayUtils::merge($core['doctrine']['driver'], $office['doctrine']['driver']);
         $applicationDir = getenv('MONARC_TEST_APP_DIR') ?: dirname(__DIR__, 3) . '/MonarcAppFO';
         $baseline = json_decode(
-            file_get_contents($applicationDir . '/tests/Fixture/php84-09-mapping-fingerprints.json'),
+            file_get_contents($applicationDir . '/tests/Fixture/attribute-mapping-fingerprints.json'),
             true,
             512,
             JSON_THROW_ON_ERROR
@@ -83,7 +83,7 @@ class MappingConfigurationTest extends TestCase
         $drivers = ArrayUtils::merge($core['doctrine']['driver'], $office['doctrine']['driver']);
         $applicationDir = getenv('MONARC_TEST_APP_DIR') ?: dirname(__DIR__, 3) . '/MonarcAppFO';
         $baseline = json_decode(
-            file_get_contents($applicationDir . '/tests/Fixture/php84-08-mapping-fingerprints.json'),
+            file_get_contents($applicationDir . '/tests/Fixture/schema-mapping-fingerprints.json'),
             true,
             512,
             JSON_THROW_ON_ERROR
