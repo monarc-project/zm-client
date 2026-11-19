@@ -10,10 +10,8 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\UserRoleSuperClass;
 
-/**
- * @ORM\Table(name="users_roles")
- * @ORM\Entity
- */
+#[ORM\Table(name: 'users_roles')]
+#[ORM\Entity]
 class UserRole extends UserRoleSuperClass
 {
     public const SUPER_ADMIN_FO = 'superadminfo';

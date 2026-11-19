@@ -12,45 +12,35 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\ObjectSuperClass;
 use Ramsey\Uuid\UuidInterface;
 
-/**
- * @ORM\Table(name="objects", indexes={
- *      @ORM\Index(name="anr_id", columns={"anr_id"}),
- *      @ORM\Index(name="object_category_id", columns={"object_category_id"}),
- *      @ORM\Index(name="asset_id", columns={"asset_id"}),
- *      @ORM\Index(name="rolf_tag_id", columns={"rolf_tag_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'objects')]
+#[ORM\Index(name: 'anr_id', columns: ['anr_id'])]
+#[ORM\Index(name: 'object_category_id', columns: ['object_category_id'])]
+#[ORM\Index(name: 'asset_id', columns: ['asset_id'])]
+#[ORM\Index(name: 'rolf_tag_id', columns: ['rolf_tag_id'])]
+#[ORM\Entity]
 class MonarcObject extends ObjectSuperClass
 {
     /**
      * @var UuidInterface|string
-     *
-     * @ORM\Column(name="uuid", type="uuid", nullable=false)
-     * @ORM\Id
      */
+    #[ORM\Column(name: 'uuid', type: 'uuid', nullable: false)]
+    #[ORM\Id]
     protected $uuid;
 
     /**
      * @var Anr
-     *
-     * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Anr", inversedBy="objects")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\Id]
+    #[ORM\ManyToOne(targetEntity: 'Anr', inversedBy: 'objects')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected $anr;
 
     /**
      * @var Asset
-     *
-     * @ORM\ManyToOne(targetEntity="Asset", inversedBy="objects")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Asset', inversedBy: 'objects')]
+    #[ORM\JoinColumn(name: 'asset_id', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id', nullable: true)]
     protected $asset;
 
     /**
@@ -58,19 +48,19 @@ class MonarcObject extends ObjectSuperClass
      *       Ordered list can be retrieved with use $childrenLinks relation.
      *
      * @var ArrayCollection|ObjectSuperClass[]
-     *
-     * @ORM\ManyToMany(targetEntity="MonarcObject", inversedBy="parents")
-     * @ORM\JoinTable(name="objects_objects",
-     *  joinColumns={
-     *     @ORM\JoinColumn(name="father_id", referencedColumnName="uuid"),
-     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     *  },
-     *  inverseJoinColumns={
-     *     @ORM\JoinColumn(name="child_id", referencedColumnName="uuid"),
-     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     *  }
-     * )
      */
+    #[ORM\ManyToMany(targetEntity: 'MonarcObject', inversedBy: 'parents')]
+    #[ORM\JoinTable(
+        name: 'objects_objects',
+        joinColumns: [
+            new ORM\JoinColumn(name: 'father_id', referencedColumnName: 'uuid'),
+            new ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id')
+        ],
+        inverseJoinColumns: [
+            new ORM\JoinColumn(name: 'child_id', referencedColumnName: 'uuid'),
+            new ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id')
+        ]
+    )]
     protected $children;
 
     public function setAnr(Anr $anr): self

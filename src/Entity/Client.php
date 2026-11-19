@@ -12,11 +12,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="clients")
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'clients')]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class Client
 {
     use CreateEntityTrait;
@@ -24,67 +22,58 @@ class Client
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var ArrayCollection|ClientModel[]
-     *
-     * @ORM\OneToMany(targetEntity="ClientModel", mappedBy="client")
      */
+    #[ORM\OneToMany(targetEntity: 'ClientModel', mappedBy: 'client')]
     protected $clientModels;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="logo_id", type="integer", nullable=true)
      */
+    #[ORM\Column(name: 'logo_id', type: 'integer', nullable: true)]
     protected $logoId;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'name', type: 'string', length: 255, nullable: true)]
     protected $name;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="proxy_alias", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'proxy_alias', type: 'string', length: 255, nullable: true)]
     protected $proxyAlias;
 
     /**
-    * @var string
-    *
-    * @ORM\Column(name="contact_email", type="string", length=255, nullable=true)
-    */
+     * @var string
+     */
+    #[ORM\Column(name: 'contact_email', type: 'string', length: 255, nullable: true)]
     protected $contactEmail;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="first_user_firstname", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'first_user_firstname', type: 'string', length: 255, nullable: true)]
     protected $firstUserFirstname;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="first_user_lastname", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'first_user_lastname', type: 'string', length: 255, nullable: true)]
     protected $firstUserLastname;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="first_user_email", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'first_user_email', type: 'string', length: 255, nullable: true)]
     protected $firstUserEmail;
 
     public function __construct()

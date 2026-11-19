@@ -11,13 +11,10 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="cron_tasks", indexes={
- *   @ORM\Index(name="name", columns={"name"}),
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'cron_tasks')]
+#[ORM\Index(name: 'name', columns: ['name'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class CronTask
 {
     use CreateEntityTrait;
@@ -36,53 +33,46 @@ class CronTask
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255, nullable=false)
      */
+    #[ORM\Column(name: 'name', type: 'string', length: 255, nullable: false)]
     protected $name;
 
     /**
      * @var array
-     *
-     * @ORM\Column(name="params", type="array", length=1024, nullable=false, options={"default":""})
      */
+    #[ORM\Column(name: 'params', type: 'array', length: 1024, nullable: false, options: ['default' => ''])]
     protected $params = [];
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="priority", type="smallint", nullable=false)
      */
+    #[ORM\Column(name: 'priority', type: 'smallint', nullable: false)]
     protected $priority;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="pid", type="integer", nullable=true)
      */
+    #[ORM\Column(name: 'pid', type: 'integer', nullable: true)]
     protected $pid;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="status", type="smallint", nullable=false)
      */
+    #[ORM\Column(name: 'status', type: 'smallint', nullable: false)]
     protected $status = self::STATUS_NEW;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="result_message", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'result_message', type: 'text', nullable: true)]
     protected $resultMessage;
 
     public function __construct(string $name, array $params, int $priority)

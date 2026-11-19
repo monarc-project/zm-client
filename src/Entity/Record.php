@@ -15,115 +15,108 @@ use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
 /**
  * Record
- *
- * @ORM\Table(name="records", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
  */
+#[ORM\Table(name: 'records')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class Record
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    /**
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected int $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
-     */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected Anr $anr;
 
-    /**
-     * @ORM\Column(name="label", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'label', type: 'string', length: 255, nullable: true)]
     protected ?string $label = null;
 
-    /**
-     * @ORM\Column(name="purposes", type="text", nullable=true)
-     */
+    #[ORM\Column(name: 'purposes', type: 'text', nullable: true)]
     protected ?string $purposes = null;
 
-    /**
-     * @ORM\Column(name="sec_measures", type="text", nullable=true)
-     */
+    #[ORM\Column(name: 'sec_measures', type: 'text', nullable: true)]
     protected ?string $secMeasures = null;
 
     /**
      * @var RecordActor
-     * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="controller_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
+    #[ORM\ManyToOne(targetEntity: 'RecordActor', cascade: ['persist'])]
+    #[ORM\JoinColumn(name: 'controller_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     protected ?RecordActor $controller = null;
 
     /**
      * @var RecordActor
-     * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="representative_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
+    #[ORM\ManyToOne(targetEntity: 'RecordActor', cascade: ['persist'])]
+    #[ORM\JoinColumn(name: 'representative_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     protected ?RecordActor $representative = null;
 
     /**
      * @var RecordActor
-     * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="dpo_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
+    #[ORM\ManyToOne(targetEntity: 'RecordActor', cascade: ['persist'])]
+    #[ORM\JoinColumn(name: 'dpo_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     protected ?RecordActor $dpo = null;
 
     /**
      * @var Collection|RecordActor[]
-     * @ORM\ManyToMany(targetEntity="RecordActor", cascade={"persist"})
-     * @ORM\JoinTable(name="records_record_joint_controllers",
-     *  joinColumns={@ORM\JoinColumn(name="record_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="controller_id", referencedColumnName="id")}
-     * )
      */
+    #[ORM\ManyToMany(targetEntity: 'RecordActor', cascade: ['persist'])]
+    #[ORM\JoinTable(
+        name: 'records_record_joint_controllers',
+        joinColumns: [new ORM\JoinColumn(name: 'record_id', referencedColumnName: 'id')],
+        inverseJoinColumns: [new ORM\JoinColumn(name: 'controller_id', referencedColumnName: 'id')]
+    )]
     protected Collection $jointControllers;
 
     /**
      * @var Collection|RecordPersonalData[]
-     * @ORM\OneToMany(
-     *     targetEntity="RecordPersonalData", mappedBy="record",
-     *     cascade={"persist", "remove"}, orphanRemoval=true
-     * )
      */
+    #[ORM\OneToMany(
+        targetEntity: 'RecordPersonalData',
+        mappedBy: 'record',
+        cascade: ['persist', 'remove'],
+        orphanRemoval: true
+    )]
     protected Collection $personalData;
 
     /**
      * @var Collection|RecordRecipient[]
-     * @ORM\ManyToMany(targetEntity="RecordRecipient", cascade={"persist"}, fetch="EAGER")
-     * @ORM\JoinTable(name="records_record_recipients",
-     *  joinColumns={@ORM\JoinColumn(name="record_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="recipient_id", referencedColumnName="id")}
-     * )
      */
+    #[ORM\ManyToMany(targetEntity: 'RecordRecipient', cascade: ['persist'], fetch: 'EAGER')]
+    #[ORM\JoinTable(
+        name: 'records_record_recipients',
+        joinColumns: [new ORM\JoinColumn(name: 'record_id', referencedColumnName: 'id')],
+        inverseJoinColumns: [new ORM\JoinColumn(name: 'recipient_id', referencedColumnName: 'id')]
+    )]
     protected Collection $recipients;
 
     /**
      * @var Collection|RecordInternationalTransfer[]
-     * @ORM\OneToMany(
-     *     targetEntity="RecordInternationalTransfer", mappedBy="record",
-     *     cascade={"persist", "remove"}, orphanRemoval=true
-     * )
      */
+    #[ORM\OneToMany(
+        targetEntity: 'RecordInternationalTransfer',
+        mappedBy: 'record',
+        cascade: ['persist', 'remove'],
+        orphanRemoval: true
+    )]
     protected Collection $internationalTransfers;
 
     /**
      * @var Collection|RecordProcessor[]
-     * @ORM\ManyToMany(targetEntity="RecordProcessor", cascade={"persist"})
-     * @ORM\JoinTable(name="records_record_processors",
-     *  joinColumns={@ORM\JoinColumn(name="record_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="processor_id", referencedColumnName="id")}
-     * )
      */
+    #[ORM\ManyToMany(targetEntity: 'RecordProcessor', cascade: ['persist'])]
+    #[ORM\JoinTable(
+        name: 'records_record_processors',
+        joinColumns: [new ORM\JoinColumn(name: 'record_id', referencedColumnName: 'id')],
+        inverseJoinColumns: [new ORM\JoinColumn(name: 'processor_id', referencedColumnName: 'id')]
+    )]
     protected Collection $processors;
 
     public function __construct()

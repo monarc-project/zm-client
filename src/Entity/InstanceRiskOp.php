@@ -12,20 +12,20 @@ use Doctrine\ORM\Mapping as ORM;
 use DateTime;
 use Monarc\Core\Entity\InstanceRiskOpSuperClass;
 
-/**
- * @ORM\Table(name="instances_risks_op", indexes={
- *      @ORM\Index(name="anr_id", columns={"anr_id"}),
- *      @ORM\Index(name="instance_id", columns={"instance_id"}),
- *      @ORM\Index(name="object_id", columns={"object_id"}),
- *      @ORM\Index(name="risk_source_id", columns={"risk_source_id"}),
- *      @ORM\Index(name="rolf_risk_id", columns={"rolf_risk_id"}),
- *      @ORM\Index(name="op_risk_owner_supervisor_id", columns={"risk_owner_supervisor_id"}),
- *      @ORM\Index(name="op_residual_acceptance_approver_supervisor_id", columns={"residual_acceptance_approver_supervisor_id"}),
- *      @ORM\Index(name="op_residual_risk_decided_by_supervisor_id", columns={"residual_risk_decided_by_supervisor_id"}),
- *      @ORM\Index(name="op_residual_risk_decided_by_user_id", columns={"residual_risk_decided_by_user_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'instances_risks_op')]
+#[ORM\Index(name: 'anr_id', columns: ['anr_id'])]
+#[ORM\Index(name: 'instance_id', columns: ['instance_id'])]
+#[ORM\Index(name: 'object_id', columns: ['object_id'])]
+#[ORM\Index(name: 'risk_source_id', columns: ['risk_source_id'])]
+#[ORM\Index(name: 'rolf_risk_id', columns: ['rolf_risk_id'])]
+#[ORM\Index(name: 'op_risk_owner_supervisor_id', columns: ['risk_owner_supervisor_id'])]
+#[ORM\Index(
+    name: 'op_residual_acceptance_approver_supervisor_id',
+    columns: ['residual_acceptance_approver_supervisor_id']
+)]
+#[ORM\Index(name: 'op_residual_risk_decided_by_supervisor_id', columns: ['residual_risk_decided_by_supervisor_id'])]
+#[ORM\Index(name: 'op_residual_risk_decided_by_user_id', columns: ['residual_risk_decided_by_user_id'])]
+#[ORM\Entity]
 class InstanceRiskOp extends InstanceRiskOpSuperClass
 {
     public const REVIEW_FREQUENCY_MONTHLY = 'Monthly';
@@ -40,179 +40,169 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
 
     /**
      * @var Object
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcObject")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="object_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'MonarcObject')]
+    #[ORM\JoinColumn(name: 'object_id', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id', nullable: true)]
     protected $object;
 
     /**
      * @var RolfRisk
-     *
-     * @ORM\ManyToOne(targetEntity="RolfRisk", inversedBy="operationalInstanceRisks")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'RolfRisk', inversedBy: 'operationalInstanceRisks')]
+    #[ORM\JoinColumn(name: 'rolf_risk_id', referencedColumnName: 'id', nullable: true)]
     protected $rolfRisk;
 
     /**
      * @var ArrayCollection|RecommendationRisk[]
-     *
-     * @ORM\OneToMany(targetEntity="RecommendationRisk", mappedBy="instanceRiskOp", cascade={"remove"})
      */
+    #[ORM\OneToMany(targetEntity: 'RecommendationRisk', mappedBy: 'instanceRiskOp', cascade: ['remove'])]
     protected $recommendationRisks;
 
     /**
      * @var InstanceRiskOwner|null
-     *
-     * @ORM\ManyToOne(targetEntity="InstanceRiskOwner", inversedBy="operationalInstanceRisks")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="risk_owner_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'InstanceRiskOwner', inversedBy: 'operationalInstanceRisks')]
+    #[ORM\JoinColumn(name: 'risk_owner_id', referencedColumnName: 'id', nullable: true)]
     protected $instanceRiskOwner;
 
     /**
      * @var AnrSupervisor|null
-     *
-     * @ORM\ManyToOne(targetEntity="AnrSupervisor", inversedBy="operationalInstanceRisks")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="risk_owner_supervisor_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'AnrSupervisor', inversedBy: 'operationalInstanceRisks')]
+    #[ORM\JoinColumn(
+        name: 'risk_owner_supervisor_id',
+        referencedColumnName: 'id',
+        nullable: true,
+        onDelete: 'SET NULL'
+    )]
     protected $riskOwnerSupervisor;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="context", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'context', type: 'string', length: 255, nullable: true)]
     protected $context;
 
     /**
      * @var RiskSource|null
-     *
-     * @ORM\ManyToOne(targetEntity="RiskSource")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="risk_source_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'RiskSource')]
+    #[ORM\JoinColumn(name: 'risk_source_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     protected $riskSource;
     
     /**
      * @var DateTime|null
-     *
-     * @ORM\Column(name="last_review_date", type="date", nullable=true)
      */
+    #[ORM\Column(name: 'last_review_date', type: 'date', nullable: true)]
     protected $lastReviewDate;
 
     /**
      * @var DateTime|null
-     *
-     * @ORM\Column(name="next_reassessment_date", type="date", nullable=true)
      */
+    #[ORM\Column(name: 'next_reassessment_date', type: 'date', nullable: true)]
     protected $nextReassessmentDate;
 
     /**
      * @var ArrayCollection|ReassessmentTrigger[]
-     *
-     * @ORM\ManyToMany(targetEntity="ReassessmentTrigger")
-     * @ORM\JoinTable(name="instances_risks_op_reassessment_triggers",
-     *     joinColumns={@ORM\JoinColumn(name="instance_risk_op_id", referencedColumnName="id", onDelete="CASCADE")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="reassessment_trigger_id", referencedColumnName="id", onDelete="CASCADE")}
-     * )
      */
+    #[ORM\ManyToMany(targetEntity: 'ReassessmentTrigger')]
+    #[ORM\JoinTable(
+        name: 'instances_risks_op_reassessment_triggers',
+        joinColumns: [new ORM\JoinColumn(name: 'instance_risk_op_id', referencedColumnName: 'id', onDelete: 'CASCADE')],
+        inverseJoinColumns: [
+            new ORM\JoinColumn(
+                name: 'reassessment_trigger_id',
+                referencedColumnName: 'id',
+                onDelete: 'CASCADE'
+            )
+        ]
+    )]
     protected $reassessmentTriggers;
 
     /**
      * @var string|null
-     *
-     * @ORM\Column(name="review_frequency", type="string", length=50, nullable=true)
      */
+    #[ORM\Column(name: 'review_frequency', type: 'string', length: 50, nullable: true)]
     protected $reviewFrequency;
 
 
     /**
      * @var string|null
-     *
-     * @ORM\Column(name="residual_risk_decision", type="string", length=20, nullable=true)
      */
+    #[ORM\Column(name: 'residual_risk_decision', type: 'string', length: 20, nullable: true)]
     protected $residualRiskDecision;
 
     /**
      * @var bool
-     *
-     * @ORM\Column(name="residual_acceptance_use_risk_owner", type="boolean", options={"default": false})
      */
+    #[ORM\Column(name: 'residual_acceptance_use_risk_owner', type: 'boolean', options: ['default' => false])]
     protected $residualAcceptanceUseRiskOwner = false;
 
     /**
      * @var AnrSupervisor|null
-     *
-     * @ORM\ManyToOne(targetEntity="AnrSupervisor")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="residual_acceptance_approver_supervisor_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'AnrSupervisor')]
+    #[ORM\JoinColumn(
+        name: 'residual_acceptance_approver_supervisor_id',
+        referencedColumnName: 'id',
+        nullable: true,
+        onDelete: 'SET NULL'
+    )]
     protected $residualAcceptanceApproverSupervisor;
 
     /**
      * @var string|null
-     *
-     * @ORM\Column(name="residual_acceptance_performed_by_name", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'residual_acceptance_performed_by_name', type: 'string', length: 255, nullable: true)]
     protected $residualAcceptancePerformedByName;
 
     /**
      * @var string|null
-     *
-     * @ORM\Column(name="residual_acceptance_performed_by_email", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'residual_acceptance_performed_by_email', type: 'string', length: 255, nullable: true)]
     protected $residualAcceptancePerformedByEmail;
 
     /**
      * @var bool
-     *
-     * @ORM\Column(name="residual_acceptance_performed_on_behalf", type="boolean", options={"default": false})
      */
+    #[ORM\Column(name: 'residual_acceptance_performed_on_behalf', type: 'boolean', options: ['default' => false])]
     protected $residualAcceptancePerformedOnBehalf = false;
 
     /**
      * @var AnrSupervisor|null
-     *
-     * @ORM\ManyToOne(targetEntity="AnrSupervisor")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="residual_risk_decided_by_supervisor_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'AnrSupervisor')]
+    #[ORM\JoinColumn(
+        name: 'residual_risk_decided_by_supervisor_id',
+        referencedColumnName: 'id',
+        nullable: true,
+        onDelete: 'SET NULL'
+    )]
     protected $residualRiskDecidedBySupervisor;
 
     /**
      * @var User|null
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="residual_risk_decided_by_user_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'User')]
+    #[ORM\JoinColumn(
+        name: 'residual_risk_decided_by_user_id',
+        referencedColumnName: 'id',
+        nullable: true,
+        onDelete: 'SET NULL'
+    )]
     protected $residualRiskDecidedByUser;
 
     /**
      * @var DateTime|null
-     *
-     * @ORM\Column(name="residual_risk_decided_at", type="datetime", nullable=true)
      */
+    #[ORM\Column(name: 'residual_risk_decided_at', type: 'datetime', nullable: true)]
     protected $residualRiskDecidedAt;
 
     /**
      * @var string|null
-     *
-     * @ORM\Column(name="residual_risk_justification", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'residual_risk_justification', type: 'text', nullable: true)]
     protected $residualRiskJustification;
 
     public function __construct()
@@ -226,7 +216,10 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
     public static function constructFromObject(
         InstanceRiskOpSuperClass $sourceOperationalInstanceRisk
     ): InstanceRiskOpSuperClass {
-        /** @var InstanceRiskOp $operationalInstanceRisk */
+        /**
+         * @var InstanceRiskOp $operationalInstanceRisk
+         */
+
         $operationalInstanceRisk = parent::constructFromObject($sourceOperationalInstanceRisk);
 
         if ($sourceOperationalInstanceRisk instanceof self) {
@@ -365,13 +358,19 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
         return $this;
     }
 
-    /** @return ArrayCollection|ReassessmentTrigger[] */
+    /**
+     * @return ArrayCollection|ReassessmentTrigger[]
+     */
+
     public function getReassessmentTriggers()
     {
         return $this->reassessmentTriggers;
     }
 
-    /** @param ReassessmentTrigger[] $reassessmentTriggers */
+    /**
+     * @param ReassessmentTrigger[] $reassessmentTriggers
+     */
+
     public function setReassessmentTriggers(array $reassessmentTriggers): self
     {
         $this->reassessmentTriggers = new ArrayCollection($reassessmentTriggers);
@@ -384,7 +383,10 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
         return $this->reviewFrequency;
     }
 
-    /** @return string[] */
+    /**
+     * @return string[]
+     */
+
     public static function getAvailableReviewFrequencies(): array
     {
         return [
@@ -396,7 +398,10 @@ class InstanceRiskOp extends InstanceRiskOpSuperClass
         ];
     }
 
-    /** @return string[] */
+    /**
+     * @return string[]
+     */
+
     public static function getAvailableResidualRiskDecisions(): array
     {
         return [

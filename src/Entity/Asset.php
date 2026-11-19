@@ -11,32 +11,25 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\AssetSuperClass;
 use Ramsey\Uuid\UuidInterface;
 
-/**
- * @ORM\Table(name="assets", indexes={
- *      @ORM\Index(name="anr_id", columns={"anr_id", "code"}),
- *      @ORM\Index(name="anr_id2", columns={"anr_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'assets')]
+#[ORM\Index(name: 'anr_id', columns: ['anr_id', 'code'])]
+#[ORM\Index(name: 'anr_id2', columns: ['anr_id'])]
+#[ORM\Entity]
 class Asset extends AssetSuperClass
 {
     /**
      * @var UuidInterface|string
-     *
-     * @ORM\Column(name="uuid", type="uuid", nullable=false)
-     * @ORM\Id
      */
+    #[ORM\Column(name: 'uuid', type: 'uuid', nullable: false)]
+    #[ORM\Id]
     protected $uuid;
 
     /**
      * @var Anr
-     *
-     * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Anr", fetch="EAGER")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\Id]
+    #[ORM\ManyToOne(targetEntity: 'Anr', fetch: 'EAGER')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected $anr;
 
     public function getAnr(): Anr

@@ -10,10 +10,8 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\PasswordTokenSuperClass;
 
-/**
- * @ORM\Table(name="passwords_tokens")
- * @ORM\Entity
- */
+#[ORM\Table(name: 'passwords_tokens')]
+#[ORM\Entity]
 class PasswordToken extends PasswordTokenSuperClass
 {
 }

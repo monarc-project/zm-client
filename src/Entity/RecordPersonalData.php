@@ -16,77 +16,58 @@ use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
 /**
  * RecordPersonalData
- *
- * @ORM\Table(name="record_personal_data", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- *      @ORM\Index(name="record", columns={"record_id"})
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
  */
+#[ORM\Table(name: 'record_personal_data')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Index(name: 'record', columns: ['record_id'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class RecordPersonalData
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    /**
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected int $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
-     */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected Anr $anr;
 
     /**
      * @var Record
-     * @ORM\ManyToOne(targetEntity="Record", inversedBy="personalData")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Record', inversedBy: 'personalData')]
+    #[ORM\JoinColumn(name: 'record_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected Record $record;
 
-    /**
-     * @ORM\Column(name="data_subject", type="text", nullable=true)
-     */
+    #[ORM\Column(name: 'data_subject', type: 'text', nullable: true)]
     protected ?string $dataSubject = null;
 
     /**
      * @var RecordDataCategory[]
-     * @ORM\ManyToMany(targetEntity="RecordDataCategory", cascade={"persist"})
-     * @ORM\JoinTable(name="record_personal_data_record_data_categories",
-     *  joinColumns={@ORM\JoinColumn(name="personal_data_id", referencedColumnName="id")},
-     *  inverseJoinColumns={@ORM\JoinColumn(name="data_category_id", referencedColumnName="id")}
-     * )
      */
+    #[ORM\ManyToMany(targetEntity: 'RecordDataCategory', cascade: ['persist'])]
+    #[ORM\JoinTable(
+        name: 'record_personal_data_record_data_categories',
+        joinColumns: [new ORM\JoinColumn(name: 'personal_data_id', referencedColumnName: 'id')],
+        inverseJoinColumns: [new ORM\JoinColumn(name: 'data_category_id', referencedColumnName: 'id')]
+    )]
     protected Collection $dataCategories;
 
-    /**
-     * @ORM\Column(name="description", type="text", nullable=true)
-     */
+    #[ORM\Column(name: 'description', type: 'text', nullable: true)]
     protected ?string $description = null;
 
-    /**
-     * @ORM\Column(name="retention_period", type="integer", options={"unsigned":true, "default":0})
-     */
+    #[ORM\Column(name: 'retention_period', type: 'integer', options: ['unsigned' => true, 'default' => 0])]
     protected int $retentionPeriod = 0;
 
-    /**
-     * @ORM\Column(name="retention_period_mode", type="smallint", options={"default":0})
-     */
+    #[ORM\Column(name: 'retention_period_mode', type: 'smallint', options: ['default' => 0])]
      // 0 for day(s), 1 for month(s) and 2 for year(s)
     protected int $retentionPeriodMode = 0;
 
-    /**
-     * @ORM\Column(name="retention_period_description", type="text", nullable=true)
-     */
+    #[ORM\Column(name: 'retention_period_description', type: 'text', nullable: true)]
     protected ?string $retentionPeriodDescription = null;
 
     public function __construct()

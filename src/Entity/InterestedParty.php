@@ -12,44 +12,32 @@ use Monarc\Core\Entity\Interfaces\PositionedEntityInterface;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(
- *     name="anr_interested_parties",
- *     indexes={
- *         @ORM\Index(name="anr_interested_parties_anr_id_indx", columns={"anr_id"}),
- *         @ORM\Index(name="anr_interested_parties_anr_id_position_indx", columns={"anr_id", "position"})
- *     }
- * )
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'anr_interested_parties')]
+#[ORM\Index(name: 'anr_interested_parties_anr_id_indx', columns: ['anr_id'])]
+#[ORM\Index(name: 'anr_interested_parties_anr_id_position_indx', columns: ['anr_id', 'position'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class InterestedParty implements PositionedEntityInterface
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    /**
-     * @ORM\Column(name="id", type="integer", nullable=false, options={"unsigned": true})
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false, options: ['unsigned' => true])]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected int $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
-     */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected Anr $anr;
 
-    /** @ORM\Column(name="stakeholder", type="string", length=255, nullable=false) */
+    #[ORM\Column(name: 'stakeholder', type: 'string', length: 255, nullable: false)]
     protected string $stakeholder = '';
 
-    /** @ORM\Column(name="requirement", type="text", nullable=false) */
+    #[ORM\Column(name: 'requirement', type: 'text', nullable: false)]
     protected string $requirement = '';
 
-    /** @ORM\Column(name="position", type="integer", nullable=false, options={"unsigned": true, "default": 0}) */
+    #[ORM\Column(name: 'position', type: 'integer', nullable: false, options: ['unsigned' => true, 'default' => 0])]
     protected int $position = 0;
 
     public function getId(): int

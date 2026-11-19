@@ -13,41 +13,29 @@ use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
 /**
  * RecordActor
- *
- * @ORM\Table(name="record_actors", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
  */
+#[ORM\Table(name: 'record_actors')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class RecordActor
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    /**
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected int $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
-     */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected Anr $anr;
 
-    /**
-     * @ORM\Column(name="label", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'label', type: 'string', length: 255, nullable: true)]
     protected ?string $label = null;
 
-    /**
-     * @ORM\Column(name="contact", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'contact', type: 'string', length: 255, nullable: true)]
     protected ?string $contact = null;
 
     public function getId(): int

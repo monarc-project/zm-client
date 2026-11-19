@@ -13,55 +13,43 @@ use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
 /**
  * RecordRecipient
- *
- * @ORM\Table(name="record_recipients", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
  */
+#[ORM\Table(name: 'record_recipients')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class RecordRecipient
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    /**
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected int $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
-     */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected Anr $anr;
 
-    /**
-     * @ORM\Column(name="label", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'label', type: 'string', length: 255, nullable: true)]
     protected ?string $label = null;
 
     /**
      * 0 for internal recipients and 1 for external recipients.
      *
      * @var bool
-     *
-     * @ORM\Column(name="type", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'type', type: 'string', length: 255, nullable: true)]
     protected ?string $type = null;
 
-    /**
-     * @ORM\Column(name="description", type="text", nullable=true)
-     */
+    #[ORM\Column(name: 'description', type: 'text', nullable: true)]
     protected ?string $description = null;
 
     /**
      * @return int
      */
+
 
     public function getId(): int
     {

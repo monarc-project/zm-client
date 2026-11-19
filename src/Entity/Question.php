@@ -10,36 +10,29 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\QuestionSuperClass;
 
-/**
- * @ORM\Table(name="questions")
- * @ORM\Entity
- */
+#[ORM\Table(name: 'questions')]
+#[ORM\Entity]
 class Question extends QuestionSuperClass
 {
     public const MODE_LOCALLY_CREATED = 1;
 
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected Anr $anr;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="response", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'response', type: 'string', length: 255, nullable: true)]
     protected $response;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="mode", type="smallint", options={"default":0})
      */
+    #[ORM\Column(name: 'mode', type: 'smallint', options: ['default' => 0])]
     protected $mode = 0;
 
     public function getImplicitPositionRelationsValues(): array
@@ -55,6 +48,7 @@ class Question extends QuestionSuperClass
     /**
      * @param Anr $anr
      */
+
     public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
@@ -65,6 +59,7 @@ class Question extends QuestionSuperClass
     /**
      * @return string
      */
+
     public function getResponse()
     {
         return $this->response;

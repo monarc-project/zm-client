@@ -10,12 +10,9 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\OperationalRiskScaleSuperClass;
 
-/**
- * @ORM\Table(name="operational_risks_scales", indexes={
- *      @ORM\Index(name="op_risk_scales_anr_id_indx", columns={"anr_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'operational_risks_scales')]
+#[ORM\Index(name: 'op_risk_scales_anr_id_indx', columns: ['anr_id'])]
+#[ORM\Entity]
 class OperationalRiskScale extends OperationalRiskScaleSuperClass
 {
 }

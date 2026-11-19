@@ -10,11 +10,9 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits;
 
-/**
- * @ORM\Table(name="users_anrs")
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'users_anrs')]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class UserAnr
 {
     use Traits\CreateEntityTrait;
@@ -24,36 +22,30 @@ class UserAnr
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var User
-     *
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="userAnrs")
-     * @ORM\JoinColumn(nullable=false)
      */
+    #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'userAnrs')]
+    #[ORM\JoinColumn(nullable: false)]
     protected $user;
 
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr", inversedBy="usersAnrsPermissions")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr', inversedBy: 'usersAnrsPermissions')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected $anr;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="rwd", type="smallint", nullable=true, options={"unsigned":true, "default":1})
      */
+    #[ORM\Column(name: 'rwd', type: 'smallint', nullable: true, options: ['unsigned' => true, 'default' => 1])]
     protected $rwd = self::FULL_PERMISSIONS_RWD;
 
     public function getId(): int

@@ -5,7 +5,7 @@
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
-use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Doctrine\ORM\Mapping\Driver\AttributeDriver;
 use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Interop\Container\ContainerInterface;
 use Laminas\Di\Container\AutowireFactory;
@@ -1938,8 +1938,7 @@ return [
     'doctrine' => [
         'driver' => [
             'Monarc_frontoffice_driver' => [
-                'class' => AnnotationDriver::class,
-                'cache' => 'array',
+                'class' => AttributeDriver::class,
                 'paths' => [__DIR__ . '/../src/Entity'],
             ],
             'orm_cli' => [

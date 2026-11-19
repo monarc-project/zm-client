@@ -14,51 +14,41 @@ use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 use Ramsey\Uuid\Lazy\LazyUuidFromString;
 use Ramsey\Uuid\Uuid;
 
-/**
- * @ORM\Table(name="recommandations_sets", indexes={
- *      @ORM\Index(name="anr_id", columns={"anr_id"}),
- *      @ORM\Index(name="recommandation_set_uuid_2", columns={"uuid", "anr_id"})
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'recommandations_sets')]
+#[ORM\Index(name: 'anr_id', columns: ['anr_id'])]
+#[ORM\Index(name: 'recommandation_set_uuid_2', columns: ['uuid', 'anr_id'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class RecommendationSet
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
     /**
-     *
      * @var LazyUuidFromString|string
-     *
-     * @ORM\Column(name="uuid", type="uuid", nullable=false)
-     * @ORM\Id
      */
+    #[ORM\Column(name: 'uuid', type: 'uuid', nullable: false)]
+    #[ORM\Id]
     protected $uuid;
 
      /**
-     * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr", inversedBy="recommendationSets", fetch="EAGER")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
-     * @ORM\Id
-     */
+      * @var Anr
+      */
+     #[ORM\ManyToOne(targetEntity: 'Anr', inversedBy: 'recommendationSets', fetch: 'EAGER')]
+     #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
+     #[ORM\Id]
     protected $anr;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="label", type="string", length=255, nullable=false)
      */
+    #[ORM\Column(name: 'label', type: 'string', length: 255, nullable: false)]
     protected $label = '';
 
     /**
      * @var Recommendation[]|ArrayCollection
-     *
-     * @ORM\OneToMany(targetEntity="Recommendation", mappedBy="recommendationSet")
      */
+    #[ORM\OneToMany(targetEntity: 'Recommendation', mappedBy: 'recommendationSet')]
     protected $recommendations;
 
     public function __construct()
@@ -75,6 +65,7 @@ class RecommendationSet
      * @param string $uuid
      * @return self
      */
+
     public function setUuid($uuid): self
     {
         $this->uuid = $uuid;
@@ -82,9 +73,7 @@ class RecommendationSet
         return $this;
     }
 
-    /**
-     * @ORM\PrePersist
-     */
+    #[ORM\PrePersist]
     public function generateAndSetUuid(): self
     {
         if ($this->uuid === null) {

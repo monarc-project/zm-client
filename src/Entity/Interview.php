@@ -11,36 +11,30 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="interviews")
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'interviews')]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class Interview
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    /**
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected int $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected Anr $anr;
 
-    /** @ORM\Column(name="date", type="string", length=255, nullable=true) */
+    #[ORM\Column(name: 'date', type: 'string', length: 255, nullable: true)]
     protected ?string $date = null;
 
-    /** @ORM\Column(name="service", type="string", length=255, nullable=true) */
+    #[ORM\Column(name: 'service', type: 'string', length: 255, nullable: true)]
     protected ?string $service = null;
 
-    /** @ORM\Column(name="content", type="string", length=255, nullable=true) */
+    #[ORM\Column(name: 'content', type: 'string', length: 255, nullable: true)]
     protected ?string $content = null;
 
     public function getId(): int

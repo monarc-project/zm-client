@@ -12,92 +12,82 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\MeasureSuperClass;
 use Ramsey\Uuid\UuidInterface;
 
-/**
- * @ORM\Table(name="measures", indexes={
- *      @ORM\Index(name="uuid_anr_id", columns={"uuid", "anr_id"}),
- *      @ORM\Index(name="category", columns={"soacategory_id"}),
- *      @ORM\Index(name="referential", columns={"referential_uuid"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'measures')]
+#[ORM\Index(name: 'uuid_anr_id', columns: ['uuid', 'anr_id'])]
+#[ORM\Index(name: 'category', columns: ['soacategory_id'])]
+#[ORM\Index(name: 'referential', columns: ['referential_uuid'])]
+#[ORM\Entity]
 class Measure extends MeasureSuperClass
 {
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var UuidInterface|string
-     *
-     * @ORM\Column(name="uuid", type="uuid", nullable=false)
      */
+    #[ORM\Column(name: 'uuid', type: 'uuid', nullable: false)]
     protected $uuid;
 
     /**
      * @var ArrayCollection|Amv[]
-     *
-     * @ORM\ManyToMany(targetEntity="Amv", inversedBy="measures", fetch="EAGER")
-     * @ORM\JoinTable(name="measures_amvs",
-     *   joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="id")},
-     *   inverseJoinColumns={
-     *     @ORM\JoinColumn(name="amv_id", referencedColumnName="uuid"),
-     *     @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     *   },
-     * )
      */
+    #[ORM\ManyToMany(targetEntity: 'Amv', inversedBy: 'measures', fetch: 'EAGER')]
+    #[ORM\JoinTable(
+        name: 'measures_amvs',
+        joinColumns: [new ORM\JoinColumn(name: 'measure_id', referencedColumnName: 'id')],
+        inverseJoinColumns: [
+            new ORM\JoinColumn(name: 'amv_id', referencedColumnName: 'uuid'),
+            new ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id')
+        ]
+    )]
     protected $amvs;
 
     /**
      * @var ArrayCollection|RolfRisk[]
-     *
-     * @ORM\ManyToMany(targetEntity="RolfRisk", inversedBy="measures")
-     * @ORM\JoinTable(name="measures_rolf_risks",
-     *   inverseJoinColumns={@ORM\JoinColumn(name="rolf_risk_id", referencedColumnName="id")},
-     *   joinColumns={@ORM\JoinColumn(name="measure_id", referencedColumnName="id")}
-     * )
      */
+    #[ORM\ManyToMany(targetEntity: 'RolfRisk', inversedBy: 'measures')]
+    #[ORM\JoinTable(
+        name: 'measures_rolf_risks',
+        inverseJoinColumns: [new ORM\JoinColumn(name: 'rolf_risk_id', referencedColumnName: 'id')],
+        joinColumns: [new ORM\JoinColumn(name: 'measure_id', referencedColumnName: 'id')]
+    )]
     protected $rolfRisks;
 
     /**
      * @var Referential
-     *
-     * @ORM\ManyToOne(targetEntity="Referential", inversedBy="measures")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="referential_uuid", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Referential', inversedBy: 'measures')]
+    #[ORM\JoinColumn(name: 'referential_uuid', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id', nullable: true)]
     protected $referential;
 
     /**
      * @var ArrayCollection|Measure[]
-     *
-     * @ORM\ManyToMany(targetEntity="Measure", cascade={"persist"})
-     * @ORM\JoinTable(name="measures_measures",
-     *   joinColumns={@ORM\JoinColumn(name="master_measure_id", referencedColumnName="id")},
-     *   inverseJoinColumns={@ORM\JoinColumn(name="linked_measure_id", referencedColumnName="id")}
-     * )
      */
+    #[ORM\ManyToMany(targetEntity: 'Measure', cascade: ['persist'])]
+    #[ORM\JoinTable(
+        name: 'measures_measures',
+        joinColumns: [new ORM\JoinColumn(name: 'master_measure_id', referencedColumnName: 'id')],
+        inverseJoinColumns: [new ORM\JoinColumn(name: 'linked_measure_id', referencedColumnName: 'id')]
+    )]
     protected $linkedMeasures;
 
     /**
      * @var Soa|null
-     *
-     * @ORM\OneToOne(targetEntity="Soa", mappedBy="measure")
      */
+    #[ORM\OneToOne(targetEntity: 'Soa', mappedBy: 'measure')]
     protected $soa;
 
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({@ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)})
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected $anr;
 
     public function getId()

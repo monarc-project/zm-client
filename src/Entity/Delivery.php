@@ -11,13 +11,10 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="deliveries", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"})
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'deliveries')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class Delivery
 {
     use CreateEntityTrait;
@@ -33,77 +30,65 @@ class Delivery
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: true)]
     protected $anr;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="typedoc", type="smallint", options={"unsigned":true, "default":1})
      */
+    #[ORM\Column(name: 'typedoc', type: 'smallint', options: ['unsigned' => true, 'default' => 1])]
     protected $docType = self::DOC_TYPE_CONTEXT_VALIDATION;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="name", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'name', type: 'text', nullable: true)]
     protected $name = '';
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="version", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'version', type: 'string', length: 255, nullable: true)]
     protected $version = '';
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="status", type="smallint", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(name: 'status', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
     protected $status = 0;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="classification", type="text", length=255, nullable=false)
      */
+    #[ORM\Column(name: 'classification', type: 'text', length: 255, nullable: false)]
     protected $classification = '';
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="resp_customer", type="text", length=255, nullable=false)
      */
+    #[ORM\Column(name: 'resp_customer', type: 'text', length: 255, nullable: false)]
     protected $respCustomer = '';
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="responsible_manager", type="text", length=255, nullable=false)
      */
+    #[ORM\Column(name: 'responsible_manager', type: 'text', length: 255, nullable: false)]
     protected $responsibleManager = '';
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="summary_eval_risk", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'summary_eval_risk', type: 'text', nullable: true)]
     protected $summaryEvalRisk = '';
 
     public function getId(): int

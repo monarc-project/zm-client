@@ -11,16 +11,12 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="anr_supervisor_roles",
- *   uniqueConstraints={@ORM\UniqueConstraint(name="idx_anr_supervisor_roles_unique", columns={"anr_supervisor_id", "role"})},
- *   indexes={
- *      @ORM\Index(name="idx_supervisor_role_supervisor_id", columns={"anr_supervisor_id"}),
- *      @ORM\Index(name="idx_supervisor_role_role", columns={"role"})
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'anr_supervisor_roles')]
+#[ORM\UniqueConstraint(name: 'idx_anr_supervisor_roles_unique', columns: ['anr_supervisor_id', 'role'])]
+#[ORM\Index(name: 'idx_supervisor_role_supervisor_id', columns: ['anr_supervisor_id'])]
+#[ORM\Index(name: 'idx_supervisor_role_role', columns: ['role'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class AnrSupervisorRole
 {
     use CreateEntityTrait;
@@ -31,26 +27,23 @@ class AnrSupervisorRole
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var AnrSupervisor
-     *
-     * @ORM\ManyToOne(targetEntity="AnrSupervisor", inversedBy="roles")
-     * @ORM\JoinColumn(name="anr_supervisor_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      */
+    #[ORM\ManyToOne(targetEntity: 'AnrSupervisor', inversedBy: 'roles')]
+    #[ORM\JoinColumn(name: 'anr_supervisor_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected $anrSupervisor;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="role", type="string", length=100, nullable=false)
      */
+    #[ORM\Column(name: 'role', type: 'string', length: 100, nullable: false)]
     protected $role;
 
     public function getId(): int

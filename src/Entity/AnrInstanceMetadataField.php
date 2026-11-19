@@ -11,33 +11,27 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\AnrInstanceMetadataFieldSuperClass;
 
-/**
- * @ORM\Table(name="anr_instance_metadata_fields", indexes={
- *      @ORM\Index(name="anr_id", columns={"anr_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'anr_instance_metadata_fields')]
+#[ORM\Index(name: 'anr_id', columns: ['anr_id'])]
+#[ORM\Entity]
 class AnrInstanceMetadataField extends AnrInstanceMetadataFieldSuperClass
 {
     /**
      * @var int
-     *
-     * @ORM\Column(name="is_deletable", type="smallint", options={"unsigned":true, "default":1})
      */
+    #[ORM\Column(name: 'is_deletable', type: 'smallint', options: ['unsigned' => true, 'default' => 1])]
     protected $isDeletable = 1;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="label", type="string", length=255, nullable=false, options={"default": ""})
      */
+    #[ORM\Column(name: 'label', type: 'string', length: 255, nullable: false, options: ['default' => ''])]
     protected $label = '';
 
     /**
      * @var ArrayCollection|InstanceMetadata[]
-     *
-     * @ORM\OneToMany(targetEntity="InstanceMetadata", mappedBy="anrInstanceMetadataField")
      */
+    #[ORM\OneToMany(targetEntity: 'InstanceMetadata', mappedBy: 'anrInstanceMetadataField')]
     protected $instancesMetadata;
 
     public function __construct()

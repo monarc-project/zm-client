@@ -7,9 +7,14 @@
 
 namespace MonarcFrontOfficeTests\Unit;
 
+use Doctrine\ORM\Mapping\Driver\AttributeDriver;
+use DoctrineModule\Service\DriverFactory;
+use Laminas\ServiceManager\ServiceManager;
 use Doctrine\ORM\Tools\SchemaValidator;
+use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Laminas\Stdlib\ArrayUtils;
 use Monarc\Core\Tests\Fixture\MappingTestEnvironment;
+use Monarc\Core\Tests\Fixture\MappingSnapshot;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -17,6 +22,46 @@ use PHPUnit\Framework\TestCase;
  */
 class MappingConfigurationTest extends TestCase
 {
+    public function testNativeDriversPreserveEveryClassAndPersistedMapping(): void
+    {
+        require_once dirname(__DIR__, 3) . '/zm-core/tests/Fixture/MappingTestEnvironment.php';
+        require_once dirname(__DIR__, 3) . '/zm-core/tests/Fixture/MappingSnapshot.php';
+        $core = require dirname(__DIR__, 3) . '/zm-core/config/module.config.php';
+        $office = require dirname(__DIR__, 2) . '/config/module.config.php';
+        $drivers = ArrayUtils::merge($core['doctrine']['driver'], $office['doctrine']['driver']);
+        $applicationDir = getenv('MONARC_TEST_APP_DIR') ?: dirname(__DIR__, 3) . '/MonarcAppFO';
+        $baseline = json_decode(
+            file_get_contents($applicationDir . '/tests/Fixture/php84-09-mapping-fingerprints.json'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        );
+        $defaults = require $applicationDir . '/vendor/doctrine/doctrine-orm-module/config/module.config.php';
+        $drivers = ArrayUtils::merge($defaults['doctrine']['driver'], $drivers);
+        $container = new ServiceManager(['services' => ['config' => ['doctrine' => ['driver' => $drivers]]]]);
+        foreach (['orm_default', 'orm_cli', 'orm_cli_fo'] as $name) {
+            self::assertSame(MappingDriverChain::class, $drivers[$name]['class']);
+            $driver = (new DriverFactory($name))($container, 'doctrine.driver.' . $name);
+            self::assertInstanceOf(MappingDriverChain::class, $driver);
+            foreach ($driver->getDrivers() as $leaf) {
+                self::assertInstanceOf(AttributeDriver::class, $leaf);
+            }
+            foreach ($drivers[$name]['drivers'] as $leaf) {
+                self::assertSame(AttributeDriver::class, $drivers[$leaf]['class']);
+            }
+            $manager = MappingTestEnvironment::create($drivers, $name);
+            try {
+                self::assertSame(
+                    $baseline[$name],
+                    MappingSnapshot::fingerprints(MappingSnapshot::capture($manager)),
+                    $name . ': full class discovery, declarations, lifecycle callbacks, indexes and SQL'
+                );
+            } finally {
+                $manager->close();
+            }
+        }
+    }
+
     public function testOfficeAndCoreDriversKeepSeparateExistingSourceDirectories(): void
     {
         $core = require dirname(__DIR__, 3) . '/zm-core/config/module.config.php';

@@ -13,59 +13,41 @@ use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
 /**
  * RecordInternationalTransfer
- *
- * @ORM\Table(name="record_international_transfers", indexes={
- *      @ORM\Index(name="record", columns={"record_id"}),
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
  */
+#[ORM\Table(name: 'record_international_transfers')]
+#[ORM\Index(name: 'record', columns: ['record_id'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class RecordInternationalTransfer
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    /**
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected int $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
-     */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected Anr $anr;
 
     /**
      * @var Record
-     * @ORM\ManyToOne(targetEntity="Record", inversedBy="internationalTransfers")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Record', inversedBy: 'internationalTransfers')]
+    #[ORM\JoinColumn(name: 'record_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected Record $record;
-    /**
-     * @ORM\Column(name="organisation", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'organisation', type: 'string', length: 255, nullable: true)]
     protected ?string $organisation = null;
 
-    /**
-     * @ORM\Column(name="description", type="text", nullable=true)
-     */
+    #[ORM\Column(name: 'description', type: 'text', nullable: true)]
     protected ?string $description = null;
 
-    /**
-     * @ORM\Column(name="country", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'country', type: 'string', length: 255, nullable: true)]
     protected ?string $country = null;
 
-    /**
-     * @ORM\Column(name="documents", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'documents', type: 'string', length: 255, nullable: true)]
     protected ?string $documents = null;
 
     public function getId(): int

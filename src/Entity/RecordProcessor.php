@@ -13,71 +13,56 @@ use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
 /**
  * RecordProcessor
- *
- * @ORM\Table(name="record_processors", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
  */
+#[ORM\Table(name: 'record_processors')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class RecordProcessor
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    /**
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected int $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
-     */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected Anr $anr;
 
-    /**
-     * @ORM\Column(name="label", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'label', type: 'string', length: 255, nullable: true)]
     protected ?string $label = null;
 
 
-    /**
-     * @ORM\Column(name="contact", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'contact', type: 'string', length: 255, nullable: true)]
     protected ?string $contact = null;
 
-    /**
-     * @ORM\Column(name="activities", type="text", nullable=true)
-     */
+    #[ORM\Column(name: 'activities', type: 'text', nullable: true)]
     protected ?string $activities = null;
 
-    /**
-     * @ORM\Column(name="sec_measures", type="text", nullable=true)
-     */
+    #[ORM\Column(name: 'sec_measures', type: 'text', nullable: true)]
     protected ?string $secMeasures = null;
 
     /**
      * @var RecordActor
-     * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="representative", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
+    #[ORM\ManyToOne(targetEntity: 'RecordActor', cascade: ['persist'])]
+    #[ORM\JoinColumn(name: 'representative', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     protected ?RecordActor $representative = null;
 
     /**
      * @var RecordActor
-     * @ORM\ManyToOne(targetEntity="RecordActor", cascade={"persist"})
-     * @ORM\JoinColumn(name="dpo", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
+    #[ORM\ManyToOne(targetEntity: 'RecordActor', cascade: ['persist'])]
+    #[ORM\JoinColumn(name: 'dpo', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     protected ?RecordActor $dpo = null;
 
     /**
      * @return int
      */
+
 
     public function getId(): int
     {

@@ -11,26 +11,21 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\SoaScaleCommentSuperClass;
 
-/**
- * @ORM\Table(name="soa_scale_comments", indexes={
- *      @ORM\Index(name="soa_scale_comments_anr_id_indx", columns={"anr_id"}),
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'soa_scale_comments')]
+#[ORM\Index(name: 'soa_scale_comments_anr_id_indx', columns: ['anr_id'])]
+#[ORM\Entity]
 class SoaScaleComment extends SoaScaleCommentSuperClass
 {
     /**
      * @var string
-     *
-     * @ORM\Column(name="comment", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'comment', type: 'text', nullable: true)]
     protected $comment = '';
 
     /**
      * @var ArrayCollection|Soa[]
-     *
-     * @ORM\OneToMany(targetEntity="Soa", mappedBy="soaScaleComment")
      */
+    #[ORM\OneToMany(targetEntity: 'Soa', mappedBy: 'soaScaleComment')]
     protected $soas;
 
     public function __construct()

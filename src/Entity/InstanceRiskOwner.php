@@ -12,15 +12,11 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="instance_risk_owners",
- *   uniqueConstraints={@ORM\UniqueConstraint(name="instance_risk_owners_anr_id_name", columns={"anr_id", "name"})},
- *   indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"})
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'instance_risk_owners')]
+#[ORM\UniqueConstraint(name: 'instance_risk_owners_anr_id_name', columns: ['anr_id', 'name'])]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class InstanceRiskOwner
 {
     use CreateEntityTrait;
@@ -28,41 +24,34 @@ class InstanceRiskOwner
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
     /**
      * @var InstanceRisk[]|ArrayCollection
-     *
-     * @ORM\OneToMany(targetEntity="InstanceRisk", mappedBy="instanceRiskOwner")
      */
+    #[ORM\OneToMany(targetEntity: 'InstanceRisk', mappedBy: 'instanceRiskOwner')]
     protected $instanceRisks;
 
     /**
      * @var InstanceRiskOp[]|ArrayCollection
-     *
-     * @ORM\OneToMany(targetEntity="InstanceRiskOp", mappedBy="instanceRiskOwner")
      */
+    #[ORM\OneToMany(targetEntity: 'InstanceRiskOp', mappedBy: 'instanceRiskOwner')]
     protected $operationalInstanceRisks;
 
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", onDelete="CASCADE")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     protected $anr;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255)
      */
+    #[ORM\Column(name: 'name', type: 'string', length: 255)]
     protected $name;
 
     public function __construct()

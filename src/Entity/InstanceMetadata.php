@@ -11,13 +11,10 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="instances_metadata", indexes={
- *      @ORM\Index(name="instance_id", columns={"instance_id"}),
- *      @ORM\Index(name="metadata_id", columns={"metadata_id"}),
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'instances_metadata')]
+#[ORM\Index(name: 'instance_id', columns: ['instance_id'])]
+#[ORM\Index(name: 'metadata_id', columns: ['metadata_id'])]
+#[ORM\Entity]
 class InstanceMetadata
 {
     use CreateEntityTrait;
@@ -25,38 +22,30 @@ class InstanceMetadata
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var Instance
-     *
-     * @ORM\ManyToOne(targetEntity="Instance", inversedBy="instanceMetadata")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Instance', inversedBy: 'instanceMetadata')]
+    #[ORM\JoinColumn(name: 'instance_id', referencedColumnName: 'id', nullable: false)]
     protected $instance;
 
     /**
      * @var AnrInstanceMetadataField
-     *
-     * @ORM\ManyToOne(targetEntity="AnrInstanceMetadataField", inversedBy="instancesMetadata")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="metadata_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'AnrInstanceMetadataField', inversedBy: 'instancesMetadata')]
+    #[ORM\JoinColumn(name: 'metadata_id', referencedColumnName: 'id', nullable: false)]
     protected $anrInstanceMetadataField;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="comment", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'comment', type: 'text', nullable: true)]
     public $comment = '';
 
     public function getId(): int

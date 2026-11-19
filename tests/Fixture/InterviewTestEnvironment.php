@@ -7,10 +7,9 @@
 
 namespace MonarcFrontOfficeTests\Fixture;
 
-use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Doctrine\ORM\Mapping\Driver\AttributeDriver;
 use Doctrine\ORM\Tools\SchemaTool;
 use Monarc\Core\Service\ConnectedUserService;
 use Monarc\Core\Validator\InputValidator\InputValidationTranslator;
@@ -32,7 +31,7 @@ class InterviewTestEnvironment
     public function __construct(ConnectedUserService $connectedUserService)
     {
         $config = new Configuration();
-        $config->setMetadataDriverImpl(new AnnotationDriver(new AnnotationReader(), [__DIR__ . '/../../src/Entity']));
+        $config->setMetadataDriverImpl(new AttributeDriver([__DIR__ . '/../../src/Entity']));
         $config->setProxyDir(sys_get_temp_dir());
         $config->setProxyNamespace('Php84InterviewTestProxies');
         $config->setAutoGenerateProxyClasses(true);

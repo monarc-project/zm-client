@@ -11,10 +11,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="clients_models")
- * @ORM\Entity
- */
+#[ORM\Table(name: 'clients_models')]
+#[ORM\Entity]
 class ClientModel
 {
     use CreateEntityTrait;
@@ -22,28 +20,23 @@ class ClientModel
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="model_id", type="integer", nullable=false)
      */
+    #[ORM\Column(name: 'model_id', type: 'integer', nullable: false)]
     protected $modelId;
 
     /**
      * @var Client
-     *
-     * @ORM\ManyToOne(targetEntity="Client", inversedBy="clientModels")
-     * @ORM\JoinColumns({
-     *     @ORM\JoinColumn(name="client_id", referencedColumnName="id")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Client', inversedBy: 'clientModels')]
+    #[ORM\JoinColumn(name: 'client_id', referencedColumnName: 'id')]
     protected $client;
 
     public function getModelId(): int

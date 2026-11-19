@@ -10,32 +10,25 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\SoaCategorySuperClass;
 
-/**
-* @ORM\Table(name="soacategory", indexes={
-*      @ORM\Index(name="anr", columns={"anr_id"}),
-*      @ORM\Index(name="referential", columns={"referential_uuid"})
-* })
-* @ORM\Entity
-*/
+#[ORM\Table(name: 'soacategory')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Index(name: 'referential', columns: ['referential_uuid'])]
+#[ORM\Entity]
 class SoaCategory extends SoaCategorySuperClass
 {
     /**
-    * @var Anr
-    *
-    * @ORM\ManyToOne(targetEntity="Anr")
-    * @ORM\JoinColumns({@ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)})
-    */
+     * @var Anr
+     */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected $anr;
 
     /**
      * @var Referential
-     *
-     * @ORM\ManyToOne(targetEntity="Referential", inversedBy="categories")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="referential_uuid", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Referential', inversedBy: 'categories')]
+    #[ORM\JoinColumn(name: 'referential_uuid', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id', nullable: true)]
     protected $referential;
 
     public function getAnr()
