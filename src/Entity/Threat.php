@@ -11,33 +11,26 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\ThreatSuperClass;
 use Ramsey\Uuid\UuidInterface;
 
-/**
- * @ORM\Table(name="threats", indexes={
- *      @ORM\Index(name="anr_id", columns={"anr_id","code"}),
- *      @ORM\Index(name="anr_id2", columns={"anr_id"}),
- *      @ORM\Index(name="theme_id", columns={"theme_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'threats')]
+#[ORM\Index(name: 'anr_id', columns: ['anr_id', 'code'])]
+#[ORM\Index(name: 'anr_id2', columns: ['anr_id'])]
+#[ORM\Index(name: 'theme_id', columns: ['theme_id'])]
+#[ORM\Entity]
 class Threat extends ThreatSuperClass
 {
     /**
      * @var UuidInterface|string
-     *
-     * @ORM\Column(name="uuid", type="uuid", nullable=false)
-     * @ORM\Id
      */
+    #[ORM\Column(name: 'uuid', type: 'uuid', nullable: false)]
+    #[ORM\Id]
     protected $uuid;
 
     /**
      * @var Anr
-     *
-     * @ORM\Id
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\Id]
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected $anr;
 
     public function getAnr(): Anr

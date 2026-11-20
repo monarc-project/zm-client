@@ -1,89 +1,91 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Exception\Exception;
-use Monarc\Core\Service\AbstractService;
+use Monarc\Core\Entity\UserSuperClass;
+use Monarc\Core\InputFormatter\FormattedInputParams;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Table\RecordRecipientTable;
+use Monarc\FrontOffice\Entity\RecordRecipient;
+use Monarc\FrontOffice\Entity\Anr;
 
-/**
- * AnrRecord Recipient Service
- *
- * Class AnrRecordRecipientService
- * @package Monarc\FrontOffice\Service
- */
-class AnrRecordRecipientService extends AbstractService
+class AnrRecordRecipientService
 {
-    protected $dependencies = ['anr'];
-    protected $filterColumns = ['label'];
-    protected $userAnrTable;
-    protected $anrTable;
-    protected $recordTable;
+    private UserSuperClass $connectedUser;
 
-    public function orphanRecipient($recipientId, $anrId) {
-        $records = $this->recordTable->getEntityByFields(['recipients' => $recipientId, 'anr' => $anrId]);
-        if(count($records) > 0) {
-            return false;
-        }
-        return true;
+    public function __construct(
+        private RecordRecipientTable $recordRecipientTable,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
-    /**
-    * Generates the array to be exported into a file when calling {#exportRecipient}
-    * @see #exportRecipient
-    * @param int $id The recipient's id
-    * @return array The data array that should be saved
-    * @throws Exception If the recipient is not found
-    */
-    public function generateExportArray($id)
+
+    public function getList(FormattedInputParams $params): array
     {
-        $entity = $this->get('table')->getEntity($id);
-
-        if (!$entity) {
-            throw new Exception('Entity `id` not found.');
-        }
-
-        $return = [];
-        $return['name'] = $entity->label;
-        $return['type'] = $entity->type === 0 ? 'internal' : 'external';
-        if (empty($entity->description)) {
-            $return['description'] = $entity->description;
-        }
-
-        return $return;
+        return array_map(
+            fn (RecordRecipient $recordRecipient): array => $this->serialize($recordRecipient),
+            $this->recordRecipientTable->findByParams($params)
+        );
     }
-    /**
-     * Imports a record recipient from a data array. This data is generally what has been exported into a file.
-     * @param array $data The record recipient's data fields
-     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
-     * @return bool|int The ID of the generated asset, or false if an error occurred.
-     */
-    public function importFromArray($data, $anr)
-    {
-        $data['anr'] = $anr;
-        $data['label'] = $data['name'];
-        unset($data['name']);
-        $data['type'] = $data['type'] === 'internal' ? 0 : 1;
-        $data['description'] = $data['description'] ?? '';
-        try {
-            $recipientEntity = $this->get('table')->getEntityByFields([
-                'label' => $data['label'],
-                'type' => $data['type'],
-                'description' => $data['description'],
-                'anr' => $anr
-            ]);
-            if (count($recipientEntity)) {
-                $id = $recipientEntity[0]->getId();
-            } else {
-                $id = $this->create($data);
-            }
-        } catch (Exception $e) {
-            $id = $this->create($data);
-        }
 
-        return $id;
+    public function getCount(FormattedInputParams $params): int
+    {
+        return $this->recordRecipientTable->countByParams($params);
+    }
+
+    public function getRecordRecipientData(Anr $anr, int $id): array
+    {
+        return $this->serialize($this->recordRecipientTable->findByIdAndAnr($id, $anr));
+    }
+
+    public function serialize(RecordRecipient $recordRecipient): array
+    {
+        return [
+            'id' => $recordRecipient->getId(),
+            'label' => $recordRecipient->getLabel(),
+            'type' => $recordRecipient->getType(),
+            'description' => $recordRecipient->getDescription(),
+            'creator' => $recordRecipient->getCreator(),
+            'createdAt' => $recordRecipient->getCreatedAt(),
+            'updater' => $recordRecipient->getUpdater(),
+            'updatedAt' => $recordRecipient->getUpdatedAt(),
+        ];
+    }
+
+    public function create(Anr $anr, array $data, bool $flush = true): RecordRecipient
+    {
+        $recordRecipient = (new RecordRecipient())
+            ->setAnr($anr)
+            ->setCreator($this->connectedUser->getEmail());
+        $this->applyData($recordRecipient, $data);
+        $this->recordRecipientTable->save($recordRecipient, $flush);
+
+        return $recordRecipient;
+    }
+
+    public function update(Anr $anr, int $id, array $data): void
+    {
+        $recordRecipient = $this->recordRecipientTable->findByIdAndAnr($id, $anr);
+        $this->applyData($recordRecipient, $data);
+        $recordRecipient->setUpdater($this->connectedUser->getEmail());
+        $this->recordRecipientTable->save($recordRecipient);
+    }
+
+    private function applyData(RecordRecipient $recordRecipient, array $data): void
+    {
+        if (array_key_exists('label', $data)) {
+            $recordRecipient->setLabel($data['label']);
+        }
+        if (array_key_exists('type', $data)) {
+            $recordRecipient->setType($data['type'] === null ? null : (string)$data['type']);
+        }
+        if (array_key_exists('description', $data)) {
+            $recordRecipient->setDescription($data['description']);
+        }
     }
 }

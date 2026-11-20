@@ -1,89 +1,89 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Service\AbstractService;
+use Monarc\Core\Entity\UserSuperClass;
+use Monarc\Core\InputFormatter\FormattedInputParams;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Table\RecordDataCategoryTable;
+use Monarc\FrontOffice\Entity\RecordDataCategory;
+use Monarc\FrontOffice\Entity\Anr;
 
-/**
- * AnrRecord Data Category Service
- *
- * Class AnrRecordDataCategoryService
- * @package Monarc\FrontOffice\Service
- */
-class AnrRecordDataCategoryService extends AbstractService
+class AnrRecordDataCategoryService
 {
-    protected $dependencies = ['anr'];
-    protected $filterColumns = ['label'];
-    protected $userAnrTable;
-    protected $personalDataTable;
+    private UserSuperClass $connectedUser;
 
-    /**
-     * Creates a data category for a processing activity if it does not exist in the anr
-     * @param array $data The data category details fields
-     * @return object The resulting data category object (entity)
-     */
-    public function createDataCategory($data)
-    {
-        $dc = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $data['anr']->getId()]);
-        if(count($dc)) {
-            return $dc[0]->getId();
-        }
-        return $this->create($data, true);
+    public function __construct(
+        private RecordDataCategoryTable $recordDataCategoryTable,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function orphanDataCategory($dataCategoryId, $anrId) {
-        $personalData = $this->personalDataTable->getEntityByFields(['dataCategories' => $dataCategoryId, 'anr' => $anrId]);
-        if(count($personalData)> 0) {
-            return false;
-        }
-        return true;
+    public function getList(FormattedInputParams $params): array
+    {
+        return array_map(
+            fn (RecordDataCategory $recordDataCategory): array => $this->serialize($recordDataCategory),
+            $this->recordDataCategoryTable->findByParams($params)
+        );
     }
 
-    /**
-    * Generates the array to be exported into a file when calling {#exportDataCategory}
-    * @see #exportDataCategory
-    * @param int $id The data category's id
-    * @return array The data array that should be saved
-    * @throws \Monarc\Core\Exception\Exception If the data category is not found
-    */
-    public function generateExportArray($id)
+    public function getCount(FormattedInputParams $params): int
     {
-        $entity = $this->get('table')->getEntity($id);
-
-        if (!$entity) {
-            throw new \Monarc\Core\Exception\Exception('Entity `id` not found.');
-        }
-
-        $return['name']= $entity->label;
-        return $return;
+        return $this->recordDataCategoryTable->countByParams($params);
     }
 
-    /**
-     * Imports a record data category from a data array. This data is generally what has been exported into a file.
-     * @param array $data The record data category's data fields
-     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
-     * @return bool|int The ID of the generated asset, or false if an error occurred.
-     */
-    public function importFromArray($data, $anr)
+    public function getRecordDataCategoryData(Anr $anr, int $id): array
     {
-        $data['anr'] = $anr;
-        $data['label'] = $data['name'];
-        unset($data['name']);
-        try {
-            $dataCategoryEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $anr]);
-            if (count($dataCategoryEntity)) {
-                $id =  $dataCategoryEntity[0]->getId();
-            } else {
-                $id = $this->create($data);
-            }
-        } catch (\Monarc\Core\Exception\Exception $e) {
-            $id = $this->create($data);
+        return $this->serialize($this->recordDataCategoryTable->findByIdAndAnr($id, $anr));
+    }
+
+    public function serialize(RecordDataCategory $recordDataCategory): array
+    {
+        return [
+            'id' => $recordDataCategory->getId(),
+            'label' => $recordDataCategory->getLabel(),
+            'creator' => $recordDataCategory->getCreator(),
+            'createdAt' => $recordDataCategory->getCreatedAt(),
+            'updater' => $recordDataCategory->getUpdater(),
+            'updatedAt' => $recordDataCategory->getUpdatedAt(),
+        ];
+    }
+
+    public function create(Anr $anr, array $data, bool $flush = true): RecordDataCategory
+    {
+        $recordDataCategory = (new RecordDataCategory())
+            ->setAnr($anr)
+            ->setCreator($this->connectedUser->getEmail());
+        $this->applyData($recordDataCategory, $data);
+        $this->recordDataCategoryTable->save($recordDataCategory, $flush);
+
+        return $recordDataCategory;
+    }
+
+    public function update(Anr $anr, int $id, array $data): void
+    {
+        $recordDataCategory = $this->recordDataCategoryTable->findByIdAndAnr($id, $anr);
+        $this->applyData($recordDataCategory, $data);
+        $recordDataCategory->setUpdater($this->connectedUser->getEmail());
+        $this->recordDataCategoryTable->save($recordDataCategory);
+    }
+
+    private function applyData(RecordDataCategory $recordDataCategory, array $data): void
+    {
+        if (array_key_exists('label', $data)) {
+            $recordDataCategory->setLabel($data['label']);
         }
-        return $id;
+    }
+
+    public function findOrCreate(Anr $anr, array $data, bool $flush = true): RecordDataCategory
+    {
+        return $this->recordDataCategoryTable->findNamedCategory($anr, $data['label'] ?? null)
+            ?? $this->create($anr, $data, $flush);
     }
 }

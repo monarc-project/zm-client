@@ -11,10 +11,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="system_messages")
- * @ORM\Entity
- */
+#[ORM\Table(name: 'system_messages')]
+#[ORM\Entity]
 class SystemMessage
 {
     use CreateEntityTrait, UpdateEntityTrait;
@@ -24,40 +22,35 @@ class SystemMessage
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var User
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({@ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false)})
      */
+    #[ORM\ManyToOne(targetEntity: 'User')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
     protected $user;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="title", type="text", nullable=false)
      */
+    #[ORM\Column(name: 'title', type: 'text', nullable: false)]
     protected $title;
 
     /**
      * @var ?string
-     *
-     * @ORM\Column(name="description", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'description', type: 'text', nullable: true)]
     protected $description;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="status", type="smallint", options={"unsigned":true, "default":1})
      */
+    #[ORM\Column(name: 'status', type: 'smallint', options: ['unsigned' => true, 'default' => 1])]
     protected $status = self::STATUS_ACTIVE;
 
     public function getId()

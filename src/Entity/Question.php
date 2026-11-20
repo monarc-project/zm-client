@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -10,35 +10,35 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\QuestionSuperClass;
 
-/**
- * @ORM\Table(name="questions")
- * @ORM\Entity
- */
+#[ORM\Table(name: 'questions')]
+#[ORM\Entity]
 class Question extends QuestionSuperClass
 {
+    public const MODE_LOCALLY_CREATED = 1;
+
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
      */
-    protected $anr;
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
+    protected Anr $anr;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="response", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'response', type: 'string', length: 255, nullable: true)]
     protected $response;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="mode", type="smallint", options={"default":0})
      */
+    #[ORM\Column(name: 'mode', type: 'smallint', options: ['default' => 0])]
     protected $mode = 0;
+
+    public function getImplicitPositionRelationsValues(): array
+    {
+        return ['anr' => $this->anr];
+    }
 
     public function getAnr(): Anr
     {
@@ -48,7 +48,8 @@ class Question extends QuestionSuperClass
     /**
      * @param Anr $anr
      */
-    public function setAnr($anr): self
+
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
 
@@ -58,12 +59,13 @@ class Question extends QuestionSuperClass
     /**
      * @return string
      */
+
     public function getResponse()
     {
         return $this->response;
     }
 
-    public function setResponse(string $response): self
+    public function setResponse(?string $response): self
     {
         $this->response = $response;
 
@@ -81,11 +83,4 @@ class Question extends QuestionSuperClass
 
         return $this;
     }
-
-    /**
-     * @var array
-     */
-    protected $parameters = [
-        'implicitPosition' => ['field' => 'anr']
-    ];
 }

@@ -5,16 +5,13 @@ namespace Monarc\FrontOffice\Entity;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Table(name="anr_history", indexes={
- *      @ORM\Index(name="idx_anr_history_anr_id", columns={"anr_id"}),
- *      @ORM\Index(name="idx_anr_history_target", columns={"target_type", "target_id"}),
- *      @ORM\Index(name="idx_anr_history_change_type", columns={"change_type"}),
- *      @ORM\Index(name="idx_anr_history_created_at", columns={"created_at"})
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'anr_history')]
+#[ORM\Index(name: 'idx_anr_history_anr_id', columns: ['anr_id'])]
+#[ORM\Index(name: 'idx_anr_history_target', columns: ['target_type', 'target_id'])]
+#[ORM\Index(name: 'idx_anr_history_change_type', columns: ['change_type'])]
+#[ORM\Index(name: 'idx_anr_history_created_at', columns: ['created_at'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class AnrHistory
 {
     public const INFORMATION_RISK = 1;
@@ -59,47 +56,45 @@ class AnrHistory
 
     public const RESIDUAL_ACCEPTANCE_UPDATED = 40;
 
-    /**
-     * @ORM\Column(name="id", type="bigint", nullable=false, options={"unsigned": true})
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
+    #[ORM\Column(name: 'id', type: 'bigint', nullable: false, options: ['unsigned' => true])]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected ?int $id = null;
 
-    /** @ORM\Column(name="anr_id", type="integer", nullable=false, options={"unsigned": true}) */
+    #[ORM\Column(name: 'anr_id', type: 'integer', nullable: false, options: ['unsigned' => true])]
     protected int $anrId;
 
-    /** @ORM\Column(name="target_type", type="smallint", nullable=false, options={"unsigned": true}) */
+    #[ORM\Column(name: 'target_type', type: 'smallint', nullable: false, options: ['unsigned' => true])]
     protected int $targetType;
 
-    /** @ORM\Column(name="target_id", type="integer", nullable=false, options={"unsigned": true}) */
+    #[ORM\Column(name: 'target_id', type: 'integer', nullable: false, options: ['unsigned' => true])]
     protected int $targetId;
 
-    /** @ORM\Column(name="change_type", type="smallint", nullable=false, options={"unsigned": true}) */
+    #[ORM\Column(name: 'change_type', type: 'smallint', nullable: false, options: ['unsigned' => true])]
     protected int $changeType;
 
-    /** @ORM\Column(name="field_code", type="string", length=100, nullable=true) */
+    #[ORM\Column(name: 'field_code', type: 'string', length: 100, nullable: true)]
     protected ?string $fieldCode = null;
 
-    /** @ORM\Column(name="old_value", type="text", nullable=true) */
+    #[ORM\Column(name: 'old_value', type: 'text', nullable: true)]
     protected ?string $oldValue = null;
 
-    /** @ORM\Column(name="new_value", type="text", nullable=true) */
+    #[ORM\Column(name: 'new_value', type: 'text', nullable: true)]
     protected ?string $newValue = null;
 
-    /** @ORM\Column(name="performed_by_firstname", type="string", length=255, nullable=true) */
+    #[ORM\Column(name: 'performed_by_firstname', type: 'string', length: 255, nullable: true)]
     protected ?string $performedByFirstname = null;
 
-    /** @ORM\Column(name="performed_by_lastname", type="string", length=255, nullable=true) */
+    #[ORM\Column(name: 'performed_by_lastname', type: 'string', length: 255, nullable: true)]
     protected ?string $performedByLastname = null;
 
-    /** @ORM\Column(name="performed_by_email", type="string", length=255, nullable=true) */
+    #[ORM\Column(name: 'performed_by_email', type: 'string', length: 255, nullable: true)]
     protected ?string $performedByEmail = null;
 
-    /** @ORM\Column(name="created_at", type="datetime", nullable=false) */
+    #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
     protected ?DateTime $createdAt = null;
 
-    /** @ORM\PrePersist */
+    #[ORM\PrePersist]
     public function initializeCreatedAt(): void
     {
         if ($this->createdAt === null) {

@@ -1,200 +1,112 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Exception\Exception;
-use Monarc\Core\Service\AbstractService;
+use Monarc\Core\Entity\UserSuperClass;
+use Monarc\Core\InputFormatter\FormattedInputParams;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Table\RecordProcessorTable;
+use Monarc\FrontOffice\Table\RecordActorTable;
 use Monarc\FrontOffice\Entity\RecordProcessor;
+use Monarc\FrontOffice\Entity\Anr;
 
-/**
- * AnrRecord Processor Service
- *
- * Class AnrRecordProcessorService
- * @package Monarc\FrontOffice\Service
- */
-class AnrRecordProcessorService extends AbstractService
+class AnrRecordProcessorService
 {
-    protected $dependencies = ['anr','representative', 'dpo'];
-    protected $recordActorService;
-    protected $filterColumns = ['label'];
-    protected $userAnrTable;
-    protected $anrTable;
-    protected $recordTable;
+    private UserSuperClass $connectedUser;
 
-    public function deleteProcessor($id)
-    {
-        $entity = $this->get('table')->getEntity($id);
-        $anrId = $entity->getAnr()->getId();
-        $actorsToCheck = array();
-        if($entity->dpo) {
-            array_push($actorsToCheck, $entity->dpo->id);
-        }
-        if($entity->representative) {
-            array_push($actorsToCheck, $entity->representative->id);
-        }
-        $result = $this->get('table')->delete($id);
-        foreach($actorsToCheck as $a) {
-            if($this->recordActorService->orphanActor($a, $anrId)) {
-                $this->recordActorService->delete(['anr'=> $anrId, 'id' => $a]);
-            }
-        }
-
-        return $result;
-    }
-    /**
-     * Updates a processor of processing activity
-     * @param array $data The processor details fields
-     * @return object The resulting created processor object (entity)
-     */
-    public function updateProcessor($id, $data)
-    {
-        $entity = $this->get('table')->getEntity($id);
-        if(isset($data['dpo']['id'])) {
-            $data['dpo'] = $data['dpo']['id'];
-        } else {
-            $data['dpo'] = null;
-        }
-        if(isset($data['representative']['id'])) {
-            $data['representative'] = $data['representative']['id'];
-        } else {
-            $data['representative'] = null;
-        }
-
-        $oldActors = array();
-        if($entity->representative && $entity->representative->id) {
-            array_push($oldActors, $entity->representative->id);
-        }
-        if($entity->dpo && $entity->dpo->id) {
-            array_push($oldActors, $entity->dpo->id);
-        }
-
-        $result = $this->update($id, $data);
-        foreach($oldActors as $a) {
-            if($a != $data['dpo'] && $a != $data['representative']
-               && $this->recordActorService->orphanActor($a, $data['anr'])) {
-                $this->recordActorService->delete(['anr'=> $data['anr'], 'id' => $a]);
-            }
-        }
-        return $result;
+    public function __construct(
+        private RecordProcessorTable $recordProcessorTable,
+        private RecordActorTable $recordActorTable,
+        private AnrRecordActorService $anrRecordActorService,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function deleteActivityAndSecMeasure($processorId, $recordId) {
-        $entity = $this->get('table')->getEntity($processorId);
-        $activities = $entity->getActivities();
-        unset($activities[$recordId]);
-        $entity->setActivities($activities);
-        $secMeasures = $entity->getSecMeasures();
-        unset($secMeasures[$recordId]);
-        $entity->setSecMeasures($secMeasures);
-        $data = [];
-        $data['activities'] = $entity->get('activities');
-        $data['secMeasures'] = $entity->get('secMeasures');
-        $result = $this->patch($processorId, $data);
-        return $result;
+    public function getList(FormattedInputParams $params): array
+    {
+        return array_map(
+            fn (RecordProcessor $recordProcessor): array => $this->serialize($recordProcessor),
+            $this->recordProcessorTable->findByParams($params)
+        );
     }
 
-    /**
-    * Generates the array to be exported into a file when calling {#exportProcessor}
-    * @see #exportProcessor
-    * @param int $id The processor's id
-    * @param string $filename The output filename
-    * @return array The data array that should be saved
-    * @throws Exception If the processor is not found
-    */
-    public function generateExportArray($id, $recordId)
+    public function getCount(FormattedInputParams $params): int
     {
-        $entity = $this->get('table')->getEntity($id);
+        return $this->recordProcessorTable->countByParams($params);
+    }
 
-        if (!$entity) {
-            throw new Exception('Entity `id` not found.');
-        }
-        $return = [
-            'name' => $entity->label,
+    public function getRecordProcessorData(Anr $anr, int $id): array
+    {
+        return $this->serialize($this->recordProcessorTable->findByIdAndAnr($id, $anr));
+    }
+
+    public function serialize(RecordProcessor $recordProcessor): array
+    {
+        return [
+            'id' => $recordProcessor->getId(),
+            'label' => $recordProcessor->getLabel(),
+            'contact' => $recordProcessor->getContact(),
+            'activities' => $recordProcessor->getActivities(),
+            'secMeasures' => $recordProcessor->getSecMeasures(),
+            'representative' => $recordProcessor->getRepresentative() === null ? null
+                : $this->anrRecordActorService->serialize($recordProcessor->getRepresentative()),
+            'dpo' => $recordProcessor->getDpo() === null ? null
+                : $this->anrRecordActorService->serialize($recordProcessor->getDpo()),
+            'creator' => $recordProcessor->getCreator(),
+            'createdAt' => $recordProcessor->getCreatedAt(),
+            'updater' => $recordProcessor->getUpdater(),
+            'updatedAt' => $recordProcessor->getUpdatedAt(),
         ];
-        if($entity->contact != '') {
-            $return['contact'] = $entity->contact;
-        }
-        if($entity->activities) {
-            $return['activities'] = $entity->activities;
-        }
-        if($entity->secMeasures) {
-            $return['security_measures'] = $entity->secMeasures;
-        }
-        if($entity->representative) {
-            $return['representative'] = $this->recordActorService->generateExportArray($entity->representative->id);
-        }
-        if($entity->dpo) {
-            $return['data_protection_officer'] = $this->recordActorService->generateExportArray($entity->dpo->id);
-        }
-        return $return;
     }
 
-    public function orphanProcessor($processorId, $anrId) {
-        $records = $this->recordTable->getEntityByFields(['processors' => $processorId, 'anr' => $anrId]);
-        if(count($records) > 0) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Imports a record processor from a data array. This data is generally what has been exported into a file.
-     * @param array $data The processor's data fields
-     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
-     * @return bool|int The ID of the generated asset, or false if an error occurred.
-     */
-    public function importFromArray($data, $anr)
+    public function create(Anr $anr, array $data, bool $flush = true): RecordProcessor
     {
-        $newData = []; //new data to be updated
-        $newData['anr'] = $anr;
-        $newData['label'] = $data['name'];
-        $newData['contact'] = (isset($data['contact']) ? $data['contact'] : '');
-        unset($data['name']);
-        try {
-            $processorEntity = $this->get('table')->getEntityByFields(['label' => $newData['label'], 'anr' => $anr]);
-            if (count($processorEntity)) {
-                $id = $processorEntity[0]->getId();
-            } else {
-                $id = $this->create($newData);
-            }
-        } catch (Exception $e) {
-            $id = $this->create($newData);
-        }
-        if (count($processorEntity)) {
-            $newData['activities'] = $processorEntity[0]->getActivities();
-            $newData['secMeasures'] = $processorEntity[0]->getSecMeasures();
-        } else {
-            $newData['activities'] = '';
-            $newData['secMeasures'] = '';
-        }
-        if(isset($data['representative'])) {
-            $newData['representative']["id"] = $this->recordActorService->importFromArray($data['representative'], $anr);
-        }
-        if(isset($data['data_protection_officer'])) {
-            $newData['dpo']["id"] = $this->recordActorService->importFromArray($data['data_protection_officer'], $anr);
-        }
-        return $this->updateProcessor($id,$newData);
+        $recordProcessor = (new RecordProcessor())
+            ->setAnr($anr)
+            ->setCreator($this->connectedUser->getEmail());
+        $this->applyData($recordProcessor, $data);
+        $this->recordProcessorTable->save($recordProcessor, $flush);
+
+        return $recordProcessor;
     }
 
-    public function importActivityAndSecMeasures($data, $processorId)
+    public function update(Anr $anr, int $id, array $data): void
     {
-        /** @var RecordProcessor $entity */
-        $entity = $this->get('table')->getEntity($processorId);
-        if (isset($data['activities'])) {
-            $entity->setActivities($data['activities']);
-        }
-        if (isset($data['security_measures'])) {
-            $entity->setSecMeasures($data['security_measures']);
-        }
+        $recordProcessor = $this->recordProcessorTable->findByIdAndAnr($id, $anr);
+        $this->applyData($recordProcessor, $data);
+        $recordProcessor->setUpdater($this->connectedUser->getEmail());
+        $this->recordProcessorTable->save($recordProcessor);
+    }
 
-        return $this->patch($processorId, [
-            'activities' => $entity->getActivities(),
-            'security_measures' => $entity->getSecMeasures(),
-        ]);
+    private function applyData(RecordProcessor $recordProcessor, array $data): void
+    {
+        $representative = !empty($data['representative'])
+            ? $this->recordActorTable->findByIdAndAnr((int)$data['representative'], $recordProcessor->getAnr()) : null;
+        $dpo = !empty($data['dpo'])
+            ? $this->recordActorTable->findByIdAndAnr((int)$data['dpo'], $recordProcessor->getAnr()) : null;
+        if (array_key_exists('label', $data)) {
+            $recordProcessor->setLabel($data['label']);
+        }
+        if (array_key_exists('contact', $data)) {
+            $recordProcessor->setContact($data['contact']);
+        }
+        if (array_key_exists('activities', $data)) {
+            $recordProcessor->setActivities($data['activities']);
+        }
+        if (array_key_exists('secMeasures', $data)) {
+            $recordProcessor->setSecMeasures($data['secMeasures']);
+        }
+        if (array_key_exists('representative', $data)) {
+            $recordProcessor->setRepresentative($representative);
+        }
+        if (array_key_exists('dpo', $data)) {
+            $recordProcessor->setDpo($dpo);
+        }
     }
 }

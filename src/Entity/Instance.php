@@ -11,55 +11,42 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\InstanceSuperClass;
 use Doctrine\Common\Collections\ArrayCollection;
 
-/**
- * @ORM\Table(name="instances", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- *      @ORM\Index(name="asset_id", columns={"asset_id"}),
- *      @ORM\Index(name="object_id", columns={"object_id"}),
- *      @ORM\Index(name="root_id", columns={"root_id"}),
- *      @ORM\Index(name="parent_id", columns={"parent_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'instances')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Index(name: 'asset_id', columns: ['asset_id'])]
+#[ORM\Index(name: 'object_id', columns: ['object_id'])]
+#[ORM\Index(name: 'root_id', columns: ['root_id'])]
+#[ORM\Index(name: 'parent_id', columns: ['parent_id'])]
+#[ORM\Entity]
 class Instance extends InstanceSuperClass
 {
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr', inversedBy: 'instances')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected $anr;
 
     /**
      * @var Asset
-     *
-     * @ORM\ManyToOne(targetEntity="Asset")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Asset', inversedBy: 'instances')]
+    #[ORM\JoinColumn(name: 'asset_id', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id', nullable: true)]
     protected $asset;
 
     /**
      * @var MonarcObject
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcObject", fetch="EAGER")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="object_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'MonarcObject', inversedBy: 'instances', fetch: 'EAGER')]
+    #[ORM\JoinColumn(name: 'object_id', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id', nullable: true)]
     protected $object;
 
     /**
      * @var InstanceMetadata[]|ArrayCollection
-     *
-     * @ORM\OneToMany(targetEntity="InstanceMetadata", mappedBy="instance")
      */
+    #[ORM\OneToMany(targetEntity: 'InstanceMetadata', mappedBy: 'instance')]
     protected $instanceMetadata;
 
     public function __construct()

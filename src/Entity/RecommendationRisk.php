@@ -11,11 +11,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="recommandations_risks")
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'recommandations_risks')]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class RecommendationRisk
 {
     use CreateEntityTrait;
@@ -23,96 +21,71 @@ class RecommendationRisk
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var Recommendation
-     *
-     * @ORM\ManyToOne(targetEntity="Recommendation")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="recommandation_id", referencedColumnName="uuid"),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Recommendation', inversedBy: 'recommendationRisks')]
+    #[ORM\JoinColumn(name: 'recommandation_id', referencedColumnName: 'uuid')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id')]
     protected $recommendation;
 
     /**
      * @var InstanceRisk
-     *
-     * @ORM\ManyToOne(targetEntity="InstanceRisk")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="instance_risk_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'InstanceRisk', inversedBy: 'recommendationRisks')]
+    #[ORM\JoinColumn(name: 'instance_risk_id', referencedColumnName: 'id', nullable: true)]
     protected $instanceRisk;
 
     /**
      * @var InstanceRiskOp
-     *
-     * @ORM\ManyToOne(targetEntity="InstanceRiskOp")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="instance_risk_op_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'InstanceRiskOp', inversedBy: 'recommendationRisks')]
+    #[ORM\JoinColumn(name: 'instance_risk_op_id', referencedColumnName: 'id', nullable: true)]
     protected $instanceRiskOp;
 
     /**
      * @var Instance
-     *
-     * @ORM\ManyToOne(targetEntity="Instance")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="instance_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Instance')]
+    #[ORM\JoinColumn(name: 'instance_id', referencedColumnName: 'id', nullable: true)]
     protected $instance;
 
     /**
      * @var MonarcObject
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcObject")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="object_global_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'MonarcObject')]
+    #[ORM\JoinColumn(name: 'object_global_id', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id')]
     protected $globalObject;
 
     /**
      * @var Asset
-     *
-     * @ORM\ManyToOne(targetEntity="Asset")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="asset_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Asset')]
+    #[ORM\JoinColumn(name: 'asset_id', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id')]
     protected $asset;
 
     /**
      * @var Threat
-     *
-     * @ORM\ManyToOne(targetEntity="Threat")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="threat_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Threat')]
+    #[ORM\JoinColumn(name: 'threat_id', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id')]
     protected $threat;
 
     /**
      * @var Vulnerability
-     *
-     * @ORM\ManyToOne(targetEntity="Vulnerability")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="vulnerability_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id")
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Vulnerability')]
+    #[ORM\JoinColumn(name: 'vulnerability_id', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id')]
     protected $vulnerability;
 
     /**
@@ -120,19 +93,15 @@ class RecommendationRisk
      * Because when a nullable relation of AMV is set, the anr value is saved as NULL as well.
      *
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected $anr;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="comment_after", type="string", length=255, nullable=false)
      */
+    #[ORM\Column(name: 'comment_after', type: 'string', length: 255, nullable: false)]
     protected $commentAfter = '';
 
     public function getId(): int

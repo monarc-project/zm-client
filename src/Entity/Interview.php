@@ -1,187 +1,92 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Entity;
 
-use Monarc\Core\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="interviews")
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
-class Interview extends AbstractEntity
+#[ORM\Table(name: 'interviews')]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
+class Interview
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    /**
-     * @var integer
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    protected $id;
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    protected int $id;
 
-    /**
-     * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true, onDelete="CASCADE")
-     * })
-     */
-    protected $anr;
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    protected Anr $anr;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="date", type="string", length=255, nullable=true)
-     */
-    protected $date;
+    #[ORM\Column(name: 'date', type: 'string', length: 255, nullable: true)]
+    protected ?string $date = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="service", type="string", length=255, nullable=true)
-     */
-    protected $service;
+    #[ORM\Column(name: 'service', type: 'string', length: 255, nullable: true)]
+    protected ?string $service = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="content", type="string", length=255, nullable=true)
-     */
-    protected $content;
+    #[ORM\Column(name: 'content', type: 'string', length: 255, nullable: true)]
+    protected ?string $content = null;
 
-    /**
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * @param int $id
-     * @return Interview
-     */
-    public function setId($id)
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * @return Anr
-     */
-    public function getAnr()
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
-    /**
-     * @param Anr $anr
-     * @return Interview
-     */
-    public function setAnr($anr)
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
+
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getDate()
+    public function getDate(): ?string
     {
         return $this->date;
     }
 
-    /**
-     * @param string $date
-     * @return Interview
-     */
-    public function setDate($date)
+    public function setDate(?string $date): self
     {
         $this->date = $date;
+
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getService()
+    public function getService(): ?string
     {
         return $this->service;
     }
 
-    /**
-     * @param string $service
-     * @return Interview
-     */
-    public function setService($service)
+    public function setService(?string $service): self
     {
         $this->service = $service;
+
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getContent()
+    public function getContent(): ?string
     {
         return $this->content;
     }
 
-    /**
-     * @param string $content
-     * @return Interview
-     */
-    public function setContent($content)
+    public function setContent(?string $content): self
     {
         $this->content = $content;
+
         return $this;
-    }
-
-    /**
-     * @param bool $partial
-     * @return mixed
-     */
-    public function getInputFilter($partial = false)
-    {
-        if (!$this->inputFilter) {
-            parent::getInputFilter($partial);
-
-            $this->inputFilter->add([
-                'name' => 'date',
-                'required' => true,
-                'allow_empty' => false,
-                'filters' => [],
-            ]);
-
-            $this->inputFilter->add([
-                'name' => 'service',
-                'required' => true,
-                'allow_empty' => false,
-                'filters' => [],
-            ]);
-
-            $this->inputFilter->add([
-                'name' => 'content',
-                'required' => true,
-                'allow_empty' => false,
-                'filters' => [],
-            ]);
-        }
-        return $this->inputFilter;
     }
 }

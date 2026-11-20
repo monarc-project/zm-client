@@ -10,13 +10,10 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\ScaleImpactTypeSuperClass;
 
-/**
- * @ORM\Table(name="scales_impact_types", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- *      @ORM\Index(name="scale_id", columns={"scale_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'scales_impact_types')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Index(name: 'scale_id', columns: ['scale_id'])]
+#[ORM\Entity]
 class ScaleImpactType extends ScaleImpactTypeSuperClass
 {
 }

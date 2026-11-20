@@ -9,120 +9,99 @@ namespace Monarc\FrontOffice\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Table(name="soa", indexes={
- *      @ORM\Index(name="measure", columns={"measure_id"}),
- *      @ORM\Index(name="anr", columns={"anr_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'soa')]
+#[ORM\Index(name: 'measure', columns: ['measure_id'])]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Entity]
 class Soa
 {
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected $anr;
 
     /**
      * @var Measure
-     *
-     * @ORM\OneToOne(targetEntity="Measure")
-     * @ORM\JoinColumns({@ORM\JoinColumn(name="measure_id", referencedColumnName="id", nullable=true)})
      */
+    #[ORM\OneToOne(targetEntity: 'Measure', inversedBy: 'soa')]
+    #[ORM\JoinColumn(name: 'measure_id', referencedColumnName: 'id', nullable: true)]
     protected $measure;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="justification", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'justification', type: 'text', nullable: true)]
     protected $remarks;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="evidences", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'evidences', type: 'text', nullable: true)]
     protected $evidences;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="actions", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'actions', type: 'text', nullable: true)]
     protected $actions;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="compliance", type="integer", nullable=true)
      */
+    #[ORM\Column(name: 'compliance', type: 'integer', nullable: true)]
     protected $compliance;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="EX", type="smallint", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(name: 'EX', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
     protected $EX = 0;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="LR", type="smallint", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(name: 'LR', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
     protected $LR = 0;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="CO", type="smallint", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(name: 'CO', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
     protected $CO = 0;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="BR", type="smallint", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(name: 'BR', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
     protected $BR = 0;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="BP", type="smallint", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(name: 'BP', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
     protected $BP = 0;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="RRA", type="smallint", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(name: 'RRA', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
     protected $RRA = 0;
 
     /**
      * @var SoaScaleComment
-     *
-     * @ORM\ManyToOne(targetEntity="SoaScaleComment")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="soa_scale_comment_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'SoaScaleComment', inversedBy: 'soas')]
+    #[ORM\JoinColumn(name: 'soa_scale_comment_id', referencedColumnName: 'id', nullable: true)]
     protected $soaScaleComment;
 
     public function getId()

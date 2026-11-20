@@ -1,14 +1,13 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
 use Monarc\Core\Table as CoreTable;
-use Monarc\Core\Model\Table as CoreDeprecatedTable;
 use Monarc\Core\Entity as CoreEntity;
 use Monarc\FrontOffice\Table;
 
@@ -24,8 +23,8 @@ class AnrModelService
         private CoreTable\MeasureTable $coreMeasureTable,
         private CoreTable\RolfRiskTable $coreRolfRiskTable,
         private CoreTable\RolfTagTable $coreRolfTagTable,
-        private CoreDeprecatedTable\QuestionTable $coreQuestionTable,
-        private CoreDeprecatedTable\QuestionChoiceTable $coreQuestionChoiceTable
+        private CoreTable\QuestionTable $coreQuestionTable,
+        private CoreTable\QuestionChoiceTable $coreQuestionChoiceTable
     ) {
     }
 
@@ -75,11 +74,11 @@ class AnrModelService
             $this->validateEntityLanguages($rolfTag, $result);
         }
         /** @var CoreEntity\Question $question */
-        foreach ($this->coreQuestionTable->fetchAllObject() as $question) {
+        foreach ($this->coreQuestionTable->findAll() as $question) {
             $this->validateEntityLanguages($question, $result);
         }
         /** @var CoreEntity\QuestionChoice $questionChoice */
-        foreach ($this->coreQuestionChoiceTable->fetchAllObject() as $questionChoice) {
+        foreach ($this->coreQuestionChoiceTable->findAll() as $questionChoice) {
             $this->validateEntityLanguages($questionChoice, $result);
         }
 

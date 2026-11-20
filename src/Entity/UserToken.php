@@ -10,12 +10,9 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\UserTokenSuperClass;
 
-/**
- * @ORM\Table(name="user_tokens", indexes={
- *      @ORM\Index(name="user_id", columns={"user_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'user_tokens')]
+#[ORM\Index(name: 'user_id', columns: ['user_id'])]
+#[ORM\Entity]
 class UserToken extends UserTokenSuperClass
 {
 }

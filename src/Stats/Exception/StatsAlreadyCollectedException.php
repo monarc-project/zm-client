@@ -10,7 +10,7 @@ use Throwable;
  */
 class StatsAlreadyCollectedException extends Exception
 {
-    public function __construct($message = '', $code = 0, Throwable $previous = null)
+    public function __construct($message = '', $code = 0, ?Throwable $previous = null)
     {
         parent::__construct($message ?: 'The stats is already collected for today.', $code, $previous);
     }

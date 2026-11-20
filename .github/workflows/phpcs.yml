@@ -14,8 +14,10 @@ jobs:
 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
+      env:
+        update: "true"
       with:
-        php-version: '8.1'
+        php-version: '8.4'
         extensions: imagick, intl, mysql, bcmath, openssl
         ini-values: post_max_size=256M, short_open_tag=On
         tools: pecl, cs2pr, phpcs
@@ -33,7 +35,7 @@ jobs:
           ${{ runner.os }}-php-
 
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-suggest --ignore-platform-req=php
+      run: composer install --prefer-dist --no-progress --no-suggest
 
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md

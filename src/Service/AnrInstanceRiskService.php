@@ -441,7 +441,7 @@ class AnrInstanceRiskService
         $this->updateInstanceRiskRecommendationsPositions($instanceRisk);
     }
 
-    public function getInstanceRisksInCsv(Entity\Anr $anr, int $instanceId = null, array $params = []): string
+    public function getInstanceRisksInCsv(Entity\Anr $anr, ?int $instanceId = null, array $params = []): string
     {
         $languageIndex = $anr->getLanguage();
 

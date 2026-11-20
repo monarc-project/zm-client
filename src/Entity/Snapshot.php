@@ -10,11 +10,9 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits;
 
-/**
- * @ORM\Table(name="snapshots")
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'snapshots')]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class Snapshot
 {
     use Traits\CreateEntityTrait;
@@ -22,23 +20,19 @@ class Snapshot
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * Reference to the readonly analysis that contains the state of the snapshot.
      *
      * @var Anr
-     *
-     * @ORM\OneToOne(targetEntity="Anr", cascade={"remove"})
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
      */
+    #[ORM\OneToOne(targetEntity: 'Anr', inversedBy: 'snapshot', cascade: ['remove'])]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected $anr;
 
     /**
@@ -46,19 +40,15 @@ class Snapshot
      * and it is going to be replaced if the snapshot is restored.
      *
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_reference_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr', inversedBy: 'referencedSnapshots')]
+    #[ORM\JoinColumn(name: 'anr_reference_id', referencedColumnName: 'id', nullable: false)]
     protected $anrReference;
 
     /**
      * @var string|null
-     *
-     * @ORM\Column(name="comment", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'comment', type: 'text', nullable: true)]
     protected $comment;
 
     public function getId(): int

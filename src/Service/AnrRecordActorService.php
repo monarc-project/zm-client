@@ -1,99 +1,88 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Service\AbstractService;
+use Monarc\Core\Entity\UserSuperClass;
+use Monarc\Core\InputFormatter\FormattedInputParams;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Table\RecordActorTable;
+use Monarc\FrontOffice\Entity\RecordActor;
+use Monarc\FrontOffice\Entity\Anr;
 
-/**
- * AnrRecord Actor Service
- *
- * Class AnrRecordActorService
- * @package Monarc\FrontOffice\Service
- */
-class AnrRecordActorService extends AbstractService
+class AnrRecordActorService
 {
-    protected $dependencies = ['anr'];
-    protected $filterColumns = ['label'];
-    protected $userAnrTable;
-    protected $recordTable;
-    protected $processorTable;
+    private UserSuperClass $connectedUser;
 
-    public function orphanActor($actorId, $anrId) {
-        $records = $this->recordTable->getEntityByFields(['controller' => $actorId, 'anr' => $anrId]);
-        if(count($records)> 0) {
-            return false;
-        }
-        $records = $this->recordTable->getEntityByFields(['dpo' => $actorId, 'anr' => $anrId]);
-        if(count($records)> 0) {
-            return false;
-        }
-        $records = $this->recordTable->getEntityByFields(['representative' => $actorId, 'anr' => $anrId]);
-        if(count($records)> 0) {
-            return false;
-        }
-        $records = $this->recordTable->getEntityByFields(['jointControllers' => $actorId, 'anr' => $anrId]);
-        if(count($records)> 0) {
-            return false;
-        }
-        $processors = $this->processorTable->getEntityByFields(['representative' => $actorId, 'anr' => $anrId]);
-        if(count($processors)> 0) {
-            return false;
-        }
-        $processors = $this->processorTable->getEntityByFields(['dpo' => $actorId, 'anr' => $anrId]);
-        if(count($processors)> 0) {
-            return false;
-        }
-        return true;
+    public function __construct(
+        private RecordActorTable $recordActorTable,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    /**
-    * Generates the array to be exported into a file when calling {#exportActor}
-    * @see #exportActor
-    * @param int $id The actor's id
-    * @return array The data array that should be saved
-    * @throws \Monarc\Core\Exception\Exception If the actor is not found
-    */
-    public function generateExportArray($id)
+    public function getList(FormattedInputParams $params): array
     {
-        $entity = $this->get('table')->getEntity($id);
-
-        if (!$entity) {
-            throw new \Monarc\Core\Exception\Exception('Entity `id` not found.');
-        }
-        $return['name'] = $entity->label;
-        if($entity->contact != "") {
-            $return['contact'] = $entity->contact;
-        }
-        return $return;
+        return array_map(
+            fn (RecordActor $recordActor): array => $this->serialize($recordActor),
+            $this->recordActorTable->findByParams($params)
+        );
     }
 
-    /**
-     * Imports a record actor from a data array. This data is generally what has been exported into a file.
-     * @param array $data The record actor's data fields
-     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
-     * @return bool|int The ID of the generated asset, or false if an error occurred.
-     */
-    public function importFromArray($data, $anr)
+    public function getCount(FormattedInputParams $params): int
     {
-        $data['anr'] = $anr;
-        $data['label'] = $data['name'];
-        $data['contact'] = (isset($data['contact']) ? $data['contact'] : '');
-        unset($data['name']);
-        try {
-            $actorEntity = $this->get('table')->getEntityByFields(['label' => $data['label'], 'anr' => $anr]);
-            if (count($actorEntity)) {
-                $id = $actorEntity[0]->getId();
-            } else {
-                $id = $this->create($data);
-            }
-        } catch (\Monarc\Core\Exception\Exception $e) {
-            $id = $this->create($data);
+        return $this->recordActorTable->countByParams($params);
+    }
+
+    public function getRecordActorData(Anr $anr, int $id): array
+    {
+        return $this->serialize($this->recordActorTable->findByIdAndAnr($id, $anr));
+    }
+
+    public function serialize(RecordActor $recordActor): array
+    {
+        return [
+            'id' => $recordActor->getId(),
+            'label' => $recordActor->getLabel(),
+            'contact' => $recordActor->getContact(),
+            'creator' => $recordActor->getCreator(),
+            'createdAt' => $recordActor->getCreatedAt(),
+            'updater' => $recordActor->getUpdater(),
+            'updatedAt' => $recordActor->getUpdatedAt(),
+        ];
+    }
+
+    public function create(Anr $anr, array $data, bool $flush = true): RecordActor
+    {
+        $recordActor = (new RecordActor())
+            ->setAnr($anr)
+            ->setCreator($this->connectedUser->getEmail());
+        $this->applyData($recordActor, $data);
+        $this->recordActorTable->save($recordActor, $flush);
+
+        return $recordActor;
+    }
+
+    public function update(Anr $anr, int $id, array $data): void
+    {
+        $recordActor = $this->recordActorTable->findByIdAndAnr($id, $anr);
+
+        $this->applyData($recordActor, $data);
+        $recordActor->setUpdater($this->connectedUser->getEmail());
+        $this->recordActorTable->save($recordActor);
+    }
+
+    private function applyData(RecordActor $recordActor, array $data): void
+    {
+        if (array_key_exists('label', $data)) {
+            $recordActor->setLabel($data['label']);
         }
-        return $id;
+        if (array_key_exists('contact', $data)) {
+            $recordActor->setContact($data['contact']);
+        }
     }
 }

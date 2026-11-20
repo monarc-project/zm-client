@@ -18,16 +18,13 @@ use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 use Ramsey\Uuid\Lazy\LazyUuidFromString;
 use Ramsey\Uuid\Uuid;
 
-/**
- * @ORM\Table(name="recommandations", indexes={
- *      @ORM\Index(name="anr_id", columns={"anr_id","code"}),
- *      @ORM\Index(name="anr_id_2", columns={"anr_id"}),
- *      @ORM\Index(name="recommandation_set_uuid", columns={"recommandation_set_uuid", "code", "anr_id"}),
- *      @ORM\Index(name="recommendation_anr_position", columns={"anr_id", "position"})
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'recommandations')]
+#[ORM\Index(name: 'anr_id', columns: ['anr_id', 'code'])]
+#[ORM\Index(name: 'anr_id_2', columns: ['anr_id'])]
+#[ORM\Index(name: 'recommandation_set_uuid', columns: ['recommandation_set_uuid', 'code', 'anr_id'])]
+#[ORM\Index(name: 'recommendation_anr_position', columns: ['anr_id', 'position'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class Recommendation implements PositionedEntityInterface, PropertyStateEntityInterface
 {
     use PropertyStateEntityTrait;
@@ -47,102 +44,95 @@ class Recommendation implements PositionedEntityInterface, PropertyStateEntityIn
 
     /**
      * @var LazyUuidFromString|string
-     *
-     * @ORM\Column(name="uuid", type="uuid", nullable=false)
-     * @ORM\Id
      */
+    #[ORM\Column(name: 'uuid', type: 'uuid', nullable: false)]
+    #[ORM\Id]
     protected $uuid;
 
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr", fetch="EAGER")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
-     * @ORM\Id
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr', fetch: 'EAGER')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
+    #[ORM\Id]
     protected $anr;
 
     /**
      * @var RecommendationSet
-     *
-     * @ORM\ManyToOne(targetEntity="RecommendationSet", cascade={"persist"}, fetch="EAGER")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="recommandation_set_uuid", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(
+        targetEntity: 'RecommendationSet',
+        inversedBy: 'recommendations',
+        cascade: ['persist'],
+        fetch: 'EAGER'
+    )]
+    #[ORM\JoinColumn(name: 'recommandation_set_uuid', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id', nullable: true)]
     protected $recommendationSet;
 
     /**
      * @var ArrayCollection|RecommendationRisk[]
-     *
-     * @ORM\OneToMany(targetEntity="RecommendationRisk", mappedBy="recommendation", cascade={"remove"})
      */
+    #[ORM\OneToMany(targetEntity: 'RecommendationRisk', mappedBy: 'recommendation', cascade: ['remove'])]
     protected $recommendationRisks;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="code", type="string", length=100, nullable=true)
      */
+    #[ORM\Column(name: 'code', type: 'string', length: 100, nullable: true)]
     protected $code;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="description", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'description', type: 'string', length: 255, nullable: true)]
     protected $description;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="importance", type="smallint", options={"unsigned":true, "default":0}, nullable=false)
      */
+    #[ORM\Column(
+        name: 'importance',
+        type: 'smallint',
+        options: ['unsigned' => true, 'default' => 0],
+        nullable: false
+    )]
     protected $importance = self::EMPTY_IMPORTANCE;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="position", type="smallint", options={"unsigned":true, "default":0}, nullable=false)
      */
+    #[ORM\Column(name: 'position', type: 'smallint', options: ['unsigned' => true, 'default' => 0], nullable: false)]
     protected $position = self::EMPTY_POSITION;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="comment", type="string", length=255, nullable=false)
      */
+    #[ORM\Column(name: 'comment', type: 'string', length: 255, nullable: false)]
     protected $comment = '';
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="status", type="smallint", options={"unsigned":true, "default":1})
      */
+    #[ORM\Column(name: 'status', type: 'smallint', options: ['unsigned' => true, 'default' => 1])]
     protected $status = self::STATUS_ACTIVE;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="responsable", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'responsable', type: 'string', length: 255, nullable: true)]
     protected $responsible;
 
     /**
      * @var DateTime
-     *
-     * @ORM\Column(name="duedate", type="datetime", nullable=true)
      */
+    #[ORM\Column(name: 'duedate', type: 'datetime', nullable: true)]
     protected $dueDate;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="counter_treated", type="smallint", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(name: 'counter_treated', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
     protected $counterTreated = 0;
 
     public function __construct()
@@ -167,9 +157,7 @@ class Recommendation implements PositionedEntityInterface, PropertyStateEntityIn
         return $this;
     }
 
-    /**
-     * @ORM\PrePersist
-     */
+    #[ORM\PrePersist]
     public function generateAndSetUuid(): self
     {
         if ($this->uuid === null) {
