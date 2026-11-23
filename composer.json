@@ -25,19 +25,19 @@
         },
         {
             "name": "Jérôme Lombardi",
-            "email": "jerome.lombardi@cases.lu"
+            "email": "jerome.lombardi@nc3.lu"
         },
         {
             "name": "Juan Rocha",
-            "email": "juan.rocha@cases.lu"
+            "email": "juan.rocha@nc3.lu"
         },
         {
             "name": "Cédric Bonhomme",
-            "email": "cedric.bonhomme@cases.lu"
+            "email": "cedric.bonhomme@nc3.lu"
         },
         {
             "name": "Ruslan Baidan",
-            "email": "ruslan.baidan@cases.lu"
+            "email": "ruslan.baidan@nc3.lu"
         }
     ],
     "require": {
@@ -49,7 +49,7 @@
         "ext-openssl": "*",
         "ext-posix": "*",
         "doctrine/doctrine-orm-module": "^6.3",
-        "monarc/core": "^2.14",
+        "monarc/core": "^2.14.2",
         "robmorgan/phinx": "^0.13.4",
         "laminas/laminas-di": "^3.1",
         "laminas/laminas-mvc": "^3.1",
@@ -69,11 +69,6 @@
     "autoload": {
         "psr-4": {
             "Monarc\\FrontOffice\\": "src/"
-        }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-feature/php84": "2.15.x-dev"
         }
     },
     "scripts": {

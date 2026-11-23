@@ -289,6 +289,35 @@ class QuestionWorkflowTest extends TestCase
         self::assertCount(1, $this->env->service->getList($params));
     }
 
+    public function testMultichoiceBooleanFiltersRetainTheAnalysisScope(): void
+    {
+        $singleChoiceQuestion = $this->definition($this->anr, false);
+        $multiChoiceQuestion = $this->definition($this->anr, true);
+        $this->definition($this->other, false);
+        $this->definition($this->other, true);
+        foreach ([
+            [0, false],
+            [1, true],
+            ['0', false],
+            ['1', true],
+            [false, false],
+            [true, true],
+            ['false', false],
+            ['true', true],
+        ] as [$value, $isMultiChoice]) {
+            $params = (new GetQuestionsInputFormatter())->format([
+                'anr' => $this->anr,
+                'multichoice' => $value,
+            ]);
+            self::assertSame($isMultiChoice, $params->getFilterFor('multichoice')['value']);
+            self::assertSame(1, $this->env->service->getCount($params));
+            self::assertSame(
+                [$isMultiChoice ? $multiChoiceQuestion : $singleChoiceQuestion],
+                array_column($this->env->service->getList($params), 'id')
+            );
+        }
+    }
+
     /** @dataProvider snapshotFormats */
     public function testImportsRestoreAnswersWhileCopiesUseFreshQuestionChoiceLinks(bool $legacy, bool $multi): void
     {

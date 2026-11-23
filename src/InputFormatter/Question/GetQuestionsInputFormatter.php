@@ -7,17 +7,13 @@
 
 namespace Monarc\FrontOffice\InputFormatter\Question;
 
-use Monarc\Core\Entity\QuestionSuperClass;
 use Monarc\Core\InputFormatter\Question\GetQuestionsInputFormatter as CoreGetQuestionsInputFormatter;
 
 class GetQuestionsInputFormatter extends CoreGetQuestionsInputFormatter
 {
     protected static array $allowedFilterFields = [
         'anr',
-        'type' => [
-            'type' => 'int',
-            'inArray' => [QuestionSuperClass::TYPE_SINGLE, QuestionSuperClass::TYPE_CHOICE],
-        ],
-        'multichoice' => ['type' => 'int', 'inArray' => [0, 1]],
+        'type' => ['type' => 'int', 'inArray' => static::ALLOWED_TYPES],
+        'multichoice' => ['type' => 'boolean'],
     ];
 }
