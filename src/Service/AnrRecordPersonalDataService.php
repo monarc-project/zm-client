@@ -1,174 +1,137 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Service;
 
-use Monarc\Core\Service\AbstractService;
+use Monarc\Core\Entity\UserSuperClass;
+use Monarc\Core\InputFormatter\FormattedInputParams;
+use Monarc\Core\Service\ConnectedUserService;
+use Monarc\FrontOffice\Table\RecordPersonalDataTable;
+use Monarc\FrontOffice\Table\RecordTable;
+use Monarc\FrontOffice\Table\RecordDataCategoryTable;
+use Monarc\FrontOffice\Entity\RecordPersonalData;
+use Monarc\FrontOffice\Entity\Anr;
 
-/**
- * AnrRecord Personal Data Service
- *
- * Class AnrRecordPersonalDataService
- * @package Monarc\FrontOffice\Service
- */
-class AnrRecordPersonalDataService extends AbstractService
+class AnrRecordPersonalDataService
 {
-    protected $dependencies = ['anr', 'record', 'dataCategories'];
-    protected $filterColumns = ['label'];
-    /** @var AnrRecordDataCategoryService */
-    protected $recordDataCategoryService;
-    protected $userAnrTable;
-    protected $anrTable;
+    private UserSuperClass $connectedUser;
 
-    /**
-     * Creates a personal data record for a processing activity
-     * @param array $data The  personal data details fields
-     * @return object The resulting created  personal data object (entity)
-     */
-    public function createPersonalData($data)
-    {
-        $dataCategories = [];
-        if (!empty($data['dataCategories'])) {
-            foreach ($data['dataCategories'] as $dataCategory) {
-                if (!isset($dataCategory['id'])) {
-                    $dc['anr'] = $this->anrTable->findById((int)$data['anr']);
-                    $dc['id'] = $this->recordDataCategoryService->createDataCategory($dataCategory);
-                }
-                $dataCategories[] = $dataCategory['id'];
-            }
-        }
-        $data['dataCategories'] = $dataCategories;
-
-        return $this->create($data);
+    public function __construct(
+        private RecordPersonalDataTable $recordPersonalDataTable,
+        private RecordTable $recordTable,
+        private RecordDataCategoryTable $recordDataCategoryTable,
+        private AnrRecordDataCategoryService $anrRecordDataCategoryService,
+        ConnectedUserService $connectedUserService
+    ) {
+        $this->connectedUser = $connectedUserService->getConnectedUser();
     }
 
-    public function deletePersonalData($id)
+    public function getList(FormattedInputParams $params): array
     {
-        $personalDataEntity = $this->get('table')->getEntity($id);
-        $anrId = $personalDataEntity->getAnr()->getId();
-        $dataCategoriesToCheck = [];
-        foreach($personalDataEntity->dataCategories as $dc) {
-            $dataCategoriesToCheck[] = $dc->id;
-        }
-
-        $result = $this->get('table')->delete($id);
-        foreach($dataCategoriesToCheck as $dc) {
-            if($this->recordDataCategoryService->orphanDataCategory($dc, $anrId)) {
-                $this->recordDataCategoryService->delete(['anr'=> $anrId, 'id' => $dc]);
-            }
-        }
-        return $result;
+        return array_map(
+            fn (RecordPersonalData $recordPersonalData): array => $this->serialize($recordPersonalData),
+            $this->recordPersonalDataTable->findByParams($params)
+        );
     }
 
-    /**
-     * Updates the personal data of a processing activity
-     * @param array $data The personal data details fields
-     * @return object The resulting created personal data object (entity)
-     */
-    public function updatePersonalData($id, $data)
+    public function getCount(FormattedInputParams $params): int
     {
-        $entity = $this->get('table')->getEntity($id);
-        $dataCategories = [];
-        if (!empty($data['dataCategories'])) {
-            foreach ($data['dataCategories'] as $dc) {
-                if (!isset($dc['id'])) {
-                    $dc['anr'] = $this->anrTable->findById((int)$data['anr']);
-                    $dc['id'] = $this->recordDataCategoryService->createDataCategory($dc);
-                }
-                $dataCategories[] = $dc['id'];
-            }
-        }
-        $data['dataCategories'] = $dataCategories;
-        $oldDataCategories = [];
-        foreach ($entity->dataCategories as $dc) {
-            $oldDataCategories[] = $dc->id;
-        }
-        $result = $this->update($id, $data);
-        foreach($oldDataCategories as $dc) {
-            if(!in_array($dc, $dataCategories)
-                && $this->recordDataCategoryService->orphanDataCategory($dc, $data['anr'])
-            ) {
-                $this->recordDataCategoryService->delete(['anr' => $data['anr'], 'id' => $dc]);
-            }
-        }
-        return $result;
+        return $this->recordPersonalDataTable->countByParams($params);
     }
 
-    /**
-    * Generates the array to be exported into a file when calling {#exportPersonalData}
-    * @see #exportPersonalData
-    * @param int $id The personalData's id
-    * @return array The data array that should be saved
-    * @throws \Monarc\Core\Exception\Exception If the personal data is not found
-    */
-    public function generateExportArray($id)
+    public function getRecordPersonalDataData(Anr $anr, int $id): array
     {
-        $entity = $this->get('table')->getEntity($id);
-
-        if (!$entity) {
-            throw new \Monarc\Core\Exception\Exception('Entity `id` not found.');
-        }
-        $return = [];
-        if ($entity->dataSubject != "") {
-            $return["data_subject"] = $entity->dataSubject;
-        }
-        if($entity->dataCategories) {
-            foreach($entity->dataCategories as $dc) {
-                $return['data_categories'][] = $this->recordDataCategoryService->generateExportArray($dc->id);
-            }
-        }
-        if ($entity->description != "") {
-            $return["description"] = $entity->description;
-        }
-        $return["retention_period"] = $entity->retentionPeriod;
-        if ($entity->retentionPeriodMode == 0) {
-            $return["retention_period_mode"] = "day(s)";
-        } else if ($entity->retentionPeriodMode == 1){
-            $return["retention_period_mode"] = "month(s)";
-        } else {
-            $return["retention_period_mode"] = "year(s)";
-        }
-        if ($entity->retentionPeriodDescription != "") {
-            $return["retention_period_description"] = $entity->retentionPeriodDescription;
-        }
-        return $return;
+        return $this->serialize($this->recordPersonalDataTable->findByIdAndAnr($id, $anr));
     }
 
-    /**
-     * Imports a record personal data from a data array. This data is generally what has been exported into a file.
-     * @param array $data The record personal data's data fields
-     * @param \Monarc\FrontOffice\Entity\Anr $anr The target ANR id
-     * @return bool|int The ID of the generated asset, or false if an error occurred.
-     */
-    public function importFromArray($data, $anr, $recordId)
+    public function serialize(RecordPersonalData $recordPersonalData): array
     {
-        $newData = [];
-        $newData['anr'] = $anr;
-        if(isset($data['data_categories'])) {
-            foreach ($data['data_categories'] as $dc) {
-                $dataCategory = [];
-                $dataCategory["id"] = $this->recordDataCategoryService->importFromArray($dc, $anr);
-                $newData['dataCategories'][] = $dataCategory;
+        return [
+            'id' => $recordPersonalData->getId(),
+            'dataSubject' => $recordPersonalData->getDataSubject(),
+            'description' => $recordPersonalData->getDescription(),
+            'retentionPeriod' => $recordPersonalData->getRetentionPeriod(),
+            'retentionPeriodMode' => $recordPersonalData->getRetentionPeriodMode(),
+            'retentionPeriodDescription' => $recordPersonalData->getRetentionPeriodDescription(),
+            'record' => $recordPersonalData->getRecord()->getId(),
+            'dataCategories' => array_map(
+                fn ($category): array => $this->anrRecordDataCategoryService->serialize($category),
+                $recordPersonalData->getDataCategories()->toArray()
+            ),
+            'creator' => $recordPersonalData->getCreator(),
+            'createdAt' => $recordPersonalData->getCreatedAt(),
+            'updater' => $recordPersonalData->getUpdater(),
+            'updatedAt' => $recordPersonalData->getUpdatedAt(),
+        ];
+    }
+
+    public function create(Anr $anr, array $data, bool $flush = true): RecordPersonalData
+    {
+        $recordPersonalData = (new RecordPersonalData())
+            ->setAnr($anr)
+            ->setCreator($this->connectedUser->getEmail());
+        $this->applyData($recordPersonalData, $data);
+        $this->recordPersonalDataTable->save($recordPersonalData, $flush);
+
+        return $recordPersonalData;
+    }
+
+    public function update(Anr $anr, int $id, array $data): void
+    {
+        $recordPersonalData = $this->recordPersonalDataTable->findByIdAndAnr($id, $anr);
+        $this->applyData($recordPersonalData, $data);
+        $recordPersonalData->setUpdater($this->connectedUser->getEmail());
+        $this->recordPersonalDataTable->save($recordPersonalData);
+    }
+
+    private function applyData(RecordPersonalData $recordPersonalData, array $data): void
+    {
+        $record = array_key_exists('record', $data)
+            ? $this->recordTable->findByIdAndAnr((int)$data['record'], $recordPersonalData->getAnr())
+            : $recordPersonalData->getRecord();
+        $categories = [];
+        foreach ($data['dataCategories'] ?? [] as $category) {
+            if (!empty($category['id'])) {
+                $categories[] = $this->recordDataCategoryTable->findByIdAndAnr(
+                    (int)$category['id'],
+                    $recordPersonalData->getAnr()
+                );
             }
         }
-        $newData['record'] = $recordId;
-        $id = $this->createPersonalData($newData);
-        $newData['dataSubject'] = (isset($data['data_subject']) ? $data['data_subject'] : '');
-        $newData['description'] = (isset($data['description']) ? $data['description'] : '');
-        $newData['retentionPeriodDescription'] = (isset($data['retention_period_description']) ? $data['retention_period_description'] : '');
-        $newData['retentionPeriod'] = $data['retention_period'];
-        if (substr($data['retention_period_mode'], 0, 3) == "day") {
-            $newData["retentionPeriodMode"] = 0;
-        } else if (substr($data['retention_period_mode'], 0, 3) == "mon") {
-            $newData["retentionPeriodMode"] = 1;
-        }  else {
-            $newData["retentionPeriodMode"] = 2;
+        foreach ($data['dataCategories'] ?? [] as $category) {
+            if (empty($category['id'])) {
+                $categories[] = $this->anrRecordDataCategoryService->findOrCreate(
+                    $recordPersonalData->getAnr(),
+                    $category,
+                    false
+                );
+            }
         }
-        $this->updatePersonalData($id, $newData);
-        return $id;
+        if (array_key_exists('dataSubject', $data)) {
+            $recordPersonalData->setDataSubject($data['dataSubject']);
+        }
+        if (array_key_exists('description', $data)) {
+            $recordPersonalData->setDescription($data['description']);
+        }
+        if (array_key_exists('retentionPeriod', $data)) {
+            $recordPersonalData->setRetentionPeriod($data['retentionPeriod']);
+        }
+        if (array_key_exists('retentionPeriodMode', $data)) {
+            $recordPersonalData->setRetentionPeriodMode($data['retentionPeriodMode']);
+        }
+        if (array_key_exists('retentionPeriodDescription', $data)) {
+            $recordPersonalData->setRetentionPeriodDescription($data['retentionPeriodDescription']);
+        }
+        $recordPersonalData->setRecord($record);
+        if (!$record->getPersonalData()->contains($recordPersonalData)) {
+            $record->getPersonalData()->add($recordPersonalData);
+        }
+        if (array_key_exists('dataCategories', $data)) {
+            $recordPersonalData->setDataCategories($categories);
+        }
     }
 }

@@ -12,16 +12,12 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="anr_supervisors",
- *   indexes={
- *      @ORM\Index(name="idx_anr_supervisors_anr_id", columns={"anr_id"}),
- *      @ORM\Index(name="idx_anr_supervisors_linked_user_id", columns={"linked_user_id"}),
- *      @ORM\Index(name="idx_anr_supervisors_email", columns={"email"})
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'anr_supervisors')]
+#[ORM\Index(name: 'idx_anr_supervisors_anr_id', columns: ['anr_id'])]
+#[ORM\Index(name: 'idx_anr_supervisors_linked_user_id', columns: ['linked_user_id'])]
+#[ORM\Index(name: 'idx_anr_supervisors_email', columns: ['email'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class AnrSupervisor
 {
     use CreateEntityTrait;
@@ -29,76 +25,71 @@ class AnrSupervisor
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     protected $anr;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255, nullable=false)
      */
+    #[ORM\Column(name: 'name', type: 'string', length: 255, nullable: false)]
     protected $name;
 
     /**
      * @var string|null
-     *
-     * @ORM\Column(name="email", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'email', type: 'string', length: 255, nullable: true)]
     protected $email;
 
     /**
      * @var User|null
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumn(name="linked_user_id", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
+    #[ORM\ManyToOne(targetEntity: 'User')]
+    #[ORM\JoinColumn(name: 'linked_user_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     protected $linkedUser;
 
     /**
      * @var string|null
-     *
-     * @ORM\Column(name="role_position", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'role_position', type: 'string', length: 255, nullable: true)]
     protected $rolePosition;
 
     /**
      * @var bool
-     *
-     * @ORM\Column(name="is_active", type="boolean", options={"default":true})
      */
+    #[ORM\Column(name: 'is_active', type: 'boolean', options: ['default' => true])]
     protected $isActive = true;
 
     /**
      * @var ArrayCollection|AnrSupervisorRole[]
-     *
-     * @ORM\OneToMany(targetEntity="AnrSupervisorRole", mappedBy="anrSupervisor", cascade={"persist", "remove"}, orphanRemoval=true)
      */
+    #[ORM\OneToMany(
+        targetEntity: 'AnrSupervisorRole',
+        mappedBy: 'anrSupervisor',
+        cascade: ['persist', 'remove'],
+        orphanRemoval: true
+    )]
     protected $roles;
 
     /**
      * @var ArrayCollection|InstanceRisk[]
-     *
-     * @ORM\OneToMany(targetEntity="InstanceRisk", mappedBy="riskOwnerSupervisor")
      */
+    #[ORM\OneToMany(targetEntity: 'InstanceRisk', mappedBy: 'riskOwnerSupervisor')]
     protected $instanceRisks;
 
     /**
      * @var ArrayCollection|InstanceRiskOp[]
-     *
-     * @ORM\OneToMany(targetEntity="InstanceRiskOp", mappedBy="riskOwnerSupervisor")
      */
+    #[ORM\OneToMany(targetEntity: 'InstanceRiskOp', mappedBy: 'riskOwnerSupervisor')]
     protected $operationalInstanceRisks;
 
     public function __construct()
@@ -188,6 +179,7 @@ class AnrSupervisor
     /**
      * @return ArrayCollection|AnrSupervisorRole[]
      */
+
     public function getRoles()
     {
         return $this->roles;
@@ -196,6 +188,7 @@ class AnrSupervisor
     /**
      * @return ArrayCollection|InstanceRisk[]
      */
+
     public function getInstanceRisks()
     {
         return $this->instanceRisks;
@@ -204,6 +197,7 @@ class AnrSupervisor
     /**
      * @return ArrayCollection|InstanceRiskOp[]
      */
+
     public function getOperationalInstanceRisks()
     {
         return $this->operationalInstanceRisks;

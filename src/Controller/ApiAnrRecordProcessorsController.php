@@ -1,69 +1,62 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Exception\Exception;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
+use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
 use Monarc\FrontOffice\Service\AnrRecordProcessorService;
+use Monarc\FrontOffice\InputFormatter\Record\GetRecordProcessorsInputFormatter;
+use Monarc\FrontOffice\Validator\InputValidator\Record\RecordProcessorDataInputValidator;
 
-class ApiAnrRecordProcessorsController extends ApiAnrAbstractController
+class ApiAnrRecordProcessorsController extends AbstractRestfulControllerRequestHandler
 {
-    protected $name = 'record-processors';
-    protected $dependencies = ['anr', 'representative', 'dpo'];
+    use ControllerRequestResponseHandlerTrait;
 
-    public function __construct(AnrRecordProcessorService $anrRecordProcessorService)
+    public function __construct(
+        private GetRecordProcessorsInputFormatter $getRecordProcessorsInputFormatter,
+        private RecordProcessorDataInputValidator $recordProcessorDataInputValidator,
+        private AnrRecordProcessorService $anrRecordProcessorService
+    ) {
+    }
+
+    public function getList()
     {
-        parent::__construct($anrRecordProcessorService);
+        $params = $this->getFormattedInputParams($this->getRecordProcessorsInputFormatter);
+
+        return $this->getPreparedJsonResponse([
+            'count' => $this->anrRecordProcessorService->getCount($params),
+            'record-processors' => $this->anrRecordProcessorService->getList($params),
+        ]);
     }
 
     public function get($id)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        $entity = $this->getService()->getEntity(['anr' => $anrId, 'id' => $id]);
-
-        $this->formatDependencies($entity, $this->dependencies);
-
-        return $this->getPreparedJsonResponse($entity);
-    }
-
-    public function update($id, $data)
-    {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
-        $this->getService()->updateProcessor($id, $data);
-
-        return $this->getSuccessfulJsonResponse();
+        return $this->getPreparedJsonResponse($this->anrRecordProcessorService->getRecordProcessorData(
+            $this->getRequest()->getAttribute('anr'),
+            (int)$id
+        ));
     }
 
     public function create($data)
     {
-        $anrId = (int)$this->params()->fromRoute('anrid');
-        if (empty($anrId)) {
-            throw new Exception('Anr id missing', 412);
-        }
-        $data['anr'] = $anrId;
+        $this->validatePostParams($this->recordProcessorDataInputValidator, $data);
+        $data = $this->recordProcessorDataInputValidator->getValidData();
+        $recordProcessor = $this->anrRecordProcessorService->create($this->getRequest()->getAttribute('anr'), $data);
 
-        $id = $this->getService()->create($data);
-
-        return $this->getPreparedJsonResponse([
-            'id' => $id,
-        ]);
+        return $this->getSuccessfulJsonResponse(['id' => $recordProcessor->getId()]);
     }
 
-    public function patch($id, $data)
+    public function update($id, $data)
     {
-        return $this->methodNotAllowed();
-    }
+        $this->validatePostParams($this->recordProcessorDataInputValidator, $data);
+        $data = $this->recordProcessorDataInputValidator->getValidData();
+        $this->anrRecordProcessorService->update($this->getRequest()->getAttribute('anr'), (int)$id, $data);
 
-    public function delete($id)
-    {
-        return $this->methodNotAllowed();
+        return $this->getSuccessfulJsonResponse();
     }
 }

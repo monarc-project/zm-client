@@ -1,193 +1,126 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Entity;
 
-use Monarc\Core\Entity\AbstractEntity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
 /**
  * RecordInternationalTransfer
- *
- * @ORM\Table(name="record_international_transfers", indexes={
- *      @ORM\Index(name="record", columns={"record_id"}),
- * })
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
  */
-class RecordInternationalTransfer extends AbstractEntity
+#[ORM\Table(name: 'record_international_transfers')]
+#[ORM\Index(name: 'record', columns: ['record_id'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
+class RecordInternationalTransfer
 {
     use CreateEntityTrait;
     use UpdateEntityTrait;
 
-    /**
-     * @var integer
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    protected $id;
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    protected int $id;
 
-    /**
-     * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
-     */
-    protected $anr;
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    protected Anr $anr;
 
     /**
      * @var Record
-     * @ORM\ManyToOne(targetEntity="Record")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="record_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * })
      */
-    protected $record;
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="organisation", type="string", length=255, nullable=true)
-     */
-    protected $organisation;
+    #[ORM\ManyToOne(targetEntity: 'Record', inversedBy: 'internationalTransfers')]
+    #[ORM\JoinColumn(name: 'record_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    protected Record $record;
+    #[ORM\Column(name: 'organisation', type: 'string', length: 255, nullable: true)]
+    protected ?string $organisation = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="description", type="text", nullable=true)
-     */
-    protected $description;
+    #[ORM\Column(name: 'description', type: 'text', nullable: true)]
+    protected ?string $description = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="country", type="string", length=255, nullable=true)
-     */
-    protected $country;
+    #[ORM\Column(name: 'country', type: 'string', length: 255, nullable: true)]
+    protected ?string $country = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="documents", type="string", length=255, nullable=true)
-     */
-    protected $documents;
+    #[ORM\Column(name: 'documents', type: 'string', length: 255, nullable: true)]
+    protected ?string $documents = null;
 
-    public function __construct($obj = null)
-    {
-        parent::__construct($obj);
-    }
-
-    /**
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * @param int $id
-     *
-     * @return Record
-     */
-    public function setId($id)
-    {
-        $this->id = $id;
-
-        return $this;
-    }
-
-    /**
-     * @return Anr
-     */
-    public function getAnr()
+    public function getAnr(): Anr
     {
         return $this->anr;
     }
 
-    /**
-     * @param int $anr
-     *
-     * @return Record
-     */
-    public function setAnr($anr)
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
 
         return $this;
     }
 
-    /**
-     * @return Record
-     */
-    public function getRecord()
+    public function getRecord(): Record
     {
         return $this->record;
     }
 
-    /**
-     * @param int $record
-     *
-     * @return RecordInternationalTransfer
-     */
-    public function setRecord($record)
+    public function setRecord(Record $record): self
     {
         $this->record = $record;
 
         return $this;
     }
 
-    public function getOrganisation(): string
+    public function getOrganisation(): ?string
     {
-        return (string)$this->organisation;
+        return $this->organisation;
     }
 
-    public function setOrganisation($organisation): self
+    public function setOrganisation(?string $organisation): self
     {
         $this->organisation = $organisation;
 
         return $this;
     }
 
-    public function getDescription(): string
+    public function getDescription(): ?string
     {
-        return (string)$this->description;
+        return $this->description;
     }
 
-    public function setDescription($description): self
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
 
         return $this;
     }
 
-    public function getCountry(): string
+    public function getCountry(): ?string
     {
-        return (string)$this->country;
+        return $this->country;
     }
 
-    public function setCountry($country): self
+    public function setCountry(?string $country): self
     {
         $this->country = $country;
 
         return $this;
     }
 
-    public function getDocuments(): string
+    public function getDocuments(): ?string
     {
-        return (string)$this->documents;
+        return $this->documents;
     }
 
-    public function setDocuments($documents): self
+    public function setDocuments(?string $documents): self
     {
         $this->documents = $documents;
 

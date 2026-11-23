@@ -1,42 +1,39 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
 namespace Monarc\FrontOffice\Controller;
 
-use Monarc\Core\Controller\AbstractController;
+use Monarc\Core\Controller\Handler\AbstractRestfulControllerRequestHandler;
 use Monarc\Core\Controller\Handler\ControllerRequestResponseHandlerTrait;
+use Monarc\Core\InputFormatter\Guide\GetGuideItemsInputFormatter;
 use Monarc\Core\Service\GuideItemService;
 
-class ApiGuidesItemsController extends AbstractController
+class ApiGuidesItemsController extends AbstractRestfulControllerRequestHandler
 {
     use ControllerRequestResponseHandlerTrait;
 
-    public function __construct(GuideItemService $guideItemService)
-    {
-        parent::__construct($guideItemService);
+    public function __construct(
+        private GetGuideItemsInputFormatter $getGuideItemsInputFormatter,
+        private GuideItemService $guideItemService
+    ) {
     }
 
     public function getList()
     {
-        $page = $this->params()->fromQuery('page');
-        $limit = $this->params()->fromQuery('limit');
-        $order = $this->params()->fromQuery('order');
-        $filter = $this->params()->fromQuery('filter');
-        $guide = $this->params()->fromQuery('guide');
-        $filterAnd = [];
-        if (!\is_null($guide)) {
-            $filterAnd = ['guide' => (int)$guide];
-        }
-
-        $service = $this->getService();
+        $formattedParams = $this->getFormattedInputParams($this->getGuideItemsInputFormatter);
 
         return $this->getPreparedJsonResponse([
-            'count' => $service->getFilteredCount($filter, $filterAnd),
-            'guides-items' => $service->getList($page, $limit, $order, $filter, $filterAnd),
+            'count' => $this->guideItemService->getCount($formattedParams),
+            'guides-items' => $this->guideItemService->getList($formattedParams),
         ]);
+    }
+
+    public function get($id)
+    {
+        return $this->getPreparedJsonResponse($this->guideItemService->getGuideItemData((int)$id));
     }
 }

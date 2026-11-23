@@ -10,10 +10,8 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\ScaleSuperClass;
 
-/**
- * @ORM\Table(name="scales")
- * @ORM\Entity
- */
+#[ORM\Table(name: 'scales')]
+#[ORM\Entity]
 class Scale extends ScaleSuperClass
 {
     public function isScaleRangeDifferentFromData(array $data): bool

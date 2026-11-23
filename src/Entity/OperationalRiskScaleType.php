@@ -10,21 +10,16 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\OperationalRiskScaleTypeSuperClass;
 
-/**
- * @ORM\Table(name="operational_risks_scales_types")
- * @ORM\Table(name="operational_risks_scales_types", indexes={
- *     @ORM\Index(name="op_risk_scales_types_anr_id_indx", columns={"anr_id"}),
- *     @ORM\Index(name="op_risk_scales_types_scale_id_indx", columns={"scale_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'operational_risks_scales_types')]
+#[ORM\Index(name: 'op_risk_scales_types_anr_id_indx', columns: ['anr_id'])]
+#[ORM\Index(name: 'op_risk_scales_types_scale_id_indx', columns: ['scale_id'])]
+#[ORM\Entity]
 class OperationalRiskScaleType extends OperationalRiskScaleTypeSuperClass
 {
     /**
      * @var string
-     *
-     * @ORM\Column(name="label", type="string", length=255, nullable=false, options={"default": ""})
      */
+    #[ORM\Column(name: 'label', type: 'string', length: 255, nullable: false, options: ['default' => ''])]
     protected $label = '';
 
     public function getLabel(): string

@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -15,10 +15,10 @@ use Monarc\Core\Entity\OperationalRiskScaleSuperClass;
 use Monarc\Core\Entity\ScaleImpactTypeSuperClass;
 use Monarc\Core\Entity\ScaleSuperClass;
 use Monarc\Core\Entity\UserSuperClass;
-use Monarc\Core\Model\Table\DeliveriesModelsTable;
+use Monarc\Core\Service\DeliveriesModelsService;
 use Monarc\Core\Service as CoreService;
 use Monarc\FrontOffice\Entity;
-use Monarc\FrontOffice\Model\Table\RecordTable;
+use Monarc\FrontOffice\Table\RecordTable;
 use Monarc\FrontOffice\Table;
 use PhpOffice\PhpWord;
 use ZipArchive;
@@ -171,11 +171,10 @@ class DeliverableGenerationService
         private Table\ClientTable $clientTable,
         private Table\MeasureTable $measureTable,
         private RecordTable $recordTable,
-        private DeliveriesModelsTable $deliveriesModelsTable,
+        private DeliveriesModelsService $deliveriesModelsService,
         private OperationalRiskScaleService $operationalRiskScaleService,
         private AnrQuestionService $anrQuestionService,
-        private AnrQuestionChoiceService $anrQuestionChoiceService,
-        private AnrInterviewService $interviewService,
+        private AnrInterviewService $anrInterviewService,
         private AnrCartoRiskService $cartoRiskService,
         private AnrInstanceRiskOpService $anrInstanceRiskOpService,
         private AnrInstanceRiskService $anrInstanceRiskService,
@@ -237,8 +236,6 @@ class DeliverableGenerationService
         $this->currentOutputFormat = $outputFormat;
         $this->setStyles();
 
-        $deliveryModel = $this->deliveriesModelsTable->findById((int)$data['template']);
-
         $values = [
             'txt' => [
                 self::VERSION => htmlspecialchars($delivery->getVersion()),
@@ -259,21 +256,11 @@ class DeliverableGenerationService
             ],
         ];
 
-        $pathModel = (getenv('APP_CONF_DIR') ?: '') . $deliveryModel->getPath($this->currentLangAnrIndex);
-        if (!file_exists($pathModel)) {
-            /* if template not available in the language of the ANR, use the default template of the category. */
-            $pathModel = getenv('APP_CONF_DIR') ?? '';
-            $deliveryModel = current(
-                $this->deliveriesModelsTable->getEntityByFields([
-                    'category' => $docType,
-                    'path2' => ['op' => 'IS NOT', 'value' => null],
-                ])
-            );
-            $pathModel .= $deliveryModel->path2;
-            if (!file_exists($pathModel)) {
-                throw new Exception('Model not found "' . $pathModel . '"');
-            }
-        }
+        $pathModel = $this->deliveriesModelsService->getGenerationPath(
+            (int)$data['template'],
+            $this->currentLangAnrIndex,
+            $docType
+        );
 
         $referentialUuid = $data['referential'] ?? null;
         $risksByControl = $data['risksByControl'] ?? false;
@@ -1222,8 +1209,9 @@ class DeliverableGenerationService
      */
     private function generateTrendAssessmentTable(): PhpWord\Element\Table
     {
-        $questions = $this->anrQuestionService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
-        $questionsChoices = $this->anrQuestionChoiceService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
+        $questionParams = (new \Monarc\FrontOffice\InputFormatter\Question\GetQuestionsInputFormatter())
+            ->format(['anr' => $this->anr]);
+        $questions = $this->anrQuestionService->getList($questionParams);
 
         $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
@@ -1232,7 +1220,7 @@ class DeliverableGenerationService
         // Fill in each row
         foreach ($questions as $question) {
             $response = '';
-            if ($question['type'] === 1) {
+            if ($question['type'] === Entity\Question::TYPE_SINGLE) {
                 // Simple text
                 $response = $question['response'];
             } else {
@@ -1242,7 +1230,7 @@ class DeliverableGenerationService
                     $responses = [];
 
                     if (!empty($responseIds)) {
-                        foreach ($questionsChoices as $choice) {
+                        foreach ($question['choices'] as $choice) {
                             if (in_array($choice['id'], $responseIds, true)) {
                                 $responses[] = '- ' . $choice['label' . $this->currentLangAnrIndex];
                             }
@@ -1250,8 +1238,8 @@ class DeliverableGenerationService
                         $response = implode("\n", $responses);
                     }
                 } else {
-                    foreach ($questionsChoices as $choice) {
-                        if ($choice['id'] === $question['response']) {
+                    foreach ($question['choices'] as $choice) {
+                        if ((string)$choice['id'] === $question['response']) {
                             $response = $choice['label' . $this->currentLangAnrIndex];
                             break;
                         }
@@ -1282,7 +1270,9 @@ class DeliverableGenerationService
      */
     private function generateInterviewsTable(): PhpWord\Element\Table
     {
-        $interviews = $this->interviewService->getList(1, 0, null, null, ['anr' => $this->anr->getId()]);
+        $interviewParams = (new \Monarc\FrontOffice\InputFormatter\Interview\GetInterviewsInputFormatter())
+            ->format(['anr' => $this->anr]);
+        $interviews = $this->anrInterviewService->getList($interviewParams);
 
         $tableWord = new PhpWord\PhpWord();
         $section = $tableWord->addSection();
@@ -1606,7 +1596,7 @@ class DeliverableGenerationService
                     }
                 }
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip($size), $style)
-                    ->addText($result, $this->boldFont, $this->centerParagraph);
+                    ->addText($result ?? '', $this->boldFont, $this->centerParagraph);
             }
         }
 
@@ -2022,15 +2012,15 @@ class DeliverableGenerationService
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($riskSourceWidth), $this->vAlignCenterCell)
                             ->addText(_WT($r['riskSource']), $auditInfoNormalFont, $riskSourceParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($impactWidth), $this->vAlignCenterCell)
-                            ->addText($r['impactC'], $auditInfoNormalFont, $auditInfoCenterParagraph);
+                            ->addText($r['impactC'] ?? '', $auditInfoNormalFont, $auditInfoCenterParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($impactWidth), $this->vAlignCenterCell)
-                            ->addText($r['impactI'], $auditInfoNormalFont, $auditInfoCenterParagraph);
+                            ->addText($r['impactI'] ?? '', $auditInfoNormalFont, $auditInfoCenterParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($impactWidth), $this->vAlignCenterCell)
-                            ->addText($r['impactA'], $auditInfoNormalFont, $auditInfoCenterParagraph);
+                            ->addText($r['impactA'] ?? '', $auditInfoNormalFont, $auditInfoCenterParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($threatLabelWidth), $this->vAlignCenterCell)
                             ->addText(_WT($r['threat']), $auditInfoNormalFont, $threatParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($threatRateWidth), $this->vAlignCenterCell)
-                            ->addText($r['threatRate'], $auditInfoNormalFont, $auditInfoCenterParagraph);
+                            ->addText($r['threatRate'] ?? '', $auditInfoNormalFont, $auditInfoCenterParagraph);
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($vulnerabilityLabelWidth),
                             $this->vAlignCenterCell
@@ -2040,19 +2030,19 @@ class DeliverableGenerationService
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($vulnerabilityRateWidth),
                             $this->vAlignCenterCell
-                        )->addText($r['vulRate'], $auditInfoNormalFont, $auditInfoCenterParagraph);
+                        )->addText($r['vulRate'] ?? '', $auditInfoNormalFont, $auditInfoCenterParagraph);
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($currentRiskWidth),
                             $this->setBgColorCell($r['riskC'])
-                        )->addText($r['riskC'], $auditInfoBoldFont, $auditInfoCenterParagraph);
+                        )->addText($r['riskC'] ?? '', $auditInfoBoldFont, $auditInfoCenterParagraph);
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($currentRiskWidth),
                             $this->setBgColorCell($r['riskI'])
-                        )->addText($r['riskI'], $auditInfoBoldFont, $auditInfoCenterParagraph);
+                        )->addText($r['riskI'] ?? '', $auditInfoBoldFont, $auditInfoCenterParagraph);
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($currentRiskWidth),
                             $this->setBgColorCell($r['riskA'])
-                        )->addText($r['riskA'], $auditInfoBoldFont, $auditInfoCenterParagraph);
+                        )->addText($r['riskA'] ?? '', $auditInfoBoldFont, $auditInfoCenterParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($treatmentWidth), $this->vAlignCenterCell)
                             ->addText($this->anrTranslate(
                                 $r['treatmentName']
@@ -2060,7 +2050,7 @@ class DeliverableGenerationService
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($targetRiskWidth),
                             $this->setBgColorCell($r['targetRisk'])
-                        )->addText($r['targetRisk'], $auditInfoBoldFont, $auditInfoCenterParagraph);
+                        )->addText($r['targetRisk'] ?? '', $auditInfoBoldFont, $auditInfoCenterParagraph);
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($lastReviewDateWidth),
                             $this->vAlignCenterCell
@@ -2437,7 +2427,7 @@ class DeliverableGenerationService
                             ->addText(_WT($r['label']), $this->normalFont, $this->leftParagraph);
                         if ($this->anr->showRolfBrut()) {
                             $table->addCell(PhpWord\Shared\Converter::cmToTwip($opRiskProbabilityWidth), $this->vAlignCenterCell)
-                                ->addText($r['brutProb'], $this->normalFont, $this->centerParagraph);
+                                ->addText($r['brutProb'] ?? '', $this->normalFont, $this->centerParagraph);
                             foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                                 $table->addCell(
                                     PhpWord\Shared\Converter::cmToTwip($opRiskScaleCellWidth),
@@ -2452,10 +2442,10 @@ class DeliverableGenerationService
                             $table->addCell(
                                 PhpWord\Shared\Converter::cmToTwip($opRiskCurrentWidth),
                                 $this->setBgColorCell($r['brutRisk'], false)
-                            )->addText($r['brutRisk'], $this->boldFont, $this->centerParagraph);
+                            )->addText($r['brutRisk'] ?? '', $this->boldFont, $this->centerParagraph);
                         }
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($opRiskProbabilityWidth), $this->vAlignCenterCell)
-                            ->addText($r['netProb'], $this->normalFont, $this->centerParagraph);
+                            ->addText($r['netProb'] ?? '', $this->normalFont, $this->centerParagraph);
                         foreach ($opRisksImpactsScales as $opRiskImpactScale) {
                             $table->addCell(
                                 PhpWord\Shared\Converter::cmToTwip($opRiskScaleCellWidth),
@@ -2470,7 +2460,7 @@ class DeliverableGenerationService
                         $table->addCell(
                             PhpWord\Shared\Converter::cmToTwip($opRiskCurrentWidth),
                             $this->setBgColorCell($r['netRisk'], false)
-                        )->addText($r['netRisk'], $this->boldFont, $this->centerParagraph);
+                        )->addText($r['netRisk'] ?? '', $this->boldFont, $this->centerParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($opExistingControlsWidth), $this->vAlignCenterCell)
                             ->addText(_WT($r['comment']), $this->normalFont, $this->leftParagraph);
                         $table->addCell(PhpWord\Shared\Converter::cmToTwip($opTreatmentWidth), $this->vAlignCenterCell)
@@ -4251,7 +4241,7 @@ class DeliverableGenerationService
      */
     private function generateTableRecordGDPR($recordId)
     {
-        $record = $this->recordTable->findById((int)$recordId);
+        $record = $this->recordTable->findByIdAndAnr((int)$recordId, $this->anr);
 
         $tableWord = new PhpWord\PhpWord();
         $tableWord->getSettings()->setUpdateFields(true);
@@ -4261,13 +4251,13 @@ class DeliverableGenerationService
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
             ->addText($this->anrTranslate('Name'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(_WT($record->getLabel()), $this->normalFont, $this->leftParagraph);
+            ->addText(_WT((string)$record->getLabel()), $this->normalFont, $this->leftParagraph);
         $table->addRow(400);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
             ->addText($this->anrTranslate('Creation date'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
             ->addText(
-                $record->getCreatedAt() ? strftime("%d-%m-%Y", $record->getCreatedAt()->getTimeStamp()) : '',
+                $record->getCreatedAt() ? $record->getCreatedAt()->format('d-m-Y') : '',
                 $this->normalFont,
                 $this->leftParagraph
             );
@@ -4276,7 +4266,7 @@ class DeliverableGenerationService
             ->addText($this->anrTranslate('Update date'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
             ->addText(
-                $record->getUpdatedAt() ? strftime("%d-%m-%Y", $record->getUpdatedAt()->getTimeStamp()) : '',
+                $record->getUpdatedAt() ? $record->getUpdatedAt()->format('d-m-Y') : '',
                 $this->normalFont,
                 $this->leftParagraph
             );
@@ -4284,12 +4274,12 @@ class DeliverableGenerationService
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
             ->addText($this->anrTranslate('Purpose(s)'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(_WT($record->getPurposes()), $this->normalFont, $this->leftParagraph);
+            ->addText(_WT((string)$record->getPurposes()), $this->normalFont, $this->leftParagraph);
         $table->addRow(400);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
             ->addText($this->anrTranslate('Security measures'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-            ->addText(_WT($record->getSecMeasures()), $this->normalFont, $this->leftParagraph);
+            ->addText(_WT((string)$record->getSecMeasures()), $this->normalFont, $this->leftParagraph);
 
         return $this->getWordXmlFromWordObject($tableWord);
     }
@@ -4301,7 +4291,7 @@ class DeliverableGenerationService
      */
     private function generateTableRecordActors($recordId)
     {
-        $record = $this->recordTable->findById((int)$recordId);
+        $record = $this->recordTable->findByIdAndAnr((int)$recordId, $this->anr);
         $jointControllers = $record->getJointControllers();
         $isPdfOutput = $this->currentOutputFormat === self::OUTPUT_FORMAT_PDF;
         $actorLabelWidth = $isPdfOutput ? 4.50 : 6.00;
@@ -4336,13 +4326,13 @@ class DeliverableGenerationService
             ->addText($this->anrTranslate('Controller'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip($actorNameWidth), $this->vAlignCenterCell)
             ->addText(
-                _WT($record->getController() ? $record->getController()->getLabel() : ''),
+                _WT((string)($record->getController() ? $record->getController()->getLabel() : '')),
                 $this->normalFont,
                 $this->leftParagraph
             );
         $table->addCell(PhpWord\Shared\Converter::cmToTwip($actorContactWidth), $this->vAlignCenterCell)
             ->addText(
-                _WT($record->getController() ? $record->getController()->getContact() : ''),
+                _WT((string)($record->getController() ? $record->getController()->getContact() : '')),
                 $this->normalFont,
                 $this->leftParagraph
             );
@@ -4352,13 +4342,13 @@ class DeliverableGenerationService
             ->addText($this->anrTranslate('Representative'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip($actorNameWidth), $this->vAlignCenterCell)
             ->addText(
-                _WT($record->getRepresentative() ? $record->getRepresentative()->getLabel() : ''),
+                _WT((string)($record->getRepresentative() ? $record->getRepresentative()->getLabel() : '')),
                 $this->normalFont,
                 $this->leftParagraph
             );
         $table->addCell(PhpWord\Shared\Converter::cmToTwip($actorContactWidth), $this->vAlignCenterCell)
             ->addText(
-                _WT($record->getRepresentative() ? $record->getRepresentative()->getContact() : ''),
+                _WT((string)($record->getRepresentative() ? $record->getRepresentative()->getContact() : '')),
                 $this->normalFont,
                 $this->leftParagraph
             );
@@ -4368,13 +4358,13 @@ class DeliverableGenerationService
             ->addText($this->anrTranslate('Data protection officer'), $this->boldFont, $this->leftParagraph);
         $table->addCell(PhpWord\Shared\Converter::cmToTwip($actorNameWidth), $this->vAlignCenterCell)
             ->addText(
-                _WT($record->getDpo() ? $record->getDpo()->getLabel() : ''),
+                _WT((string)($record->getDpo() ? $record->getDpo()->getLabel() : '')),
                 $this->normalFont,
                 $this->leftParagraph
             );
         $table->addCell(PhpWord\Shared\Converter::cmToTwip($actorContactWidth), $this->vAlignCenterCell)
             ->addText(
-                _WT($record->getDpo() ? $record->getDpo()->getContact() : ''),
+                _WT((string)($record->getDpo() ? $record->getDpo()->getContact() : '')),
                 $this->normalFont,
                 $this->leftParagraph
             );
@@ -4387,9 +4377,9 @@ class DeliverableGenerationService
             $i = 0;
             foreach ($jointControllers as $jc) {
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip($actorNameWidth), $this->vAlignCenterCell)
-                    ->addText(_WT($jc->getLabel()), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)$jc->getLabel()), $this->normalFont, $this->leftParagraph);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip($actorContactWidth), $this->vAlignCenterCell)
-                    ->addText(_WT($jc->getContact()), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)$jc->getContact()), $this->normalFont, $this->leftParagraph);
                 if ($i !== count($jointControllers) - 1) {
                     $table->addRow(400);
                     $table->addCell(PhpWord\Shared\Converter::cmToTwip($actorLabelWidth), $this->grayCell);
@@ -4411,7 +4401,7 @@ class DeliverableGenerationService
      */
     private function generateTableRecordPersonalData($recordId)
     {
-        $recordEntity = $this->recordTable->findById((int)$recordId);
+        $recordEntity = $this->recordTable->findByIdAndAnr((int)$recordId, $this->anr);
         $personalData = $recordEntity->getPersonalData();
 
         //create section
@@ -4449,16 +4439,16 @@ class DeliverableGenerationService
                     $retentionPeriod .= $this->anrTranslate('year(s)');
                 }
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->vAlignCenterCell)
-                    ->addText(_WT($pd->getDataSubject()), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)$pd->getDataSubject()), $this->normalFont, $this->leftParagraph);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->vAlignCenterCell)
-                    ->addText(_WT($dataCategories), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)($dataCategories)), $this->normalFont, $this->leftParagraph);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->vAlignCenterCell)
-                    ->addText(_WT($pd->getDescription()), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)$pd->getDescription()), $this->normalFont, $this->leftParagraph);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->vAlignCenterCell)
-                    ->addText(_WT($retentionPeriod), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)($retentionPeriod)), $this->normalFont, $this->leftParagraph);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(3.60), $this->vAlignCenterCell)
                     ->addText(
-                        _WT($pd->getRetentionPeriodDescription()),
+                        _WT((string)$pd->getRetentionPeriodDescription()),
                         $this->normalFont,
                         $this->leftParagraph
                     );
@@ -4480,7 +4470,7 @@ class DeliverableGenerationService
      */
     private function generateTableRecordRecipients($recordId)
     {
-        $recordEntity = $this->recordTable->findById((int)$recordId);
+        $recordEntity = $this->recordTable->findByIdAndAnr((int)$recordId, $this->anr);
         $recipients = $recordEntity->getRecipients();
 
         //create section
@@ -4502,15 +4492,15 @@ class DeliverableGenerationService
             foreach ($recipients as $r) {
                 $table->addRow(400);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(6.00), $this->vAlignCenterCell)
-                    ->addText(_WT($r->getLabel()), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)$r->getLabel()), $this->normalFont, $this->leftParagraph);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->vAlignCenterCell)
                     ->addText(
-                        $r->getType() === 0 ? $this->anrTranslate('internal') : $this->anrTranslate('external'),
+                        (int)$r->getType() === 0 ? $this->anrTranslate('internal') : $this->anrTranslate('external'),
                         $this->normalFont,
                         $this->leftParagraph
                     );
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(8.00), $this->vAlignCenterCell)
-                    ->addText(_WT($r->getDescription()), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)$r->getDescription()), $this->normalFont, $this->leftParagraph);
             }
         } else {
             $section->addText($this->anrTranslate('No recipient'), $this->normalFont, $this->leftParagraph);
@@ -4525,7 +4515,7 @@ class DeliverableGenerationService
      */
     private function generateTableRecordInternationalTransfers($recordId)
     {
-        $recordEntity = $this->recordTable->findById((int)$recordId);
+        $recordEntity = $this->recordTable->findByIdAndAnr((int)$recordId, $this->anr);
         $internationalTransfers = $recordEntity->getInternationalTransfers();
 
         //create section
@@ -4549,13 +4539,13 @@ class DeliverableGenerationService
             foreach ($internationalTransfers as $it) {
                 $table->addRow(400);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
-                    ->addText(_WT($it->getOrganisation()), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)$it->getOrganisation()), $this->normalFont, $this->leftParagraph);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
-                    ->addText(_WT($it->getDescription()), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)$it->getDescription()), $this->normalFont, $this->leftParagraph);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
-                    ->addText(_WT($it->getCountry()), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)$it->getCountry()), $this->normalFont, $this->leftParagraph);
                 $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.50), $this->vAlignCenterCell)
-                    ->addText(_WT($it->getDocuments()), $this->normalFont, $this->leftParagraph);
+                    ->addText(_WT((string)$it->getDocuments()), $this->normalFont, $this->leftParagraph);
             }
         } else {
             $section->addText(
@@ -4575,7 +4565,7 @@ class DeliverableGenerationService
      */
     private function generateTableRecordProcessors($recordId)
     {
-        $recordEntity = $this->recordTable->findById((int)$recordId);
+        $recordEntity = $this->recordTable->findByIdAndAnr((int)$recordId, $this->anr);
         $processors = $recordEntity->getProcessors();
         $isPdfOutput = $this->currentOutputFormat === self::OUTPUT_FORMAT_PDF;
         $actorLabelWidth = $isPdfOutput ? 4.50 : 10.00;
@@ -4590,29 +4580,29 @@ class DeliverableGenerationService
 
         foreach ($processors as $p) {
             //create section
-            $section->addText(_WT($p->getLabel()), $this->boldFont);
+            $section->addText(_WT((string)$p->getLabel()), $this->boldFont);
             $table = $section->addTable($this->borderTable);
 
             $table->addRow(400);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
                 ->addText($this->anrTranslate('Name'), $this->boldFont, $this->leftParagraph);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-                ->addText(_WT($p->getLabel()), $this->normalFont, $this->leftParagraph);
+                ->addText(_WT((string)$p->getLabel()), $this->normalFont, $this->leftParagraph);
             $table->addRow(400);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
                 ->addText($this->anrTranslate('Contact'), $this->boldFont, $this->leftParagraph);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-                ->addText(_WT($p->getContact()), $this->normalFont, $this->leftParagraph);
+                ->addText(_WT((string)$p->getContact()), $this->normalFont, $this->leftParagraph);
             $table->addRow(400);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
                 ->addText($this->anrTranslate('Activities'), $this->boldFont, $this->leftParagraph);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-                ->addText(_WT($p->getActivities()), $this->normalFont, $this->leftParagraph);
+                ->addText(_WT((string)$p->getActivities()), $this->normalFont, $this->leftParagraph);
             $table->addRow(400);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(4.00), $this->grayCell)
                 ->addText($this->anrTranslate('Security measures'), $this->boldFont, $this->leftParagraph);
             $table->addCell(PhpWord\Shared\Converter::cmToTwip(14.00), $this->vAlignCenterCell)
-                ->addText(_WT($p->getSecMeasures()), $this->normalFont, $this->leftParagraph);
+                ->addText(_WT((string)$p->getSecMeasures()), $this->normalFont, $this->leftParagraph);
 
             $section->addTextBreak(1);
             $section->addText($this->anrTranslate('Actors'), $this->boldFont);
@@ -4644,13 +4634,13 @@ class DeliverableGenerationService
                 );
             $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip($actorNameWidth), $this->vAlignCenterCell)
                 ->addText(
-                    _WT($p->getRepresentative() ? $p->getRepresentative()->getLabel() : ''),
+                    _WT((string)($p->getRepresentative() ? $p->getRepresentative()->getLabel() : '')),
                     $this->normalFont,
                     $this->leftParagraph
                 );
             $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip($actorContactWidth), $this->vAlignCenterCell)
                 ->addText(
-                    _WT($p->getRepresentative() ? $p->getRepresentative()->getContact() : ''),
+                    _WT((string)($p->getRepresentative() ? $p->getRepresentative()->getContact() : '')),
                     $this->normalFont,
                     $this->leftParagraph
                 );
@@ -4660,13 +4650,13 @@ class DeliverableGenerationService
                 ->addText($this->anrTranslate('Data protection officer'), $this->boldFont, $this->leftParagraph);
             $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip($actorNameWidth), $this->vAlignCenterCell)
                 ->addText(
-                    _WT($p->getDpo() ? $p->getDpo()->getLabel() : ''),
+                    _WT((string)($p->getDpo() ? $p->getDpo()->getLabel() : '')),
                     $this->normalFont,
                     $this->leftParagraph
                 );
             $tableActor->addCell(PhpWord\Shared\Converter::cmToTwip($actorContactWidth), $this->vAlignCenterCell)
                 ->addText(
-                    _WT($p->getDpo() ? $p->getDpo()->getContact() : ''),
+                    _WT((string)($p->getDpo() ? $p->getDpo()->getContact() : '')),
                     $this->normalFont,
                     $this->leftParagraph
                 );
@@ -4684,7 +4674,7 @@ class DeliverableGenerationService
     private function generateTableAllRecordsGDPR()
     {
         /** @var Entity\Record[] $recordEntities */
-        $recordEntities = $this->recordTable->getEntityByFields(['anr' => $this->anr->getId()]);
+        $recordEntities = $this->recordTable->findByAnr($this->anr);
 
         $result = '';
 
@@ -4692,9 +4682,9 @@ class DeliverableGenerationService
             $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();
             $tableWord->addTitleStyle(1, $this->titleFont);
-            $section->addTitle(_WT($recordEntity->getlabel()));
+            $section->addTitle(_WT((string)$recordEntity->getlabel()));
             $result .= $this->getWordXmlFromWordObject($tableWord);
-            $result .= $this->generateTableRecordGDPR($recordEntity->id);
+            $result .= $this->generateTableRecordGDPR($recordEntity->getId());
             //create section
             $tableWord = new PhpWord\PhpWord();
             $section = $tableWord->addSection();

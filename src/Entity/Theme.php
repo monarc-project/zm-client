@@ -10,22 +10,16 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\ThemeSuperClass;
 
-/**
- * @ORM\Table(name="themes", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'themes')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Entity]
 class Theme extends ThemeSuperClass
 {
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=false)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected $anr;
 
     public function getAnr(): Anr

@@ -12,27 +12,22 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\UserRoleSuperClass;
 use Monarc\Core\Entity\UserSuperClass;
 
-/**
- * @ORM\Table(name="users", uniqueConstraints={@ORM\UniqueConstraint(name="email", columns={"email"})})
- * @ORM\Entity
- */
+#[ORM\Table(name: 'users')]
+#[ORM\UniqueConstraint(name: 'email', columns: ['email'])]
+#[ORM\Entity]
 class User extends UserSuperClass
 {
     /**
      * @var Anr|null
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="current_anr_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'current_anr_id', referencedColumnName: 'id', nullable: true)]
     protected $currentAnr;
 
     /**
      * @var ArrayCollection|UserAnr[]
-     *
-     * @ORM\OneToMany(targetEntity="UserAnr", orphanRemoval=true, mappedBy="user", cascade={"persist"})
      */
+    #[ORM\OneToMany(targetEntity: 'UserAnr', orphanRemoval: true, mappedBy: 'user', cascade: ['persist'])]
     protected $userAnrs;
 
     public function __construct(array $data)
@@ -68,6 +63,7 @@ class User extends UserSuperClass
     /**
      * @param array|UserAnr[] $userAnrs
      */
+
     public function setUserAnrs(array $userAnrs): self
     {
         foreach ($userAnrs as $userAnr) {

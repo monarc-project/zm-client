@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2024 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -11,8 +11,6 @@ use Monarc\Core\Helper\EncryptDecryptHelperTrait;
 use Monarc\Core\Service\ConfigService;
 use Monarc\FrontOffice\Entity;
 use Monarc\FrontOffice\Export\Service\Traits as ExportTrait;
-use Monarc\FrontOffice\Model\Table as DeprecatedTable;
-use Monarc\FrontOffice\Service\AnrRecordService;
 use Monarc\FrontOffice\Table;
 
 class AnrExportService
@@ -29,9 +27,11 @@ class AnrExportService
     use ExportTrait\OperationalRiskScaleExportTrait;
     use ExportTrait\RecommendationExportTrait;
     use ExportTrait\SupervisorExportTrait;
+    use ExportTrait\QuestionExportTrait;
+    use ExportTrait\InterviewExportTrait;
+    use ExportTrait\RecordExportTrait;
 
     public function __construct(
-        private Table\AnrTable $anrTable,
         private Table\AssetTable $assetTable,
         private Table\ThreatTable $threatTable,
         private Table\VulnerabilityTable $vulnerabilityTable,
@@ -52,10 +52,9 @@ class AnrExportService
         private Table\SoaScaleCommentTable $soaScaleCommentTable,
         private Table\DeliveryTable $deliveryTable,
         private Table\SoaTable $soaTable,
-        private DeprecatedTable\QuestionTable $questionTable,
-        private DeprecatedTable\InterviewTable $interviewTable,
-        private DeprecatedTable\RecordTable $recordTable,
-        private AnrRecordService $anrRecordService,
+        private Table\QuestionTable $questionTable,
+        private Table\InterviewTable $interviewTable,
+        private Table\RecordTable $recordTable,
         private ConfigService $configService
     ) {
     }
@@ -538,26 +537,8 @@ class AnrExportService
         }
 
         $questionsData = [];
-        foreach ($this->questionTable->findByAnr($anr) as $question) {
-            $questionChoicesData = [];
-            foreach ($question->getQuestionChoices() as $questionChoice) {
-                $questionChoicesData[] = [
-                    'id' => $questionChoice->getId(),
-                    'label' => $questionChoice->getLabel($languageIndex),
-                    'position' => $questionChoice->getPosition(),
-                ];
-            }
-            $questionPosition = $question->getPosition();
-            $questionsData[$questionPosition] = [
-                'id' => $question->getId(),
-                'mode' => $question->getMode(),
-                'isMultiChoice' => $question->isMultiChoice(),
-                'label' => $question->getLabel($languageIndex),
-                'response' => $question->getResponse(),
-                'type' => $question->getType(),
-                'position' => $questionPosition,
-                'questionChoices' => $questionChoicesData,
-            ];
+        foreach ($this->questionTable->findOrderedQuestions($anr) as $question) {
+            $questionsData[$question->getPosition()] = $this->prepareQuestionData($question, $languageIndex);
         }
         ksort($questionsData);
 
@@ -601,12 +582,7 @@ class AnrExportService
     {
         $result = [];
         foreach ($this->interviewTable->findByAnr($anr) as $interview) {
-            $result[] = [
-                'id' => $interview->getId(),
-                'date' => $interview->getDate(),
-                'service' => $interview->getService(),
-                'content' => $interview->getContent(),
-            ];
+            $result[] = $this->prepareInterviewData($interview);
         }
 
         return $result;
@@ -653,9 +629,8 @@ class AnrExportService
     private function prepareGdprRecordsData(Entity\Anr $anr): array
     {
         $result = [];
-        $filename = '';
         foreach ($this->recordTable->findByAnr($anr) as $record) {
-            $result[] = $this->anrRecordService->generateExportArray($record->getId(), $filename);
+            $result[] = $this->prepareRecordData($record);
         }
 
         return $result;

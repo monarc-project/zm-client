@@ -15,11 +15,10 @@ use Monarc\Core\Entity\AnrSuperClass;
 use Ramsey\Uuid\Lazy\LazyUuidFromString;
 use Ramsey\Uuid\Uuid;
 
-/**
- * @ORM\Table(name="anrs", uniqueConstraints={@ORM\UniqueConstraint(name="uuid", columns={"uuid"})})
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'anrs')]
+#[ORM\UniqueConstraint(name: 'uuid', columns: ['uuid'])]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class Anr extends AnrSuperClass
 {
     public const REVIEW_FREQUENCY_MONTHLY = 'Monthly';
@@ -29,136 +28,126 @@ class Anr extends AnrSuperClass
 
     /**
      * @var LazyUuidFromString|string
-     *
-     * @ORM\Column(name="uuid", type="uuid", nullable=false)
      */
+    #[ORM\Column(name: 'uuid', type: 'uuid', nullable: false)]
     protected $uuid;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="label", type="string", length=255, nullable=false)
      */
+    #[ORM\Column(name: 'label', type: 'string', length: 255, nullable: false)]
     protected $label;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="description", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'description', type: 'text', nullable: true)]
     protected $description;
 
     /**
      * @var ArrayCollection|MonarcObject[]
-     *
-     * @ORM\OneToMany(targetEntity="MonarcObject", mappedBy="anr")
      */
+    #[ORM\OneToMany(targetEntity: 'MonarcObject', mappedBy: 'anr')]
     protected $objects;
 
     /**
      * @var ArrayCollection|ObjectCategory[]
-     *
-     * @ORM\OneToMany(targetEntity="ObjectCategory", mappedBy="anr")
      */
+    #[ORM\OneToMany(targetEntity: 'ObjectCategory', mappedBy: 'anr')]
     protected $objectCategories;
 
     /**
      * @var ArrayCollection|Snapshot[]
-     *
-     * @ORM\OneToMany(targetEntity="Snapshot", mappedBy="anrReference", cascade={"remove"})
      */
+    #[ORM\OneToMany(targetEntity: 'Snapshot', mappedBy: 'anrReference', cascade: ['remove'])]
     protected $referencedSnapshots;
 
     /**
      * @var ArrayCollection|RecommendationSet[]
-     *
-     * @ORM\OneToMany(targetEntity="RecommendationSet", mappedBy="anr", cascade={"remove"})
      */
+    #[ORM\OneToMany(targetEntity: 'RecommendationSet', mappedBy: 'anr', cascade: ['remove'])]
     protected $recommendationSets;
 
     /**
      * @var Snapshot|null
-     *
-     * @ORM\OneToOne(targetEntity="Snapshot", mappedBy="anr", cascade={"remove"})
      */
+    #[ORM\OneToOne(targetEntity: 'Snapshot', mappedBy: 'anr', cascade: ['remove'])]
     protected $snapshot;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="language", type="integer", options={"unsigned":true, "default":1})
      */
+    #[ORM\Column(name: 'language', type: 'integer', options: ['unsigned' => true, 'default' => 1])]
     protected $language = 1;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="language_code", type="string", nullable=false, length=8, options={"default": "fr"})
      */
+    #[ORM\Column(name: 'language_code', type: 'string', nullable: false, length: 8, options: ['default' => 'fr'])]
     protected $languageCode = 'fr';
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="model_id", type="integer", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(name: 'model_id', type: 'integer', options: ['unsigned' => true, 'default' => 0])]
     protected $modelId = 0;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="model_impacts", type="smallint", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(name: 'model_impacts', type: 'smallint', options: ['unsigned' => true, 'default' => 0])]
     protected $modelImpacts = 0;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="cache_model_are_scales_updatable", type="smallint", options={"unsigned":true, "default":0})
      */
+    #[ORM\Column(
+        name: 'cache_model_are_scales_updatable',
+        type: 'smallint',
+        options: ['unsigned' => true, 'default' => 0]
+    )]
     protected $cacheModelAreScalesUpdatable = 0;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="is_visible_on_dashboard", type="smallint", options={"default":1})
      */
+    #[ORM\Column(name: 'is_visible_on_dashboard', type: 'smallint', options: ['default' => 1])]
     protected $isVisibleOnDashboard = 1;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="is_stats_collected", type="smallint", options={"default":1})
      */
+    #[ORM\Column(name: 'is_stats_collected', type: 'smallint', options: ['default' => 1])]
     protected $isStatsCollected = 1;
 
     /**
      * @var DateTime|null
-     *
-     * @ORM\Column(name="reassessment_last_review_date", type="date", nullable=true)
      */
+    #[ORM\Column(name: 'reassessment_last_review_date', type: 'date', nullable: true)]
     protected $reassessmentLastReviewDate;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="reassessment_review_frequency", type="string",
-     *             length=50, nullable=false, options={"default": "Annually"})
      */
+    #[ORM\Column(
+        name: 'reassessment_review_frequency',
+        type: 'string',
+        length: 50,
+        nullable: false,
+        options: ['default' => 'Annually']
+    )]
     protected $reassessmentReviewFrequency = self::REVIEW_FREQUENCY_ANNUALLY;
 
     /**
      * @var Referential[]|ArrayCollection
-     *
-     * @ORM\OneToMany(targetEntity="Referential", mappedBy="anr", cascade={"remove"})
      */
+    #[ORM\OneToMany(targetEntity: 'Referential', mappedBy: 'anr', cascade: ['remove'])]
     protected $referentials;
 
     /**
      * @var UserAnr[]|ArrayCollection
-     *
-     * @ORM\OneToMany(targetEntity="UserAnr", mappedBy="anr", cascade={"remove"})
      */
+    #[ORM\OneToMany(targetEntity: 'UserAnr', mappedBy: 'anr', cascade: ['remove'])]
     protected $usersAnrsPermissions;
 
     public function __construct()
@@ -179,9 +168,13 @@ class Anr extends AnrSuperClass
      *
      * @return Anr
      */
+
     public static function constructFromObjectAndData(AnrSuperClass $sourceAnr, array $data): AnrSuperClass
     {
-        /** @var Anr $newAnr */
+        /**
+         * @var Anr $newAnr
+         */
+
         $newAnr = parent::constructFromObject($sourceAnr);
 
         if ($sourceAnr instanceof self) {
@@ -202,7 +195,7 @@ class Anr extends AnrSuperClass
             /* Creation of an analysis based on a model. */
             $languageIndex = (int)($data['language'] ?? 1);
             $newAnr->setLabel((string)$data['label'])
-                ->setDescription((string)$data['description'])
+                ->setDescription((string)($data['description'] ?? ''))
                 ->setLanguage($languageIndex)
                 ->setLanguageCode($data['languageCode'] ?? 'fr')
                 ->setModelId($sourceAnr->getModel()->getId())
@@ -251,9 +244,7 @@ class Anr extends AnrSuperClass
         return $this->language;
     }
 
-    /**
-     * @ORM\PrePersist
-     */
+    #[ORM\PrePersist]
     public function generateAndSetUuid(): self
     {
         $this->uuid = Uuid::uuid4();
@@ -295,7 +286,10 @@ class Anr extends AnrSuperClass
         return $this->reassessmentLastReviewDate;
     }
 
-    /** @return string[] */
+    /**
+     * @return string[]
+     */
+
     public static function getAvailableReviewFrequencies(): array
     {
         return [

@@ -1,7 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @link      https://github.com/monarc-project for the canonical source repository
- * @copyright Copyright (c) 2016-2020 SMILE GIE Securitymadein.lu - Licensed under GNU Affero GPL v3
+ * @copyright Copyright (c) 2016-2026 Luxembourg House of Cybersecurity LHC.lu - Licensed under GNU Affero GPL v3
  * @license   MONARC is licensed under GNU Affero General Public License version 3
  */
 
@@ -10,24 +10,18 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\QuestionChoiceSuperClass;
 
-/**
- * @ORM\Table(name="questions_choices", indexes={
- *      @ORM\Index(name="question_id", columns={"question_id"}),
- *      @ORM\Index(name="anr_id", columns={"anr_id"}),
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'questions_choices')]
+#[ORM\Index(name: 'question_id', columns: ['question_id'])]
+#[ORM\Index(name: 'anr_id', columns: ['anr_id'])]
+#[ORM\Entity]
 class QuestionChoice extends QuestionChoiceSuperClass
 {
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
      */
-    protected $anr;
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
+    protected Anr $anr;
 
     public function getAnr(): Anr
     {
@@ -37,7 +31,8 @@ class QuestionChoice extends QuestionChoiceSuperClass
     /**
      * @param Anr $anr
      */
-    public function setAnr($anr): self
+
+    public function setAnr(Anr $anr): self
     {
         $this->anr = $anr;
 

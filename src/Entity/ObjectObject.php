@@ -10,46 +10,34 @@ namespace Monarc\FrontOffice\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\ObjectObjectSuperClass;
 
-/**
- * @ORM\Table(name="objects_objects", indexes={
- *      @ORM\Index(name="anr", columns={"anr_id"}),
- *      @ORM\Index(name="father_id", columns={"father_id"}),
- *      @ORM\Index(name="child_id", columns={"child_id"})
- * })
- * @ORM\Entity
- */
+#[ORM\Table(name: 'objects_objects')]
+#[ORM\Index(name: 'anr', columns: ['anr_id'])]
+#[ORM\Index(name: 'father_id', columns: ['father_id'])]
+#[ORM\Index(name: 'child_id', columns: ['child_id'])]
+#[ORM\Entity]
 class ObjectObject extends ObjectObjectSuperClass
 {
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: true)]
     protected $anr;
 
     /**
      * @var MonarcObject
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcObject", fetch="EAGER")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="father_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'MonarcObject', inversedBy: 'childrenLinks', fetch: 'EAGER')]
+    #[ORM\JoinColumn(name: 'father_id', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id', nullable: true)]
     protected $parent;
 
     /**
      * @var MonarcObject
-     *
-     * @ORM\ManyToOne(targetEntity="MonarcObject", fetch="EAGER")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="child_id", referencedColumnName="uuid", nullable=true),
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="anr_id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'MonarcObject', inversedBy: 'parentsLinks', fetch: 'EAGER')]
+    #[ORM\JoinColumn(name: 'child_id', referencedColumnName: 'uuid', nullable: true)]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'anr_id', nullable: true)]
     protected $child;
 
     public function getImplicitPositionRelationsValues(): array

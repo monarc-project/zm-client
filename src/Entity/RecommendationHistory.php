@@ -12,11 +12,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Monarc\Core\Entity\Traits\CreateEntityTrait;
 use Monarc\Core\Entity\Traits\UpdateEntityTrait;
 
-/**
- * @ORM\Table(name="recommandations_historics")
- * @ORM\Entity
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Table(name: 'recommandations_historics')]
+#[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class RecommendationHistory
 {
     use CreateEntityTrait;
@@ -24,223 +22,187 @@ class RecommendationHistory
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     protected $id;
 
     /**
      * @var Anr
-     *
-     * @ORM\ManyToOne(targetEntity="Anr")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="anr_id", referencedColumnName="id", nullable=False)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'Anr')]
+    #[ORM\JoinColumn(name: 'anr_id', referencedColumnName: 'id', nullable: false)]
     protected $anr;
 
     /**
      * @var InstanceRisk
-     *
-     * @ORM\ManyToOne(targetEntity="InstanceRisk")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="instance_risk_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'InstanceRisk')]
+    #[ORM\JoinColumn(name: 'instance_risk_id', referencedColumnName: 'id', nullable: true)]
     protected $instanceRisk;
 
     /**
      * @var InstanceRiskOp
-     *
-     * @ORM\ManyToOne(targetEntity="InstanceRiskOp")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="instance_risk_op_id", referencedColumnName="id", nullable=true)
-     * })
      */
+    #[ORM\ManyToOne(targetEntity: 'InstanceRiskOp')]
+    #[ORM\JoinColumn(name: 'instance_risk_op_id', referencedColumnName: 'id', nullable: true)]
     protected $instanceRiskOp;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="final", type="smallint", options={"unsigned":false, "default":1})
      */
+    #[ORM\Column(name: 'final', type: 'smallint', options: ['unsigned' => false, 'default' => 1])]
     protected $isFinal = 1;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="impl_comment", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'impl_comment', type: 'string', length: 255, nullable: true)]
     protected $implComment;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="reco_code", type="string", length=100, nullable=true)
      */
+    #[ORM\Column(name: 'reco_code', type: 'string', length: 100, nullable: true)]
     protected $recoCode;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="reco_description", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'reco_description', type: 'string', length: 255, nullable: true)]
     protected $recoDescription;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="reco_importance", type="smallint", options={"unsigned":true, "default":1})
      */
+    #[ORM\Column(name: 'reco_importance', type: 'smallint', options: ['unsigned' => true, 'default' => 1])]
     protected $recoImportance = 1;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="reco_comment", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'reco_comment', type: 'string', length: 255, nullable: true)]
     protected $recoComment;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="reco_responsable", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'reco_responsable', type: 'string', length: 255, nullable: true)]
     protected $recoResponsable;
 
     /**
      * @var DateTime
-     *
-     * @ORM\Column(name="reco_duedate", type="datetime", nullable=true)
      */
+    #[ORM\Column(name: 'reco_duedate', type: 'datetime', nullable: true)]
     protected $recoDueDate;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="risk_instance", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'risk_instance', type: 'string', length: 255, nullable: true)]
     protected $riskInstance;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="risk_instance_context", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'risk_instance_context', type: 'string', length: 255, nullable: true)]
     protected $riskInstanceContext;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="risk_asset", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'risk_asset', type: 'string', length: 255, nullable: true)]
     protected $riskAsset;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="risk_threat", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'risk_threat', type: 'string', length: 255, nullable: true)]
     protected $riskThreat;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="risk_threat_val", type="smallint", options={"unsigned":false, "default":-1})
      */
+    #[ORM\Column(name: 'risk_threat_val', type: 'smallint', options: ['unsigned' => false, 'default' => -1])]
     protected $riskThreatVal = -1;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="risk_vul", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'risk_vul', type: 'string', length: 255, nullable: true)]
     protected $riskVul;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="risk_vul_val_before", type="smallint", options={"unsigned":false, "default":-1})
      */
+    #[ORM\Column(name: 'risk_vul_val_before', type: 'smallint', options: ['unsigned' => false, 'default' => -1])]
     protected $riskVulValBefore = -1;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="risk_vul_val_after", type="smallint", options={"unsigned":false, "default":-1})
      */
+    #[ORM\Column(name: 'risk_vul_val_after', type: 'smallint', options: ['unsigned' => false, 'default' => -1])]
     protected $riskVulValAfter = -1;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="risk_op_description", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'risk_op_description', type: 'string', length: 255, nullable: true)]
     protected $riskOpDescription;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="net_prob_before", type="smallint", options={"unsigned":false, "default":-1})
      */
+    #[ORM\Column(name: 'net_prob_before', type: 'smallint', options: ['unsigned' => false, 'default' => -1])]
     protected $netProbBefore = -1;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="risk_kind_of_measure", type="smallint", options={"unsigned":false, "default":-1})
      */
+    #[ORM\Column(name: 'risk_kind_of_measure', type: 'smallint', options: ['unsigned' => false, 'default' => -1])]
     protected $riskKindOfMeasure = -1;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="risk_comment_before", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'risk_comment_before', type: 'string', length: 255, nullable: true)]
     protected $riskCommentBefore;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="risk_comment_after", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'risk_comment_after', type: 'string', length: 255, nullable: true)]
     protected $riskCommentAfter;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="risk_max_risk_before", type="smallint", options={"unsigned":false, "default":-1})
      */
+    #[ORM\Column(name: 'risk_max_risk_before', type: 'smallint', options: ['unsigned' => false, 'default' => -1])]
     protected $riskMaxRiskBefore = -1;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="risk_color_before", type="string", length=100, nullable=true)
      */
+    #[ORM\Column(name: 'risk_color_before', type: 'string', length: 100, nullable: true)]
     protected $riskColorBefore;
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="risk_max_risk_after", type="smallint", options={"unsigned":false, "default":-1})
      */
+    #[ORM\Column(name: 'risk_max_risk_after', type: 'smallint', options: ['unsigned' => false, 'default' => -1])]
     protected $riskMaxRiskAfter = -1;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="risk_color_after", type="string", length=100, nullable=true)
      */
+    #[ORM\Column(name: 'risk_color_after', type: 'string', length: 100, nullable: true)]
     protected $riskColorAfter;
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="cache_comment_after", type="string", length=255, nullable=true)
      */
+    #[ORM\Column(name: 'cache_comment_after', type: 'string', length: 255, nullable: true)]
     protected $cacheCommentAfter;
 
     public static function constructFromObject(RecommendationHistory $recommendationHistory): RecommendationHistory
