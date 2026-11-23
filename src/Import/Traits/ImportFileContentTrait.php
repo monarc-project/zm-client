@@ -20,17 +20,23 @@ trait ImportFileContentTrait
      *
      * @return array|bool
      */
-    private function getArrayDataOfJsonFileContent(string $fileName, ?string $password)
-    {
-        if (empty($password)) {
-            return json_decode(file_get_contents($fileName), true, 512, JSON_THROW_ON_ERROR);
+    private function getArrayDataOfJsonFileContent(
+        string $fileName,
+        ?string $password,
+        bool $allowLegacyEncoding = false
+    ) {
+        $content = file_get_contents($fileName);
+        $json = empty($password) ? $content : $this->decrypt($content, $password);
+
+        // Older record exports wrapped encrypted content in an additional base64 encoding.
+        if ($allowLegacyEncoding && !is_array(json_decode((string)$json, true))) {
+            $json = $this->decrypt(base64_decode($content), empty($password) ? '' : $password);
         }
 
-        $decryptedResult = $this->decrypt(file_get_contents($fileName), $password);
-        if ($decryptedResult === false) {
+        if ($json === false) {
             throw new Exception('Password is not correct.', 412);
         }
 
-        return json_decode($decryptedResult, true, 512, JSON_THROW_ON_ERROR);
+        return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
     }
 }

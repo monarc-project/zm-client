@@ -471,6 +471,154 @@ class RopaWorkflowTest extends TestCase
         );
     }
 
+    public function testCsvImportPreservesNestedFieldsAndGroupsContinuationRowsWithoutAnUpload(): void
+    {
+        [$ids, $errors] = $this->env->recordImportService->importFromFile($this->env->anr, [
+            'isJson' => 'false',
+            'csv' => [
+                'blank' => ['name' => '  '],
+                'invalid' => null,
+                'first' => [
+                    'name' => 'Customer records',
+                    'purposes' => '  Provide service  ',
+                    'security measures' => 'Encryption',
+                    'controller name' => 'Controller',
+                    'controller contact' => 'controller@example.invalid',
+                    'representative name' => 'Representative',
+                    'data protection officer name' => 'DPO',
+                    'joint controllers name' => 'Joint controller',
+                    'data recipient' => 'Recipient',
+                    'data recipient type' => 'internal',
+                    'description' => 'Email',
+                    'data subject' => 'Customers',
+                    'data categories' => 'Contact details, Phone',
+                    'retention period' => '0',
+                    'retention period unit' => 'month(s)',
+                    'retention period description' => 'After contract',
+                    'organisation of international transfer' => 'Provider',
+                    'country' => 'Luxembourg',
+                    'documents' => 'Contract',
+                    'data processor name' => 'Processor',
+                    'data processor contact' => 'processor@example.invalid',
+                    'activities' => 'Hosting',
+                    'data processor security measures' => 'Backups',
+                    'data processor representative name' => 'Processor representative',
+                    'data processor representative contact' => 'representative@example.invalid',
+                    'data processor data protection officer name' => 'Processor DPO',
+                    'data processor data protection officer contact' => 'dpo@example.invalid',
+                ],
+                'continuation' => [
+                    'joint controllers name' => 'Another joint controller',
+                    'joint controllers contact' => 'joint@example.invalid',
+                    'data recipient' => 'External recipient',
+                    'data recipient type' => 'external',
+                    'controller contact' => 'Ignore contact without name',
+                    'data subject' => 'Employees',
+                    'retention period' => '1',
+                    'retention period unit' => 'year(s)',
+                ],
+                'second' => ['name' => '0', 'purposes' => '0'],
+            ],
+        ]);
+
+        self::assertSame([], $errors);
+        self::assertCount(2, $ids);
+        $expected = RopaTestEnvironment::recordData();
+        $expected['purposes'] = '  Provide service  ';
+        $expected['personal_data'][0]['retention_period'] = 0;
+        $expected['personal_data'][0]['data_categories'][] = ['name' => 'Phone'];
+        $expected['personal_data'][] = [
+            'data_subject' => 'Employees',
+            'data_categories' => [],
+            'retention_period' => 1,
+            'retention_period_mode' => 'year(s)',
+        ];
+        $expected['joint_controllers'][] = [
+            'name' => 'Another joint controller',
+            'contact' => 'joint@example.invalid',
+        ];
+        $expected['recipients'][0]['description'] = 'Email';
+        $expected['recipients'][] = ['name' => 'External recipient', 'type' => 'external'];
+        $expected['international_transfers'][0]['description'] = 'Email';
+        $expected['processors'][0]['representative']['contact'] = 'representative@example.invalid';
+        $expected['processors'][0]['data_protection_officer']['contact'] = 'dpo@example.invalid';
+        $copyId = $this->env->importRecord($this->env->other, $expected);
+        self::assertSame(
+            $this->env->exportRecord($this->env->recordTable->findById($copyId)),
+            $this->env->exportRecord($this->env->recordTable->findById($ids[0]))
+        );
+        $second = $this->env->recordTable->findById($ids[1]);
+        self::assertSame('0', $second->getLabel());
+        self::assertSame('0', $second->getPurposes());
+        self::assertCount(0, $second->getJointControllers());
+        self::assertCount(0, $second->getPersonalData());
+    }
+
+    public function testCsvImportDoesNotAttributeInvalidLeadingDataToTheFollowingRecord(): void
+    {
+        [$ids, $errors] = $this->env->recordImportService->importFromFile($this->env->anr, [
+            'isJson' => false,
+            'csv' => [
+                ['purposes' => 'Missing record name'],
+                ['name' => 'Valid record'],
+            ],
+        ]);
+        self::assertCount(1, $ids);
+        self::assertSame('Valid record', $this->env->recordTable->findById($ids[0])->getLabel());
+        self::assertSame(['The file "" can\'t be imported'], $errors);
+    }
+
+    public function testJsonImportStillRequiresAnUploadedFile(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('File missing');
+        $this->expectExceptionCode(412);
+        $this->env->recordImportService->importFromFile($this->env->anr, []);
+    }
+
+    public function testInvalidJsonAndPasswordsReturnImportErrorsWithoutPersistingRecords(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'ropa-invalid-');
+        try {
+            foreach ([
+                ['malformed JSON', null],
+                ['null', null],
+                ['false', null],
+                ['"text"', null],
+                [$this->encrypt('[{"name":"Encrypted record"}]', 'secret'), 'wrong password'],
+            ] as [$content, $password]) {
+                file_put_contents($path, $content);
+                self::assertSame(
+                    [[], ['The file "invalid.json" can\'t be imported']],
+                    $this->env->recordImportService->importFromFile($this->env->anr, [
+                        'file' => ['name' => 'invalid.json', 'tmp_name' => $path, 'error' => UPLOAD_ERR_OK],
+                        'password' => $password,
+                    ])
+                );
+                self::assertSame(0, $this->env->recordTable->countAll());
+                self::assertSame([], $this->env->manager->getUnitOfWork()->getScheduledEntityInsertions());
+            }
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function testJsonImportReportsInvalidEntriesAndStillImportsValidRecords(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'ropa-mixed-');
+        try {
+            file_put_contents($path, json_encode([null, [], ['name' => 'Valid record'], 'invalid']));
+            [$ids, $errors] = $this->env->recordImportService->importFromFile($this->env->anr, [
+                'file' => ['name' => 'mixed.json', 'tmp_name' => $path, 'error' => UPLOAD_ERR_OK],
+            ]);
+            self::assertCount(1, $ids);
+            self::assertSame('Valid record', $this->env->recordTable->findById($ids[0])->getLabel());
+            self::assertSame(array_fill(0, 3, 'The file "mixed.json" can\'t be imported'), $errors);
+        } finally {
+            unlink($path);
+        }
+    }
+
     /** @dataProvider scopedServices */
     public function testEveryScopedServiceRejectsForeignAnalysisReadsAndWrites(
         string $serviceName,
