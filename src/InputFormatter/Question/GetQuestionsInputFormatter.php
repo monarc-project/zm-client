@@ -13,7 +13,7 @@ class GetQuestionsInputFormatter extends CoreGetQuestionsInputFormatter
 {
     protected static array $allowedFilterFields = [
         'anr',
-        'type' => ['type' => 'int', 'inArray' => static::ALLOWED_TYPES],
+        'type' => ['type' => 'int', 'inArray' => self::ALLOWED_TYPES],
         'multichoice' => ['type' => 'boolean'],
     ];
 }
