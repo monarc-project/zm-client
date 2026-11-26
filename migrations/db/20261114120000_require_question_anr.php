@@ -12,6 +12,8 @@ class RequireQuestionAnr extends AbstractMigration
 {
     public function up(): void
     {
+        $this->execute('DELETE FROM questions_choices WHERE anr_id IS NULL');
+        $this->execute('DELETE FROM questions WHERE anr_id IS NULL');
         foreach (['questions', 'questions_choices'] as $table) {
             $this->table($table)
                 ->changeColumn('anr_id', 'integer', ['null' => false, 'signed' => false])

@@ -12,6 +12,7 @@ class RequireInterviewAnr extends AbstractMigration
 {
     public function up(): void
     {
+        $this->execute('DELETE FROM interviews WHERE anr_id IS NULL');
         $this->table('interviews')
             ->changeColumn('anr_id', 'integer', ['null' => false, 'signed' => false])
             ->update();
